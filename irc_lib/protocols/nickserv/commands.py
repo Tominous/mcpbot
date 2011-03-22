@@ -1,0 +1,47 @@
+class NickServCommands(object):
+    
+    def rawcmd(self, cmd):
+        self.out_msg.put(':%s PRIVMSG NickServ :%s\r\n'%(self.cnick, cmd)) 
+
+    def register(self):
+        pass
+    def identify(self):
+        pass
+    def drop(self):
+        pass
+    def auth(self):
+        pass
+    def sendauth(self):
+        pass
+    def reauth(self):
+        pass
+    def restoremail(self):
+        pass
+    def link(self):
+        pass
+    def unlink(self):
+        pass
+    def listlinks(self):
+        pass
+    def access(self):
+        pass
+    def set(self):
+        pass
+    def unset(self):
+        pass
+    def recover(self):
+        pass
+    def release(self):
+        pass
+    def ghost(self):
+        pass
+    def info(self):
+        pass
+    def listchans(self):
+        pass
+        
+    def status(self, nick):
+        if self.bot.irc_status['Registered']:
+            self.rawcmd('STATUS %s'%nick)
+        else:
+            self.pending_actions.put((self.rawcmd, ('STATUS %s'%nick,), "self.irc_status['Registered']"))

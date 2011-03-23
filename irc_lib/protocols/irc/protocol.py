@@ -2,15 +2,17 @@ from commands  import IRCCommands
 from rawevents import IRCRawEvents
 from constants import IRC_REPLIES
 import thread
+from threading import Condition
+import time
 
 class IRCProtocol(IRCCommands, IRCRawEvents):
     
-    def __init__(self, _nick, _out_msg, _in_msg, _pending_actions, _bot):
+    def __init__(self, _nick, _out_msg, _in_msg, _locks, _bot):
         self.cnick           = _nick
         self.out_msg         = _out_msg
         self.in_msg          = _in_msg
-        self.pending_actions = _pending_actions
         self.bot             = _bot
+        self.locks           = _locks
 
         thread.start_new_thread(self.treat_msg,  ())
 
@@ -35,14 +37,14 @@ class IRCProtocol(IRCCommands, IRCRawEvents):
                 cmd    = msg[1]
                 msg    = ' '.join(msg[2:])
                 if hasattr(self, 'onRaw%s'%cmd):
-                    getattr(self, 'onRaw%s'%cmd)(sender, cmd, msg)
+                    thread.start_new_thread(getattr(self, 'onRaw%s'%cmd),(sender, cmd, msg))
                 else:
-                    getattr(self, 'onRawDefault')(sender, cmd, msg)
+                    thread.start_new_thread(getattr(self, 'onRawDefault'),(sender, cmd, msg))
 
                 if hasattr(self.bot, 'on%s'%cmd):
-                    getattr(self.bot, 'on%s'%cmd)(sender, cmd, msg)
+                    thread.start_new_thread(getattr(self.bot, 'on%s'%cmd),(sender, cmd, msg))
                 else:
-                    getattr(self.bot, 'onDefault')(sender, cmd, msg)
+                    thread.start_new_thread(getattr(self.bot, 'onDefault'),(sender, cmd, msg))
                 
     def add_user(self, nick, chan):
         nick_status = '-'
@@ -53,14 +55,18 @@ class IRCProtocol(IRCCommands, IRCRawEvents):
         if not snick in self.bot.irc_status['Users']:
             self.bot.irc_status['Users'][snick] = {}
             self.bot.irc_status['Users'][snick]['Registered'] = -1
-        self.bot.irc_status['Users'][snick][chan] = nick_status        
+            self.bot.irc_status['Users'][snick]['Host'] = -1
+            self.bot.irc_status['Users'][snick]['IP']   = -1
+        self.bot.irc_status['Users'][snick]['Channels'] = {}
+        self.bot.irc_status['Users'][snick]['Channels'][chan] = nick_status        
     
     def rm_user(self, nick, chan=None):
         if not chan:
             del self.bot.irc_status['Users'][nick]
             return
             
-        del self.bot.irc_status['Users'][nick][chan]
-        if len(self.bot.irc_status['Users'][nick]) == 0:
+        del self.bot.irc_status['Users'][nick]['Channels'][chan]
+        if len(self.bot.irc_status['Users'][nick]['Channels']) == 0:
             del self.bot.irc_status['Users'][nick]
+
 

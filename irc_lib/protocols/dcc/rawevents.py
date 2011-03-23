@@ -4,7 +4,10 @@ import socket
 class DCCRawEvents(object):
 
     def onRawDCCMsg(self, nick, msg):
-        pass
+        if len(msg.split()) == 1:
+            self.bot.raise_onCmd(nick, msg.split()[0].strip(), '')
+        else:
+            self.bot.raise_onCmd(nick, msg.split()[0].strip(), ' '.join(msg.split()[1:]).strip())
 
     def onRawDCCCHAT(self, sender, dcccmd, dccarg, dccip, dccport):
         nick    = get_nick(sender)
@@ -17,15 +20,9 @@ class DCCRawEvents(object):
         self.sockets[nick].setblocking(0)
         self.buffers[nick] = ''
         
+       
         #print '%s %s | IP:%s Port:%s'%(dcccmd, dccarg, dccip, dccport)
 
-    def onRawDCCClose(self, sender, dcccmd, dccarg, dccip, dccport):
-        nick    = get_nick(sender)
-        self.sockets[nick].close()
-        del self.sockets[nick]
-        del self.buffers[nick]
-
-        print 'Closing connection with %s'%nick
 
     def onRawDCCDefault(self, sender, dcccmd, dccarg, dccip, dccport):
         print 'RAW EVENT'

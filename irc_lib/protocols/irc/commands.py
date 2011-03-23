@@ -24,10 +24,12 @@ class IRCCommands(object):
         self.rawcmd('PONG %s'%timestamp)
 
     def join(self, chan, key=''):
-        if self.bot.irc_status['Registered']:
-            self.rawcmd('JOIN %s %s'%(chan,key))
-        else:
-            self.pending_actions.put((self.rawcmd, ('JOIN %s %s'%(chan,key),), "self.irc_status['Registered']"))
+        self.locks['ServReg'].acquire()
+        while not self.bot.irc_status['Registered']:
+            self.locks['ServReg'].wait()
+        self.locks['ServReg'].release()
+        
+        self.rawcmd('JOIN %s %s'%(chan,key))
 
     def privmsg(self, target, msg):
         self.rawcmd('PRIVMSG %s :%s'%(target, msg))
@@ -40,3 +42,6 @@ class IRCCommands(object):
 
     def kick(self, chan, nick, comment=''):
         self.rawcmd('KICK %s %s %s'%(chan, nick, comment))
+
+    def whois(self, nick):
+        self.rawcmd('WHOIS %s'%nick)

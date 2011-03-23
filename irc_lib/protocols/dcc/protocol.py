@@ -6,19 +6,26 @@ from Queue import Queue
 import socket
 import thread
 import time
+import urllib
 
 class DCCProtocol(DCCCommands, DCCRawEvents):
 
-    def __init__(self, _nick, _out_msg, _in_msg, _pending_actions, _bot):
+    def __init__(self, _nick, _out_msg, _in_msg, _locks, _bot):
         self.cnick           = _nick
         self.out_msg         = _out_msg
         self.in_msg          = _in_msg
-        self.pending_actions = _pending_actions
         self.bot             = _bot
+        self.locks           = _locks
         
-        self.listeningsocks  = {}
         self.sockets         = {}
         self.buffers         = {}
+        self.ip2nick         = {}
+
+        self.insocket      = socket.socket()
+        self.insocket.listen(10)
+        self.insocket.setblocking(0)
+        self.inip, self.inport = self.insocket.getsockname()
+        self.inip = self.conv_ip_std_long(urllib.urlopen('http://www.whatismyip.com/automation/n09230945.asp').readlines()[0])
         
         thread.start_new_thread(self.treat_msg,  ())
         thread.start_new_thread(self.inbound_loop,  ())                
@@ -48,14 +55,14 @@ class DCCProtocol(DCCCommands, DCCRawEvents):
                 raise IRCBotError('Invalid command from DCC : %s'%msg)
                 
             if hasattr(self, 'onRawDCC%s'%dcccmd):
-                getattr(self, 'onRawDCC%s'%dcccmd)(sender, dcccmd, dccarg, dccip, dccport)
+                thread.start_new_thread(getattr(self, 'onRawDCC%s'%dcccmd),(sender, dcccmd, dccarg, dccip, dccport))
             else:
-                getattr(self, 'onRawDCCDefault')(sender, dcccmd, dccarg, dccip, dccport)
+                thread.start_new_thread(getattr(self, 'onRawDCCDefault'),(sender, dcccmd, dccarg, dccip, dccport))
 
             if hasattr(self.bot, 'onDCC%s'%dcccmd):
-                getattr(self.bot, 'onDCC%s'%dcccmd)(sender, dcccmd, dccarg, dccip, dccport)
+                thread.start_new_thread(getattr(self.bot, 'onDCC%s'%dcccmd),(sender, dcccmd, dccarg, dccip, dccport))
             else:
-                getattr(self.bot, 'onDefault')(msg[0], cmd, ' '.join(msg[2:]))
+                thread.start_new_thread(getattr(self.bot, 'onDefault'),(msg[0], cmd, ' '.join(msg[2:])))
 
     def conv_ip_long_std(self,longip):
             
@@ -84,28 +91,30 @@ class DCCProtocol(DCCCommands, DCCRawEvents):
 
     def inbound_loop(self):
         while True:
-            
-            for nick, isocket in self.listeningsocks.items():
-                try:
-                    self.sockets[nick], garbage = isocket.accept()
-                    self.buffers[nick] = ''
-                except socket.error:
-                    continue
-            
+            try:
+                buffsocket, buffip = self.insocket.accept()
+                self.sockets[self.ip2nick[buffip[0]]] = buffsocket
+                self.sockets[self.ip2nick[buffip[0]]].setblocking(0)
+                self.say(self.ip2nick[buffip[0]], 'Connection with user %s established.\r\n'%self.ip2nick[buffip[0]])
+            except socket.error as msg:
+                pass
+
             for nick, isocket in self.sockets.items():
+                if not isocket:continue
                 if not nick in self.buffers: self.buffers[nick]=''
 
                 try:
                     self.buffers[nick]  += isocket.recv(512)
-                except socket.error:
+                except socket.error as msg:
                     continue
-                    
                 msg_list = self.buffers[nick].splitlines()
 
                 #We push all the msg beside the last one (in case it is truncated)
                 for msg in msg_list:
-                    self.onRawDCCMsg(nick, msg.replace('\r\n',''))
-                    if hasattr(self.bot, 'onDCCMsg'): self.bot.onDCCMsg(nick, msg.replace('\r\n',''))
-                    else: self.bot.onDefault(nick, 'DCC MSG', msg.replace('\r\n',''))
+                    thread.start_new_thread(self.onRawDCCMsg,(nick, msg.replace('\r\n','')))
+                    if hasattr(self.bot, 'onDCCMsg'): 
+                        thread.start_new_thread(self.bot.onDCCMsg,(nick, msg.replace('\r\n','')))
+                    else: 
+                        thread.start_new_thread(self.bot.onDefault,(nick, 'DCC MSG', msg.replace('\r\n','')))
                 
                 self.buffers[nick] = ''

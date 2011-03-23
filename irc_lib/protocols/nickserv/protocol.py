@@ -2,17 +2,18 @@ from utils.irc_name import get_nick
 from commands  import NickServCommands
 from rawevents import NickServRawEvents
 from IRCBotError import IRCBotError
+from threading import Condition
 import thread
 import time
 
 class NickServProtocol(NickServCommands, NickServRawEvents):
 
-    def __init__(self, _nick, _out_msg, _in_msg, _pending_actions, _bot):
+    def __init__(self, _nick, _out_msg, _in_msg, _locks, _bot):
         self.cnick           = _nick
         self.out_msg         = _out_msg
         self.in_msg          = _in_msg
-        self.pending_actions = _pending_actions
         self.bot             = _bot
+        self.locks           = _locks
         
         thread.start_new_thread(self.treat_msg,  ())
 
@@ -32,20 +33,13 @@ class NickServProtocol(NickServCommands, NickServRawEvents):
                 raise IRCBotError('Invalid reply from NickServ : %s'%msg)
                 
             if hasattr(self, 'onRawNickServ%s'%nseevent):
-                getattr(self, 'onRawNickServ%s'%nseevent)(nseevent, content)
+                thread.start_new_thread(getattr(self, 'onRawNickServ%s'%nseevent),(nseevent, content))
             else:
-                getattr(self, 'onRawNickServDefault')(nseevent, content)
+                thread.start_new_thread(getattr(self, 'onRawNickServDefault'),(nseevent, content))
 
             if hasattr(self.bot, 'onNickServ%s'%nseevent):
-                getattr(self.bot, 'onNickServ%s'%nseevent)(nseevent, content)
+                thread.start_new_thread(getattr(self.bot, 'onNickServ%s'%nseevent),(nseevent, content))
             else:
-                getattr(self.bot, 'onDefault')(msg[0], cmd, ' '.join(msg[2:]))
+                thread.start_new_thread(getattr(self.bot, 'onDefault'),(msg[0], cmd, ' '.join(msg[2:])))
 
-    def getStatus(self, nick):
-        if not nick in self.bot.irc_status['Users']: return -2
-        
-        while self.bot.irc_status['Users'][nick]['Registered'] < 0:
-            self.status(nick)
-            time.sleep(1)
-        
-        return self.bot.irc_status['Users'][nick]['Registered']
+

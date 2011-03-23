@@ -15,18 +15,12 @@ class DCCCommands(object):
                 self.sockets[nick].send(msg.strip()+'\r\n')
                 isGone = True
             except socket.error:
-                print 'Error !'
+                print 'Socket error !'
                 raise socket.error
 
     def dcc(self, nick):
-        whatismyip = 'http://www.whatismyip.com/automation/n09230945.asp'
-        myip = urllib.urlopen(whatismyip).readlines()[0]        
-    
-        self.listeningsocks[nick] = socket.socket()
-        self.listeningsocks[nick].listen(5)
-        self.listeningsocks[nick].setblocking(0)
-        addr,port = self.listeningsocks[nick].getsockname()
-        
-        ircip = self.conv_ip_std_long(myip)
-
-        self.rawcmd(nick, 'CHAT chat %s %s'%(ircip,port))
+        target_ip = self.bot.getIP(nick)
+        self.sockets[nick]      = None
+        self.ip2nick[target_ip] = nick
+        print target_ip, nick
+        self.rawcmd(nick, 'CHAT chat %s %s'%(self.inip,self.inport))

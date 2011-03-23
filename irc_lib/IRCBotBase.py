@@ -1,21 +1,31 @@
 import socket
 import thread
 from sets import Set
+from threading import Condition
 from protocols.dispatcher import Dispatcher
 from Queue import Queue
 from IRCBotError import IRCBotError
+from IRCBotAdvMtd import IRCBotAdvMtd
 
-class IRCBotBase():
+class IRCBotBase(IRCBotAdvMtd):
     
-    def __init__(self, _nick='IRCBotLib'):
+    def __init__(self, _nick='IRCBotLib', _char=':'):
         
-        self.cnick            = _nick
+        self.controlchar = _char
+        
+        self.cnick       = _nick
+        
+        self.locks           = {
+            'WhoIs'    :Condition(),
+            'ServReg'  :Condition(),
+            'NSStatus' :Condition(),
+        }
+        
         
         self.out_msg         = Queue()                                  #Outbound msgs
         self.in_msg          = Queue()                                  #Inbound msgs
-        self.pending_actions = Queue()                                  #Pending actions queue (for all actions which require more information before proceding)
         
-        self.dispatcher      = Dispatcher(self.cnick, self.out_msg, self.in_msg, self.pending_actions, self)  #IRC Protocol handler
+        self.dispatcher      = Dispatcher(self.cnick, self.out_msg, self.in_msg, self.locks, self)  #IRC Protocol handler
         self.irc             = self.dispatcher.irc
         self.nickserv        = self.dispatcher.nse
         self.ctcp            = self.dispatcher.ctcp
@@ -52,18 +62,6 @@ class IRCBotBase():
                 self.in_msg.put(msg_list[-1])
                 buffer = ''        
 
-    def solve_pending(self):
-        while True:
-            pending = self.pending_actions.get()
-            self.pending_actions.task_done()
-            
-            fct, arguments, condition = pending
-            if eval(condition):
-                fct(*arguments)
-            else:
-                self.pending_actions.put(pending)
-
-
     def connect(self, server, port=6667):
         if self.irc_socket : raise IRCBotError('Socket already existing, can not complete the connect command')
         self.irc_socket = socket.socket()
@@ -75,7 +73,6 @@ class IRCBotBase():
 
         thread.start_new_thread(self.inbound_loop,  ())
         thread.start_new_thread(self.outbound_loop, ())
-        thread.start_new_thread(self.solve_pending, ())        
 
     def onDefault(self, sender, cmd, msg):
         pass

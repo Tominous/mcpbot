@@ -3,7 +3,7 @@ from protocols.nickserv.protocol import NickServProtocol
 from protocols.ctcp.protocol     import CTCPProtocol
 from protocols.dcc.protocol      import DCCProtocol
 from utils.irc_name import get_nick
-from Queue import Queue
+from Queue import Queue,Empty
 import thread
 
 class Dispatcher(object):
@@ -11,6 +11,8 @@ class Dispatcher(object):
     def __init__(self, _nick, _out_msg, _in_msg, _locks, _bot):
 
         self.in_msg    = _in_msg
+
+        self.bot       = _bot
 
         self.irc_queue  = Queue()
         self.nse_queue  = Queue()
@@ -22,11 +24,16 @@ class Dispatcher(object):
         self.ctcp = CTCPProtocol    (_nick, _out_msg, self.ctcp_queue, _locks, _bot)        
         self.dcc  = DCCProtocol     (_nick, _out_msg, self.dcc_queue,  _locks, _bot)        
 
-        thread.start_new_thread(self.treat_msg,  ())
+        _bot.threadpool.add_task(self.treat_msg)
+        #thread.start_new_thread(self.treat_msg,  ())
 
     def treat_msg(self):
-        while True:
-            msg = self.in_msg.get()
+        while not self.bot.exit:
+            try:
+                msg = self.in_msg.get(True, 1)
+            except Empty:
+                continue            
+
             self.in_msg.task_done()
 
             sender = get_nick(msg.split()[0])

@@ -2,7 +2,9 @@ from utils.irc_name import get_nick
 from commands  import DCCCommands
 from rawevents import DCCRawEvents
 from IRCBotError import IRCBotError
-from Queue import Queue
+from protocols.event import Event
+from protocols.user import User
+from Queue import Queue,Empty
 import socket
 import thread
 import time
@@ -26,13 +28,16 @@ class DCCProtocol(DCCCommands, DCCRawEvents):
         self.insocket.setblocking(0)
         self.inip, self.inport = self.insocket.getsockname()
         self.inip = self.conv_ip_std_long(urllib.urlopen('http://www.whatismyip.com/automation/n09230945.asp').readlines()[0])
-        
-        thread.start_new_thread(self.treat_msg,  ())
-        thread.start_new_thread(self.inbound_loop,  ())                
+
+        self.bot.threadpool.add_task(self.treat_msg)        
+        self.bot.threadpool.add_task(self.inbound_loop)        
 
     def treat_msg(self):
-        while True:
-            msg = self.in_msg.get()
+        while not self.bot.exit:
+            try:
+                msg = self.in_msg.get(True, 1)
+            except Empty:
+                continue  
             self.in_msg.task_done()
 
             msg = msg.split()
@@ -55,14 +60,14 @@ class DCCProtocol(DCCCommands, DCCRawEvents):
                 raise IRCBotError('Invalid command from DCC : %s'%msg)
                 
             if hasattr(self, 'onRawDCC%s'%dcccmd):
-                thread.start_new_thread(getattr(self, 'onRawDCC%s'%dcccmd),(sender, dcccmd, dccarg, dccip, dccport))
+                self.bot.threadpool.add_task(getattr(self, 'onRawDCC%s'%dcccmd),sender, dcccmd, dccarg, dccip, dccport)
             else:
-                thread.start_new_thread(getattr(self, 'onRawDCCDefault'),(sender, dcccmd, dccarg, dccip, dccport))
+                self.bot.threadpool.add_task(getattr(self, 'onRawDCCDefault'),sender, dcccmd, dccarg, dccip, dccport)
 
             if hasattr(self.bot, 'onDCC%s'%dcccmd):
-                thread.start_new_thread(getattr(self.bot, 'onDCC%s'%dcccmd),(sender, dcccmd, dccarg, dccip, dccport))
+                self.bot.threadpool.add_task(getattr(self.bot, 'onDCC%s'%dcccmd),sender, dcccmd, dccarg, dccip, dccport)
             else:
-                thread.start_new_thread(getattr(self.bot, 'onDefault'),(msg[0], cmd, ' '.join(msg[2:])))
+                self.bot.threadpool.add_task(getattr(self.bot, 'onDefault'),msg[0], cmd, ' '.join(msg[2:]))
 
     def conv_ip_long_std(self,longip):
             
@@ -90,7 +95,7 @@ class DCCProtocol(DCCCommands, DCCRawEvents):
         return longip
 
     def inbound_loop(self):
-        while True:
+        while not self.bot.exit:
             try:
                 buffsocket, buffip = self.insocket.accept()
                 self.sockets[self.ip2nick[buffip[0]]] = buffsocket
@@ -111,10 +116,11 @@ class DCCProtocol(DCCCommands, DCCRawEvents):
 
                 #We push all the msg beside the last one (in case it is truncated)
                 for msg in msg_list:
-                    thread.start_new_thread(self.onRawDCCMsg,(nick, msg.replace('\r\n','')))
+                    ev = Event(nick, 'DCCMSG', self.cnick, msg.strip(), self.cnick, 'DCCMSG')
+                    self.bot.threadpool.add_task(self.onRawDCCMsg,ev)
                     if hasattr(self.bot, 'onDCCMsg'): 
-                        thread.start_new_thread(self.bot.onDCCMsg,(nick, msg.replace('\r\n','')))
+                        self.bot.threadpool.add_task(self.bot.onDCCMsg,ev)
                     else: 
-                        thread.start_new_thread(self.bot.onDefault,(nick, 'DCC MSG', msg.replace('\r\n','')))
+                        self.bot.threadpool.add_task(self.bot.onDefault,ev)
                 
                 self.buffers[nick] = ''

@@ -3,25 +3,25 @@ import time
 
 class CTCPRawEvents(object):
 
-    def onRawCTCPFINGER(self, sender, ctcpcmd, content):
-        self.rawnotice(sender, 'FINGER :I am just an innocent bot!')
+    def onRawCTCPFINGER(self, ev):
+        self.rawnotice(ev.sender, 'FINGER :I am just an innocent bot!')
 
-    def onRawCTCPVERSION(self, sender, ctcpcmd, content):
-        self.rawnotice(sender, 'VERSION PMIrcLib:0.1:Python')
+    def onRawCTCPVERSION(self, ev):
+        self.rawnotice(ev.sender, 'VERSION PMIrcLib:0.1:Python')
         
-    def onRawCTCPSOURCE(self, sender, ctcpcmd, content):
-        self.rawnotice(sender, 'SOURCE Nowhere:None:None')
-        self.rawnotice(sender, 'SOURCE')
+    def onRawCTCPSOURCE(self, ev):
+        self.rawnotice(ev.sender, 'SOURCE Nowhere:None:None')
+        self.rawnotice(ev.sender, 'SOURCE')
 
-    def onRawCTCPUSERINFO(self, sender, ctcpcmd, content):
-        self.rawnotice(sender, 'USERINFO :I am a bot.')
+    def onRawCTCPUSERINFO(self, ev):
+        self.rawnotice(ev.sender, 'USERINFO :I am a bot.')
 
 
-    def onRawCTCPPING(self, sender, ctcpcmd, content):
-        self.rawnotice(sender, 'PING :%s'%content)
+    def onRawCTCPPING(self, ev):
+        self.rawnotice(ev.sender, 'PING :%s'%ev.msg)
 
-    def onRawCTCPTIME(self, sender, ctcpcmd, content):
-        self.rawnotice(sender, 'TIME :%s'%time.ctime())
+    def onRawCTCPTIME(self, ev):
+        self.rawnotice(ev.sender, 'TIME :%s'%time.ctime())
 
-    def onRawCTCPDefault(self, sender, ctcpcmd, content):
+    def onRawCTCPDefault(self, ev):
         print 'RAW EVENT'

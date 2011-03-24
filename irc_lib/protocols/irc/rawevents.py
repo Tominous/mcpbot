@@ -1,88 +1,82 @@
 from utils.irc_name import get_nick, get_ip
+from protocols.event import Event
+from protocols.user import User
 
 class IRCRawEvents(object):
     
     def onRawPING(self, msg):
         self.pong(msg[1])
     
-    def onRawNOTICE(self, sender, cmd, msg):
-        if msg.split()[0] == 'AUTH':
-            self.bot.irc_status['Server'] = sender
+    def onRawNOTICE(self, ev):
+        if ev.target == 'AUTH':
+            self.bot.irc_status['Server'] = ev.sender
             return
 
-        target = msg.split()[0]
-        body   = ' '.join(msg.split()[1:])[1:]
-        if target[0] in ['#','&'] and body[0] == self.bot.controlchar:
-            self.bot.raise_onCmd(sender.strip(), body.split()[0][1:].strip(), ' '.join(body.split()[1:]).strip())
-            return
-        
-        if target == self.cnick and body[0] != self.bot.controlchar:
-            self.bot.raise_onCmd(sender.strip(), body.split()[0].strip(), ' '.join(body.split()[1:]).strip())
-            return
+        self.onRawPRIVMSG(ev)
 
-    def onRawPRIVMSG(self, sender, cmd, msg):
-        target = msg.split()[0]
-        body   = ' '.join(msg.split()[1:])[1:]
-        if target[0] in ['#','&'] and body[0] == self.bot.controlchar:
-            self.bot.raise_onCmd(sender.strip(), body.split()[0][1:].strip(), ' '.join(body.split()[1:]).strip())
-            return
+    def onRawPRIVMSG(self, ev):
         
-        if target == self.cnick and body[0] != self.bot.controlchar:
-            self.bot.raise_onCmd(sender.strip(), body.split()[0].strip(), ' '.join(body.split()[1:]).strip())
-            return
+        outcmd = None
+        
+        if ev.ischan and ev.msg[0] == self.bot.controlchar:
+            outcmd = ev.msg.split()[0][1:]
+         
+        if ev.target == self.cnick and ev.msg[0] != self.bot.controlchar:
+            outcmd = ev.msg.split()[0]
+        
+        if outcmd:
+            if len(ev.msg.split()) < 2 : outmsg = ' '
+            else: outmsg = ' '.join(ev.msg.split()[1:])
+            evcmd = Event(ev.sender, outcmd, ev.target, outmsg, self.cnick, 'CMD')
+            self.bot.raise_onCmd(evcmd)            
             
-    def onRawJOIN(self, sender, cmd, msg):
-        channel = msg[1:]
-        if get_nick(sender) == self.cnick:
-            self.bot.irc_status['Channels'].add(channel)
+    def onRawJOIN(self, ev):
+        if ev.sender == self.cnick:
+            self.bot.irc_status['Channels'].add(ev.chan)
         else:
-           self.add_user(get_nick(sender), channel) 
+           self.add_user(ev.sender, ev.chan) 
     
-    def onRawPART(self, sender, cmd, msg):
-        channel = msg.split()[0]
-        self.rm_user(get_nick(sender), channel)
+    def onRawPART(self, ev):
+        self.rm_user(ev.sender, ev.chan)
 
-    def onRawQUIT(self, sender, cmd, msg):
-        self.rm_user(get_nick(sender))
-    
-    def onRawRPL_MOTDSTART(self, sender, cmd, msg):
-        if sender == self.bot.irc_status['Server']:
+    def onRawQUIT(self, ev):
+        self.rm_user(ev.sender)
+
+    def onRawRPL_MOTDSTART(self, ev):
+        if ev.sender == self.bot.irc_status['Server']:
             self.locks['ServReg'].acquire()            
             self.bot.irc_status['Registered'] = True
             self.locks['ServReg'].notifyAll()
             self.locks['ServReg'].release()
     
-    def onRawRPL_NAMREPLY(self, sender, cmd, msg):
-        channel = msg.split()[2]
-        nicks   = msg.split()[3:]
-        nicks[0]= nicks[0][1:]
+    def onRawRPL_NAMREPLY(self, ev):
+        weirdsymbol = ev.msg.split()[0]     #Used for channel status, "@" is used for secret channels, "*" for private channels, and "=" for others (public channels).
+        channel     = ev.msg.split()[1]
+        nicks       = ev.msg.split()[2:]
+
         for nick in nicks:
             self.add_user(nick, channel)
-            #self.whois(nick)                #Automatic whois ?
     
-    def onRawRPL_WHOISUSER(self, send, cmd, msg):
-        nick = msg.split()[1]
-        real = msg.split()[2]
-        host = msg.split()[3]
+    def onRawRPL_WHOISUSER(self, ev):
+        nick = ev.msg.split()[0]
+        user = ev.msg.split()[1]
+        host = ev.msg.split()[2]
+        real = ' '.join(ev.msg.split()[4:])[1:]
 
         self.locks['WhoIs'].acquire()
-        if nick in self.bot.irc_status['Users']:
-            self.bot.irc_status['Users'][nick]['Host'] = host
-            self.bot.irc_status['Users'][nick]['IP']   = get_ip(host)
+        if nick in self.bot.users:
+            self.bot.users[nick].host = host
+            self.bot.users[nick].ip   = get_ip(host)
         self.locks['WhoIs'].notifyAll()
         self.locks['WhoIs'].release()
     
-    def onRawNICK(self, sender, cmd, msg):
-        last_nick = get_nick(sender)
-        new_nick  = msg[1:]
+    def onRawNICK(self, ev):
+        if ev.sender == self.cnick:return
+        self.bot.users[ev.target] = self.bot.users[ev.sender]
+        del self.bot.users[ev.sender]
 
-        if last_nick == self.cnick:return
-        self.bot.irc_status['Users'][new_nick] = self.bot.irc_status['Users'][last_nick]
-        del self.bot.irc_status['Users'][last_nick]
+    def onRawINVITE(self, ev):
+        self.join(ev.msg)
     
-    def onRawINVITE(self, sender, cmd, msg):
-        chan = msg.split()[1][1:]
-        self.join(chan)
-    
-    def onRawDefault(self, sender, cmd, msg):
+    def onRawDefault(self, ev):
         pass

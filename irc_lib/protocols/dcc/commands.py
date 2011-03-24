@@ -1,5 +1,7 @@
 import socket
 import urllib
+from protocols.event import Event
+from protocols.user import User
 
 class DCCCommands(object):
 

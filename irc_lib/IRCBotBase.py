@@ -1,11 +1,13 @@
 import socket
 import thread
+import time
 from sets import Set
 from threading import Condition
 from protocols.dispatcher import Dispatcher
-from Queue import Queue
+from Queue import Queue,Empty
 from IRCBotError import IRCBotError
 from IRCBotAdvMtd import IRCBotAdvMtd
+from utils.ThreadPool import ThreadPool
 
 class IRCBotBase(IRCBotAdvMtd):
     
@@ -21,9 +23,13 @@ class IRCBotBase(IRCBotAdvMtd):
             'NSStatus' :Condition(),
         }
         
+        self.exit            = False
+        
+        self.threadpool      = ThreadPool(20)
         
         self.out_msg         = Queue()                                  #Outbound msgs
         self.in_msg          = Queue()                                  #Inbound msgs
+        self.printq          = Queue()
         
         self.dispatcher      = Dispatcher(self.cnick, self.out_msg, self.in_msg, self.locks, self)  #IRC Protocol handler
         self.irc             = self.dispatcher.irc
@@ -33,22 +39,34 @@ class IRCBotBase(IRCBotAdvMtd):
 
         self.irc_socket      = None                                     #The basic IRC socket. For dcc, we are going to use another set of sockets.
 
-        self.irc_status      = {'Server':None, 'Registered':False, 'Channels':Set(), 'Users':{}}
+        self.irc_status      = {'Server':None, 'Registered':False, 'Channels':Set()}
+        self.users           = {}
+
+        self.threadpool.add_task(self.print_loop)
 
     def outbound_loop(self):
-        while True:
+        while not self.exit:
             if not self.irc_socket : continue
-
-            msg = self.out_msg.get()
+            try:
+                msg = self.out_msg.get(True, 1)
+            except Empty:
+                continue
             self.out_msg.task_done()
-            self.irc_socket.send(msg)
+            try:
+                self.irc_socket.send(msg)
+            except socket.timeout:
+                self.out_msg.put(msg)
+                continue
             
     def inbound_loop(self):
         buffer = ''
-        while True:
+        while not self.exit:
             if not self.irc_socket : continue
 
-            buffer  += self.irc_socket.recv(512)
+            try:
+                buffer  += self.irc_socket.recv(512)
+            except socket.timeout:
+                continue
             msg_list = buffer.split('\r\n')
 
             #We push all the msg beside the last one (in case it is truncated)
@@ -62,18 +80,36 @@ class IRCBotBase(IRCBotAdvMtd):
                 self.in_msg.put(msg_list[-1])
                 buffer = ''        
 
+    def print_loop(self):
+        while not self.exit:
+            try:
+                msg = self.printq.get(True, 1)
+            except Empty:
+                continue
+            self.printq.task_done()
+            print msg
+
     def connect(self, server, port=6667):
         if self.irc_socket : raise IRCBotError('Socket already existing, can not complete the connect command')
         self.irc_socket = socket.socket()
         self.irc_socket.connect((server, port))
+        self.irc_socket.settimeout(1)
 
         self.irc.password()
         self.irc.nick()
         self.irc.user()
-
-        thread.start_new_thread(self.inbound_loop,  ())
-        thread.start_new_thread(self.outbound_loop, ())
+        self.threadpool.add_task(self.inbound_loop)
+        self.threadpool.add_task(self.outbound_loop)
 
     def onDefault(self, sender, cmd, msg):
         pass
         
+    def start(self):
+        while not self.exit:
+            try:
+                time.sleep(1)
+            except (KeyboardInterrupt, SystemExit):
+                print 'EXIT REQUESTED. SHUTTING DOWN THE BOT'
+                self.exit = True
+                self.threadpool.wait_completion()
+                raise            

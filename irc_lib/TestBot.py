@@ -30,28 +30,17 @@ class TestBot(IRCBotBase, cprompt.Cmd):
         if ev.cmd == 'dcc':
             self.dcc.dcc(ev.sender)
 
-        if ev.cmd == 'loc':
-            nick = ev.msg.split()[0].strip()
-            ip = self.getIP(nick)
-            file, header = urllib.urlretrieve('http://api.ipinfodb.com/v3/ip-city/?key=65aede7e4d8ac7708aad9731fd61c11f7ed2dafdcccd45d3a7b0773c44877c88&ip=%s'%ip) 
-            buffer = open(file).read().split(';')
-            self.say(ev.sender, 'User %s, IP : %s, Country : %s, City : %s'%(nick, ip, buffer[4], buffer[6]))
-
     def onJOIN(self, ev):
         if ev.sender == self.cnick:
             self.ctcp.action(ev.chan, 'greets everyone.')
         elif ev.chan != "#test":
             self.irc.privmsg(ev.chan, 'Hello %s!'%ev.sender)
     
-            
     def onDCCMsg(self,ev):
         self.dcc.say(ev.sender, ev.msg)
 
 if __name__ == "__main__":
     bot = TestBot('PMDevBot')
-    #bot.start()
     bot.connect('irc.esper.net')
     bot.irc.join('#test')
-
-
     bot.start()

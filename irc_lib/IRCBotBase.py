@@ -107,7 +107,7 @@ class IRCBotBase(IRCBotAdvMtd):
     def start(self):
         while not self.exit:
             try:
-                time.sleep(1)
+                time.sleep(2)
             except (KeyboardInterrupt, SystemExit):
                 print 'EXIT REQUESTED. SHUTTING DOWN THE BOT'
                 self.exit = True

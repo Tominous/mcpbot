@@ -124,3 +124,5 @@ class DCCProtocol(DCCCommands, DCCRawEvents):
                         self.bot.threadpool.add_task(self.bot.onDefault,ev)
                 
                 self.buffers[nick] = ''
+
+            time.sleep(.1)

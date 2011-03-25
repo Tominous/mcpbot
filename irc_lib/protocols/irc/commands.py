@@ -1,4 +1,5 @@
 import constants as cst
+from utils.colors import conv_s2i
 
 class IRCCommands(object):
     
@@ -31,10 +32,12 @@ class IRCCommands(object):
         
         self.rawcmd('JOIN %s %s'%(chan,key))
 
-    def privmsg(self, target, msg):
+    def privmsg(self, target, msg, color=True):
+        if color: msg = conv_s2i(msg)
         self.rawcmd('PRIVMSG %s :%s'%(target, msg))
 
-    def notice(self, target, msg):
+    def notice(self, target, msg, color=True):
+        if color: msg = conv_s2i(msg)
         self.rawcmd('NOTICE %s :%s'%(target, msg))
 
     def names(self, channels=''):

@@ -2,17 +2,20 @@ import time
 import cmd as cprompt
 import urllib
 from utils.irc_name import get_nick
-
+from utils.restricted import restricted
+from sets import Set
 from IRCBotBase import IRCBotBase
 
 class TestBot(IRCBotBase, cprompt.Cmd):
+    
+    whitelist = Set(['ProfMobius'])
     
     def __init__(self, nick='DevBot'):
         IRCBotBase.__init__(self, nick)
         cprompt.Cmd.__init__(self)
     
     def onDefault(self, ev):
-        self.printq.put('%s S: %s C: %s T: %s M: %s'%(ev.type.ljust(5), ev.sender.ljust(25), ev.cmd.ljust(15), ev.target, ev.msg))
+        self.printq.put('%s S: %s C: %s T: %s M: %s'%(ev.type.ljust(5), ev.sender.ljust(25), ev.cmd.ljust(15), ev.target.ljust(10), ev.msg))
         pass
 
     def onCmd(self, ev):
@@ -29,18 +32,69 @@ class TestBot(IRCBotBase, cprompt.Cmd):
 
         if ev.cmd == 'dcc':
             self.dcc.dcc(ev.sender)
+            
+        if ev.cmd == 'say':
+            self.irc.privmsg(ev.msg.split()[0], ' '.join(ev.msg.split()[1:]))
 
-    def onJOIN(self, ev):
-        if ev.sender == self.cnick:
-            self.ctcp.action(ev.chan, 'greets everyone.')
-        elif ev.chan != "#test":
-            self.irc.privmsg(ev.chan, 'Hello %s!'%ev.sender)
+        if ev.cmd == 'notice':
+            self.irc.notice(ev.msg.split()[0], ' '.join(ev.msg.split()[1:]))
+            
+        if ev.cmd == 'action':
+            self.ctcp.action(ev.msg.split()[0], ' '.join(ev.msg.split()[1:]))
+            
+        if ev.cmd == 'colors':
+            out_msg = ''
+            for i in range (16):
+                out_msg += '$C%dAAA '%i
+            self.irc.privmsg(ev.msg.split()[0], out_msg)
+            
+        if ev.cmd == 'flood':
+            self.cmdFlood(ev.sender, ev.chan, ev.msg)
+                
+        if ev.cmd == 'exec':
+            self.cmdExec(ev.sender, ev.chan, ev.msg)
+        
+        if ev.cmd == 'addwhite':
+            self.cmdAddWhite(ev.sender, ev.chan, ev.msg)
+
+        if ev.cmd == 'rmwhite':
+            self.cmdRemoveWhite(ev.sender, ev.chan, ev.msg)
+        
     
     def onDCCMsg(self,ev):
         self.dcc.say(ev.sender, ev.msg)
+
+    @restricted
+    def cmdAddWhite(self,sender,channel,msg):
+        self.addWhitelist(msg)
+        
+    @restricted
+    def cmdRemoveWhite(self, sender,channel,msg):
+        self.rmWhitelist(msg)
+
+    @restricted
+    def cmdFlood(self, sender, channel, msg):
+        number = int(msg.split()[1])
+        for i in range(number):
+            self.irc.privmsg(msg.split()[0], ':%03d'%i)        
+
+    @restricted
+    def cmdExec(self, sender, channel, cmd):
+        try:
+            self.printq.put(cmd)
+            exec(cmd) in self.globaldic, self.localdic
+        except Exception as errormsg:
+            self.printq.put ('ERROR : %s'%errormsg)
+            try:
+                self.say(channel, 'ERROR : %s'%errormsg)
+            except:
+                self.say(sender, 'ERROR : %s'%errormsg)
+            #self.say(ev.sender, msg)
+        
 
 if __name__ == "__main__":
     bot = TestBot('PMDevBot')
     bot.connect('irc.esper.net')
     bot.irc.join('#test')
+    bot.startLogging()
     bot.start()

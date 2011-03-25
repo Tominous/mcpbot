@@ -2,13 +2,15 @@ import socket
 import urllib
 from protocols.event import Event
 from protocols.user import User
+from utils.colors import conv_s2i
 
 class DCCCommands(object):
 
     def rawcmd(self, target, cmd):
         self.out_msg.put(':%s PRIVMSG %s :\x01DCC %s\x01\r\n'%(self.cnick, target, cmd)) 
 
-    def say(self, nick, msg):
+    def say(self, nick, msg, color=True):
+        if color: msg = conv_s2i(msg)
         if not nick in self.sockets:return
 
         isGone = False

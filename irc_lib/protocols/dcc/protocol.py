@@ -24,10 +24,13 @@ class DCCProtocol(DCCCommands, DCCRawEvents):
         self.ip2nick         = {}
 
         self.insocket      = socket.socket()
-        self.insocket.listen(10)
-        self.insocket.setblocking(0)
-        self.inip, self.inport = self.insocket.getsockname()
-        self.inip = self.conv_ip_std_long(urllib.urlopen('http://www.whatismyip.com/automation/n09230945.asp').readlines()[0])
+        try:
+            self.insocket.listen(10)
+            self.insocket.setblocking(0)
+            self.inip, self.inport = self.insocket.getsockname()
+            self.inip = self.conv_ip_std_long(urllib.urlopen('http://www.whatismyip.com/automation/n09230945.asp').readlines()[0])
+        except socket.error:
+            self.bot.printq.put("If you see this, it means you can't create listening sockets. This is a bug from Iron Python. Desactivating dcc.")
 
         self.bot.threadpool.add_task(self.treat_msg)        
         self.bot.threadpool.add_task(self.inbound_loop)        
@@ -97,6 +100,7 @@ class DCCProtocol(DCCCommands, DCCRawEvents):
     def inbound_loop(self):
         while not self.bot.exit:
             try:
+                if not self.insocket : raise socket.error
                 buffsocket, buffip = self.insocket.accept()
                 self.sockets[self.ip2nick[buffip[0]]] = buffsocket
                 self.sockets[self.ip2nick[buffip[0]]].setblocking(0)

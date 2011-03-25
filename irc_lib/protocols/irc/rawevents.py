@@ -1,6 +1,7 @@
 from utils.irc_name import get_nick, get_ip
 from protocols.event import Event
 from protocols.user import User
+import time,os
 
 class IRCRawEvents(object):
     
@@ -8,6 +9,9 @@ class IRCRawEvents(object):
         self.pong(msg[1])
     
     def onRawNOTICE(self, ev):
+        if self.bot.log:
+            self.bot.loggingq.put(ev)
+        
         if ev.target == 'AUTH':
             self.bot.irc_status['Server'] = ev.sender
             return
@@ -15,6 +19,8 @@ class IRCRawEvents(object):
         self.onRawPRIVMSG(ev)
 
     def onRawPRIVMSG(self, ev):
+        if self.bot.log:
+            self.bot.loggingq.put(ev)
         
         outcmd = None
         

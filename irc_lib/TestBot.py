@@ -1,18 +1,16 @@
 import time
-import cmd as cprompt
 import urllib
 from utils.irc_name import get_nick
 from utils.restricted import restricted
 from sets import Set
 from IRCBotBase import IRCBotBase
 
-class TestBot(IRCBotBase, cprompt.Cmd):
+class TestBot(IRCBotBase):
     
     whitelist = Set(['ProfMobius'])
     
     def __init__(self, nick='DevBot'):
         IRCBotBase.__init__(self, nick)
-        cprompt.Cmd.__init__(self)
     
     def onDefault(self, ev):
         self.printq.put('%s S: %s C: %s T: %s M: %s'%(ev.type.ljust(5), ev.sender.ljust(25), ev.cmd.ljust(15), ev.target.ljust(10), ev.msg))

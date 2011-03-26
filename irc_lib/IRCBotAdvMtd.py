@@ -60,9 +60,12 @@ class IRCBotAdvMtd(object):
         ff.close()
         
     def loadWhitelist(self, filename = 'whitelist.pck'):
-        ff = open(filename, 'r')
-        self.whitelist = pickle.load(ff)
-        ff.close()
+        try:
+            ff = open(filename, 'r')
+            self.whitelist = pickle.load(ff)
+            ff.close()
+        except:
+            pass
 
     def startLogging(self, filename = 'bot.log'):
         if not self.log:

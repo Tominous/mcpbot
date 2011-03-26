@@ -185,6 +185,8 @@ for row in gc:
 #c.execute("""DELETE FROM methods WHERE name='<clinit>'""")
 c.execute("""UPDATE methods SET notchsig = signature WHERE notchsig = -1""")
 c.execute("""UPDATE methods SET notch    = name WHERE notch = '-1'""")
+c.execute("""UPDATE classes SET notch    = name WHERE notch = '-1'""")
+c.execute("""UPDATE fields  SET notch    = name WHERE notch = '-1'""")
 
 conn.commit()
 

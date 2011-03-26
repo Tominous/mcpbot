@@ -1,8 +1,8 @@
-from utils.irc_name import get_nick
+from irc_lib.utils.irc_name import get_nick
 from commands  import NickServCommands
 from rawevents import NickServRawEvents
-from IRCBotError import IRCBotError
-from protocols.event import Event
+from irc_lib.IRCBotError import IRCBotError
+from irc_lib.protocols.event import Event
 from threading import Condition
 from Queue import Queue,Empty
 import thread

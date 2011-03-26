@@ -1,9 +1,9 @@
-from utils.irc_name import get_nick
+from irc_lib.utils.irc_name import get_nick
 from commands  import DCCCommands
 from rawevents import DCCRawEvents
-from IRCBotError import IRCBotError
-from protocols.event import Event
-from protocols.user import User
+from irc_lib.IRCBotError import IRCBotError
+from irc_lib.protocols.event import Event
+from irc_lib.protocols.user import User
 from Queue import Queue,Empty
 import socket
 import thread

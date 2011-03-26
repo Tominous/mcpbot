@@ -1,6 +1,6 @@
-from utils.irc_name import get_nick, get_ip
-from protocols.event import Event
-from protocols.user import User
+from irc_lib.utils.irc_name import get_nick, get_ip
+from irc_lib.protocols.event import Event
+from irc_lib.protocols.user import User
 import time,os
 
 class IRCRawEvents(object):

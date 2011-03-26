@@ -3,8 +3,8 @@ from rawevents import IRCRawEvents
 from constants import IRC_REPLIES
 import thread
 from threading import Condition
-from protocols.event import Event
-from protocols.user import User
+from irc_lib.protocols.event import Event
+from irc_lib.protocols.user import User
 from Queue import Queue,Empty
 import time
 

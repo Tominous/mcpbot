@@ -1,5 +1,5 @@
 import constants as cst
-from utils.colors import conv_s2i
+from irc_lib.utils.colors import conv_s2i
 
 class IRCCommands(object):
     

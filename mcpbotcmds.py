@@ -95,13 +95,13 @@ class MCPBotCmds(object):
         if '.' in msg:
             classname  = msg.split('.')[0]
             membername = msg.split('.')[1]
-            c.execute("""SELECT m.name, m.notch, m.decoded, m.signature, m.notchsig, c.name, c.notch 
+            c.execute("""SELECT m.name, m.notch, m.decoded, m.signature, m.notchsig, c.name, c.notch, m.description
                          FROM %ss m LEFT JOIN classes c ON m.class = c.id
                          WHERE ((m.name LIKE ? ESCAPE '!') OR m.notch = ? OR m.decoded = ?) AND m.side = ? AND (c.name = ? OR c.notch = ?)"""%
                          etype,
                          ('%s!_%s!_%%'%(type_lookup[etype], membername), membername, membername, side, classname, classname))
         else:
-            c.execute("""SELECT m.name, m.notch, m.decoded, m.signature, m.notchsig, c.name, c.notch 
+            c.execute("""SELECT m.name, m.notch, m.decoded, m.signature, m.notchsig, c.name, c.notch, m.description
                          FROM %ss m LEFT JOIN classes c ON m.class = c.id
                          WHERE ((m.name LIKE ? ESCAPE '!') OR m.notch = ? OR m.decoded = ?) AND m.side = ?"""%etype,
                          ('%s!_%s!_%%'%(type_lookup[etype], msg), msg, msg, side))
@@ -116,6 +116,7 @@ class MCPBotCmds(object):
             self.say(sender, " $BType/Sig$N    : %s"%row[3])
             #self.say(sender, " $BNotchType$N   : %s"%row[4])            
             self.say(sender, " $BClass$N       : %s"%row[5])            
+            self.say(sender, " $BDescription$N : %s"%row[7])
             nrow += 1
 
         if nrow == 0:

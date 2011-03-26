@@ -118,13 +118,29 @@ for side in ['client', 'server']:
     #Inherited is supposed to represent the methods not in the cpool (not implemented), but still available by inheritance.
     for key, data in fields.items():
         print '+ Inserting in the db : %s'%data['Name']
-        c.execute("""insert into fields values (%d, '%s', '%s', '-1', '%s', '%s', '-1', %d, %d, %d, %d, '-1', '-1', '-1')"""%
-                (data['ID'], side, data['Name'], data['Name'], data['Signature'].replace('net/minecraft/src/',''),  data['Class'], int(data['Implemented']), data['Inherited'], data['Defined']))
+        c.execute("""insert into fields values (?, ?, ?, 
+                                                ?, ?, ?, 
+                                                ?, ?, ?,
+                                                ?, ?, ?,
+                                                ?, ?)""",
+                                                (data['ID'], side, data['Name'], 
+                                                None, data['Name'], data['Signature'].replace('net/minecraft/src/',''),  
+                                                None, data['Class'], int(data['Implemented']), 
+                                                data['Inherited'], data['Defined'], None,
+                                                None, None))
 
     for key, data in methods.items():
         print '+ Inserting in the db : %s'%data['Name']
-        c.execute("""insert into methods values (%d, '%s', '%s', '-1', '%s', '%s', '-1', %d, %d, %d, %d, '-1', '-1', '-1')"""%
-                (data['ID'], side, data['Name'], data['Name'], data['Signature'].replace('net/minecraft/src/',''),  data['Class'], int(data['Implemented']), data['Inherited'], data['Defined']))
+        c.execute("""insert into methods values (?, ?, ?,
+                                                 ?, ?, ?,
+                                                 ?, ?, ?,
+                                                 ?, ?, ?,
+                                                 ?, ?)""",
+                                                (data['ID'], side, data['Name'], 
+                                                None,data['Name'], data['Signature'].replace('net/minecraft/src/',''),  
+                                                None,data['Class'], int(data['Implemented']), 
+                                                data['Inherited'], data['Defined'], None,
+                                                None, None))
 
 conn.commit()
 
@@ -147,12 +163,12 @@ method_csv = parse_csv('methods.csv', 4, ',', ['trashbin',  'searge_c', 'trashbi
 field_csv  = parse_csv('fields.csv',  3, ',', ['trashbin',  'trashbin', 'searge_c', 'trashbin',  'trashbin', 'searge_s', 'full', 'description'])    
 
 for method in method_csv:
-    c.execute("""UPDATE methods SET decoded  = '%s' WHERE name     = '%s' AND side = 'client'"""%(method['full'], method['searge_c']))    
-    c.execute("""UPDATE methods SET decoded  = '%s' WHERE name     = '%s' AND side = 'server'"""%(method['full'], method['searge_s']))
+    c.execute("""UPDATE methods SET decoded  = ?, description = ? WHERE name  = ? AND side = 'client'""",(method['full'], method['description'], method['searge_c']))    
+    c.execute("""UPDATE methods SET decoded  = ?, description = ? WHERE name  = ? AND side = 'server'""",(method['full'], method['description'], method['searge_s']))
     
 for field in field_csv:
-    c.execute("""UPDATE fields SET decoded = '%s' WHERE name = '%s' AND side = 'client'"""%(field['full'], field['searge_c']))
-    c.execute("""UPDATE fields SET decoded = '%s' WHERE name = '%s' AND side = 'server'"""%(field['full'], field['searge_s']))    
+    c.execute("""UPDATE fields SET decoded = ?, description = ? WHERE name = ? AND side = 'client'""",(field['full'], field['description'], field['searge_c']))
+    c.execute("""UPDATE fields SET decoded = ?, description = ? WHERE name = ? AND side = 'server'""",(field['full'], field['description'], field['searge_s']))    
 
 conn.commit()
 
@@ -164,7 +180,7 @@ gc.execute("""SELECT m.id, c.name, c.notch
              
 conn.commit()
 for row in gc:
-    c.execute("""UPDATE methods SET name = '%s', notch = '%s', decoded = '%s' WHERE id=%d"""%(row[1].split('/')[-1], row[2], row[1].split('/')[-1], row[0]))
+    c.execute("""UPDATE methods SET name = ?, notch = ?, decoded = ? WHERE id=?""",(row[1].split('/')[-1], row[2], row[1].split('/')[-1], row[0]))
 
 #c.execute("""DELETE FROM methods WHERE name='<clinit>'""")
 c.execute("""UPDATE methods SET notchsig = signature WHERE notchsig = -1""")

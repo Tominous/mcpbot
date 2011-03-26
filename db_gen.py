@@ -57,6 +57,8 @@ for side in ['client', 'server']:
                 name = method.getName().split()[0]
                 sig  = method.getName().split()[1]
                 
+                if name == '<clinit>' : continue
+                
                 methods[method_id] = {'ID':method_id, 'Name':name, 'Signature':sig, 'Class':classes[class_data.getClassname()]['ID'], 'Implemented':True, 'Inherited':-1}
                 method_id += 1
 
@@ -146,14 +148,32 @@ method_csv = parse_csv('methods.csv', 4, ',', ['trashbin',  'searge_c', 'trashbi
 field_csv  = parse_csv('fields.csv',  3, ',', ['trashbin',  'trashbin', 'searge_c', 'trashbin',  'trashbin', 'searge_s', 'full', 'description'])    
 
 for method in method_csv:
-    c.execute("""UPDATE methods SET decoded = '%s' WHERE name = '%s' AND side = 'client'"""%(method['full'], method['searge_c']))    
-    c.execute("""UPDATE methods SET decoded = '%s' WHERE name = '%s' AND side = 'server'"""%(method['full'], method['searge_s']))        
+    c.execute("""UPDATE methods SET decoded  = '%s' WHERE name     = '%s' AND side = 'client'"""%(method['full'], method['searge_c']))    
+    c.execute("""UPDATE methods SET decoded  = '%s' WHERE name     = '%s' AND side = 'server'"""%(method['full'], method['searge_s']))
+    
 for field in field_csv:
     c.execute("""UPDATE fields SET decoded = '%s' WHERE name = '%s' AND side = 'client'"""%(field['full'], field['searge_c']))
     c.execute("""UPDATE fields SET decoded = '%s' WHERE name = '%s' AND side = 'server'"""%(field['full'], field['searge_s']))    
 
 conn.commit()
 
+gc = conn.cursor()
+gc.execute("""SELECT m.id, c.name, c.notch
+             FROM methods m
+             INNER JOIN classes c ON c.id=m.class
+             WHERE m.name='<init>'""")
+             
+conn.commit()
+for row in gc:
+    c.execute("""UPDATE methods SET name = '%s', notch = '%s', decoded = '%s' WHERE id=%d"""%(row[1].split('/')[-1], row[2], row[1].split('/')[-1], row[0]))
+
+#c.execute("""DELETE FROM methods WHERE name='<clinit>'""")
+c.execute("""UPDATE methods SET notchsig = signature WHERE notchsig = -1""")
+c.execute("""UPDATE methods SET notch    = name WHERE notch = '-1'""")
+
+conn.commit()
+
+gc.close()
 c.close()
 #pprint (classes_id[174])
 #pprint (methods)

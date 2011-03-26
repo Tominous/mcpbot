@@ -1,4 +1,3 @@
-import sqlite3
 from sets               import Set
 from irc_lib.IRCBotBase import IRCBotBase
 from mcpbotcmds         import MCPBotCmds
@@ -8,7 +7,6 @@ class MCPBot(IRCBotBase, MCPBotCmds):
     whitelist = Set(['ProfMobius'])
     
     def __init__(self, nick='DevBot', char='!'):
-        self.dbase = sqlite3.connect('database.db')
         IRCBotBase.__init__(self, nick, char)
         
     def onDefault(self, ev):

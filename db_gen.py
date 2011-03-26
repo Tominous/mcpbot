@@ -112,19 +112,19 @@ for side in ['client', 'server']:
     for key, data in classes.items():
         print '+ Inserting in the db : %s'%key
         c.execute("""insert into classes values (%d, '%s', '%s', '-1', '%s', %d, %d, %d, %d, %d, %d, %d, '-1', '-1')"""%
-                (data['ID'], side, data['Name'], data['Name'], data['SuperID'], data['TopSuperID'], 
+                (data['ID'], side, data['Name'].split('/')[-1], data['Name'].split('/')[-1], data['SuperID'], data['TopSuperID'], 
                 data['InterfacesID'][0], data['InterfacesID'][1], data['InterfacesID'][2], data['InterfacesID'][3], data['InterfacesID'][4]))
 
     #Inherited is supposed to represent the methods not in the cpool (not implemented), but still available by inheritance.
     for key, data in fields.items():
         print '+ Inserting in the db : %s'%data['Name']
         c.execute("""insert into fields values (%d, '%s', '%s', '-1', '%s', '%s', '-1', %d, %d, %d, %d, '-1', '-1', '-1')"""%
-                (data['ID'], side, data['Name'], data['Name'], data['Signature'],  data['Class'], int(data['Implemented']), data['Inherited'], data['Defined']))
+                (data['ID'], side, data['Name'], data['Name'], data['Signature'].replace('net/minecraft/src/',''),  data['Class'], int(data['Implemented']), data['Inherited'], data['Defined']))
 
     for key, data in methods.items():
         print '+ Inserting in the db : %s'%data['Name']
         c.execute("""insert into methods values (%d, '%s', '%s', '-1', '%s', '%s', '-1', %d, %d, %d, %d, '-1', '-1', '-1')"""%
-                (data['ID'], side, data['Name'], data['Name'], data['Signature'],  data['Class'], int(data['Implemented']), data['Inherited'], data['Defined']))
+                (data['ID'], side, data['Name'], data['Name'], data['Signature'].replace('net/minecraft/src/',''),  data['Class'], int(data['Implemented']), data['Inherited'], data['Defined']))
 
 conn.commit()
 
@@ -133,7 +133,6 @@ for side in ['client', 'server']:
     rgs_dict = parse_rgs('%s.rgs'%dir_lookup[side])
     for class_ in rgs_dict['class_map']:
         trgname = class_['trg_name']
-        if len(trgname.split('/')) == 1: trgname = 'net/minecraft/src/'+trgname
         c.execute("""UPDATE classes SET notch = '%s' WHERE name = '%s' AND side = '%s'"""%(class_['src_name'].split('/')[-1], trgname, side))
 
     for method in rgs_dict['method_map']:

@@ -95,8 +95,7 @@ c.execute("""CREATE TABLE methodshist(id INTEGER PRIMARY KEY,
                                       olddesc     TEXT, 
                                       newname     TEXT, 
                                       newdesc     TEXT, 
-                                      timestamp   REAL, 
-                                      time        TEXT, 
+                                      timestamp   INTEGER, 
                                       nick        TEXT
                                       )""")
 
@@ -106,8 +105,7 @@ c.execute("""CREATE TABLE fieldshist (id INTEGER PRIMARY KEY,
                                       olddesc     TEXT, 
                                       newname     TEXT, 
                                       newdesc     TEXT, 
-                                      timestamp   REAL, 
-                                      time        TEXT, 
+                                      timestamp   INTEGER, 
                                       nick        TEXT
                                       )""")                                  
 

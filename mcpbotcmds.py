@@ -1,5 +1,6 @@
 import sqlite3
 import time
+import string
 from irc_lib.utils.restricted import restricted
 from database import database
 
@@ -91,17 +92,24 @@ class MCPBotCmds(object):
         side_lookup = {'client':0, 'server':1}
         type_lookup = {'fields':'field', 'methods':'func'}
         msg = msg.strip()
-        if   len(msg.split('.')) == 1:
+
+        if len(msg.split('.')) > 2 or not msg:
+            self.say(sender, "=== GET %s %s ==="%(side.upper(),etype.upper()))
+            self.say(sender, " Syntax error. Use $B%s <membername>$N or $B%s <classname>.<membername>$N"%(cmd,cmd))
+            return
+
+        elif len(msg.split('.')) == 1:
             c.execute("""SELECT m.name, m.notch, m.searge, m.sig, m.notchsig, m.desc, m.classname, m.classnotch FROM v%s m
-                         WHERE ((m.searge LIKE ? ESCAPE '!') OR m.notch = ? OR m.name = ?) AND m.side = ?"""%etype, 
-                         ('%s!_%s!_%%'%(type_lookup[etype],msg),msg,msg,side_lookup[side]))
+                         WHERE ((m.searge LIKE ? ESCAPE '!') OR m.searge = ? OR m.notch = ? OR m.name = ?) AND m.side = ?"""%etype, 
+                         ('%s!_%s!_%%'%(type_lookup[etype],msg),msg,msg,msg,side_lookup[side]))
+
         elif len(msg.split('.')) == 2:
             cname = msg.split('.')[0]
-            mname = msg.split('.')[0]
+            mname = msg.split('.')[1]
             c.execute("""SELECT m.name, m.notch, m.searge, m.sig, m.notchsig, m.desc, m.classname, m.classnotch FROM v%s m
-                         WHERE ((m.searge LIKE ? ESCAPE '!') OR m.notch = ? OR m.name = ?) AND m.side = ? AND (m.classname = ? OR m.classnotch = ?)"""%etype, 
-                         ('%s!_%s!_%%'%(type_lookup[etype],msg),mname,mname,side_lookup[side], cname,cname))
-        
+                         WHERE ((m.searge LIKE ? ESCAPE '!') OR m.searge = ? OR m.notch = ? OR m.name = ?) AND m.side = ? AND (m.classname = ? OR m.classnotch = ?)"""%etype, 
+                         ('%s!_%s!_%%'%(type_lookup[etype],msg),mname,mname,mname,side_lookup[side], cname,cname))
+                         
         results = c.fetchall()
 
         if len(results) > 10:
@@ -121,7 +129,7 @@ class MCPBotCmds(object):
                 fullnotch = '[%s.%s]'%(classnotch, notch)
                 self.say(sender, " %s %s %s"%(fullcsv.ljust(maxlencsv+2), fullnotch.ljust(maxlennotch+2), sig))
         elif len(results) == 1:
-            result = results
+            name, notch, searge, sig, notchsig, desc, classname, classnotch = results[0]
             self.say(sender, "=== GET %s %s ==="%(side.upper(),etype.upper()))
             self.say(sender, " $BSide$N        : %s"%side)
             self.say(sender, " $BName$N        : %s.%s"%(classname, name,))
@@ -141,31 +149,115 @@ class MCPBotCmds(object):
     #====================== Search commands ============================
     @database
     def cmdSearch(self, sender, chan, cmd, msg, c):
-        pass
+        msg.strip()
+        type_lookup = {'method':'func','field':'field'}
+        side_lookup = {'client':0, 'server':1}
+
+        results = {'classes':None, 'fields':None, 'methods':None}
+
+        self.say(sender, "=== SEARCH RESULTS ===")    
+        for side in ['client', 'server']:
+            c.execute("""SELECT c.name, c.notch FROM vclasses c WHERE (c.name LIKE ?) AND c.side = ?""",('%%%s%%'%(msg), side_lookup[side]))                   
+            results['classes'] = c.fetchall()
+
+            for etype in ['fields', 'methods']:
+                c.execute("""SELECT m.name, m.notch, m.searge, m.sig, m.notchsig, m.desc, m.classname, m.classnotch FROM v%s m
+                            WHERE (m.name LIKE ? ESCAPE '!') AND m.side = ?"""%etype, 
+                            ('%%%s%%'%(msg), side_lookup[side]))
+                results[etype] = c.fetchall()
+
+            if not results['classes']:
+                self.say(sender, " [%s][  CLASS] No results"%side.upper())
+            else:                
+                maxlenname  = max(map(len, [result[0] for result in results['classes']]))
+                maxlennotch = max(map(len, [result[1] for result in results['classes']]))
+                if len(results['classes']) > 10:
+                    self.say(sender, " [%s][  CLASS] Too many results : %d"%(side.upper(),len(results['classes'])))
+                else:
+                    for result in results['classes']:
+                        name, notch = result
+                        self.say(sender, " [%s][  CLASS] %s %s"%(side.upper(), name.ljust(maxlenname+2), notch.ljust(maxlennotch+2)))            
+
+
+            for etype in ['fields', 'methods']:
+                if not results[etype]:
+                    self.say(sender, " [%s][%7s] No results"%(side.upper(), etype.upper()))
+                else:
+                    maxlenname  = max(map(len, ['%s.%s'%(result[6], result[0])   for result in results[etype]]))
+                    maxlennotch = max(map(len, ['[%s.%s]'%(result[7], result[1]) for result in results[etype]]))
+                    if len(results[etype]) > 10:
+                        self.say(sender, " [%s][%7s] Too many results : %d"%(side.upper(),etype.upper(),len(results[etype])))
+                    else:
+                        for result in results[etype]:
+                            name, notch, searge, sig, notchsig, desc, classname, classnotch = result
+                            fullname   = '%s.%s'%(classname, name)
+                            fullnotch = '[%s.%s]'%(classnotch, notch)
+                            self.say(sender, " [%s][%7s] %s %s %s"%(side.upper(),etype.upper(), fullname.ljust(maxlenname+2), fullnotch.ljust(maxlennotch+2), sig))                
                 
     #===================================================================
 
     #====================== Setters for members ========================
     
-    @restricted
     def cmdScm(self, sender, chan, cmd, msg):
-        self.setMember(sender, chan, cmd, msg, 'client', 'method')
+        self.setMember(sender, chan, cmd, msg, 'client', 'methods')
         
-    @restricted
     def cmdScf(self, sender, chan, cmd, msg):
-        self.setMember(sender, chan, cmd, msg, 'client', 'field')
+        self.setMember(sender, chan, cmd, msg, 'client', 'fields')
         
-    @restricted
     def cmdSsm(self, sender, chan, cmd, msg):
-        self.setMember(sender, chan, cmd, msg, 'server', 'method')
+        self.setMember(sender, chan, cmd, msg, 'server', 'methods')
 
-    @restricted
     def cmdSsf(self, sender, chan, cmd, msg):
-        self.setMember(sender, chan, cmd, msg, 'server', 'field')
+        self.setMember(sender, chan, cmd, msg, 'server', 'fields')
 
-    @database
     def setMember(self, sender, chan, cmd, msg, side, etype, c):
-        pass
+        msg = msg.strip()
+        type_lookup = {'methods':'func','fields':'field'}
+        side_lookup = {'client':0, 'server':1}
+        
+        if not msg or msg.split() < 2:
+            self.say(sender, "=== SET %s %s ==="%(side.upper(),etype.upper()))
+            self.say(sender, " Syntax error. Use $B%s <membername> <newname> [newdescription]$N"%(cmd))
+            return        
+        
+        msg     = map(string.strip, msg.split())
+        oldname = msg[0]
+        newname = msg[1]
+        newdesc = None
+        if len(msg) > 2:
+            newdesc = ' '.join(msg[2:])        
+
+        c.execute("""SELECT m.name, m.notch, m.searge, m.sig, m.notchsig, m.desc, m.classname, m.classnotch, m.id FROM v%s m
+                    WHERE ((m.searge LIKE ? ESCAPE '!') OR m.searge = ?) AND m.side = ?"""%etype, 
+                    ('%s!_%s!_%%'%(type_lookup[etype],oldname),oldname,side_lookup[side]))            
+        
+        results = c.fetchall()
+
+        if len(results) > 1:
+            self.say(sender, "=== SET %s %s ==="%(side.upper(),etype.upper()))            
+            self.say(sender, " Ambiguous request $R'%s'$N"%oldname)
+            self.say(sender, " Found %s possible answers"%len(rows))
+            
+            maxlencsv   = max(map(len, ['%s.%s'%(result[5], result[2])   for result in results]))
+            maxlennotch = max(map(len, ['[%s.%s]'%(result[6], result[1]) for result in results]))
+            for result in results:
+                name, notch, searge, sig, notchsig, desc, classname, classnotch, id = result
+                fullcsv   = '%s.%s'%(classname, name)
+                fullnotch = '[%s.%s]'%(classnotch, notch)
+                self.say(sender, " %s %s %s"%(fullcsv.ljust(maxlencsv+2), fullnotch.ljust(maxlennotch+2), sig))
+                
+        elif len(results) == 0:
+            self.say(sender, "=== SET %s %s ==="%(side.upper(),etype.upper()))
+            self.say(sender, " No result for %s"%oldname)
+        else:
+            name, notch, searge, sig, notchsig, desc, classname, classnotch, id = results[0]
+            self.say(sender, "=== SET %s %s ==="%(side.upper(),etype.upper()))
+            self.say(sender, "$BName$N     : %s => %s"%(name, newname))
+            self.say(sender, "$BOld desc$N : %s"%(desc))
+            self.say(sender, "$BNew desc$N : %s"%(newdesc))
+
+            c.execute("""INSERT INTO %shist VALUES (?, ?, ?, ?, ?, ?, ?, ?)"""%etype,
+                (None, int(id), name, desc, newname, newdesc, time.time(), sender))
 
     #===================================================================
 

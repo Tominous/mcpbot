@@ -367,3 +367,18 @@ c.execute("""CREATE VIEW vclass AS
     LEFT JOIN classes c1
         ON c.superid = c1.id 
     """)
+
+c.execute("""CREATE VIEW vconstructors AS
+    SELECT m.name, m.notch, m.sig, m.notchsig
+    FROM methods m
+    INNER JOIN classes c
+        ON m.name = c.name
+    """)
+
+#Triggers to mark entries as dirty
+for mtype in ['methods', 'fields']:
+    c.execute("""CREATE TRIGGER update_%s_dirty AFTER INSERT ON %shist
+                BEGIN
+                UPDATE %s SET dirtyid = new.id WHERE id = new.memberid;
+                END"""%(mtype, mtype, mtype))
+

@@ -313,3 +313,57 @@ for mtype in ['fields', 'methods']:
                 raise KeyError("WE COULDN'T FIND A TOP ID !")
             
 conn.commit()
+
+######### WE NOW DEFINE THE VIEWS WE WILL BE USING ###########
+
+# For methods and fields, we want id, side, searge, notch, name, sig, notchsig, desc, topclass name, topclass notch, package, version
+for mtype in ['fields', 'methods']:
+    c.execute("""CREATE VIEW v%s AS
+        SELECT m.id, m.side, m.searge, m.notch, 
+        CASE WHEN m.dirtyid > 0 THEN h.newname
+                            ELSE m.name
+        END AS name,  
+        CASE WHEN m.dirtyid > 0 THEN h.newdesc
+                            ELSE m.desc
+        END AS desc,
+            m.sig, m.notchsig, c.name AS classname, c.notch AS classnotch, p.name AS package, c.versionid
+    FROM %s m
+    INNER JOIN classes c
+        ON m.topid = c.id
+    INNER JOIN packages p
+        ON c.packageid = p.id
+    LEFT  JOIN %shist h
+        ON m.dirtyid = h.id
+    """%(mtype,mtype,mtype))
+
+for mtype in ['fields', 'methods']:
+    c.execute("""CREATE VIEW v%sall AS
+        SELECT m.id, m.side, m.searge, m.notch, 
+        CASE WHEN m.dirtyid > 0 THEN h.newname
+                            ELSE m.name
+        END AS name,  
+        CASE WHEN m.dirtyid > 0 THEN h.newdesc
+                            ELSE m.desc
+        END AS desc,
+            m.sig, m.notchsig, c.name AS classname, c.notch AS classnotch, c1.name AS topname, c1.notch AS topnotch, p.name AS package, c.versionid
+    FROM %s m
+    INNER JOIN %slk mlk
+        ON mlk.memberid = m.id
+    INNER JOIN classes c
+        ON mlk.classid = c.id        
+    INNER JOIN classes c1
+        ON m.topid = c1.id        
+    INNER JOIN packages p
+        ON c.packageid = p.id
+    LEFT  JOIN %shist h
+        ON m.dirtyid = h.id
+    """%(mtype,mtype,mtype,mtype))
+    
+c.execute("""CREATE VIEW vclass AS
+    SELECT c.id, c.side, c.name, c.notch, c1.name AS supername, c.isinterf, p.name AS package, c.versionid
+    FROM classes c
+    INNER JOIN packages p
+        ON c.packageid = p.id
+    LEFT JOIN classes c1
+        ON c.superid = c1.id 
+    """)

@@ -1,35 +1,123 @@
-#Code to generate a database from unrenamed class files, a rgs and csv.
-#Input :
-#   A recompile MC bin directory should be put in bin. Those classes are generated WITHOUT renamer active. (comment out the 3 or 4 last lines of the bash script)
-
 from glob   import glob
 from pprint import pprint
 from parsers.parsers import parse_csv, parse_rgs
 import os,sys
 import sqlite3
+from sets import Set
 import libobfuscathon.class_def.class_def as libof
 
 unrenamed_classes_dir = 'bin'
 
-class_id  = 0
-field_id  = 0
-method_id = 0
-
-os.system('rm database.db')
-conn = sqlite3.connect('database.db')
+os.system('rm database.sqlite')
+conn = sqlite3.connect('database.sqlite')
 c    = conn.cursor()
-c.execute("""create table classes(id INT, side TEXT, name TEXT, notch TEXT, decoded TEXT, super INT, topsuper INT, interface0 INT, interface1 INT, interface2 INT, interface3 INT, interface4 INT, dirty INT, updatetime TEXT)""")
-c.execute("""create table methods(id INT, side TEXT, name TEXT, notch TEXT, decoded TEXT, signature TEXT, notchsig TEXT, class INT, implemented INT, inherited INT, defined INT, description TEXT, dirty INT, updatetime TEXT)""")
-c.execute("""create table fields(id INT,  side TEXT, name TEXT, notch TEXT, decoded TEXT, signature TEXT, notchsig TEXT, class INT, implemented INT, inherited INT, defined INT, description TEXT, dirty INT, updatetime TEXT)""")
 
-dir_lookup = {'client':'minecraft', 'server':'minecraft_server'}
+#TABLE classes : table containing classes information
+#side          : 0 client, 1 server
+#name          : full name
+#notch         : notch name
+#superid       : id in classes of the parent
+#topsuperid    : id in classes of the ultimate parent
+#packageid     : id in packages of the class package
+#versionid     : for which version this entry is valid. Also correspond to a entry in versionid
+c.execute("""CREATE TABLE classes(id INTEGER PRIMARY KEY, 
+                                  side        INT,
+                                  name       TEXT, 
+                                  notch      TEXT,
+                                  superid     INT, 
+                                  topsuperid  INT,
+                                  isinterf    INT,
+                                  packageid   INT,
+                                  versionid   INT 
+                                  )""")
 
+#TABLE packages : Contains the list of possible packages.
+c.execute("""CREATE TABLE packages(id INTEGER PRIMARY KEY,
+                                   name TEXT)""")
+
+#TABLE methods : table containing methods information
+#side          : 0 client, 1 server
+#searge        : searge name (func_, field_)
+#name          : full name
+#notch         : notch name
+#sig           : the signature/type
+#notchsig      : the signature/type notch style
+#desc          : current description
+#topid         : top class where the method/field is first defined
+#dirtyid       : id of the most recent history entry. 0 is none
+#versionid     : for which version this entry is valid. Also correspond to a entry in versionid
+c.execute("""CREATE TABLE methods(id INTEGER PRIMARY KEY, 
+                                  side         INT,        
+                                  searge      TEXT, 
+                                  notch       TEXT, 
+                                  name        TEXT, 
+                                  sig         TEXT, 
+                                  notchsig    TEXT, 
+                                  desc        TEXT,
+                                  topid        INT, 
+                                  dirtyid      INT,
+                                  versionid    INT
+                                  )""")
+
+c.execute("""CREATE TABLE fields(id INTEGER PRIMARY KEY, 
+                                  side         INT,        
+                                  searge      TEXT, 
+                                  notch       TEXT, 
+                                  name        TEXT, 
+                                  sig         TEXT, 
+                                  notchsig    TEXT, 
+                                  desc        TEXT,
+                                  topid        INT, 
+                                  dirtyid      INT,
+                                  versionid    INT
+                                  )""")
+
+#TABLE interflk : link between classes and interfaces. Contains a serie of pairs like classid / interfid
+c.execute("""CREATE TABLE interfaceslk (
+                                  classid     INT,        
+                                  interfid    INT 
+                                  )""")
+
+#TABLE methlk : link between methods and classes. Contains a serie of pairs like methodid / classid
+c.execute("""CREATE TABLE methodslk (
+                                  memberid     INT,        
+                                  classid      INT
+                                  )""")
+
+c.execute("""CREATE TABLE fieldslk (
+                                  memberid     INT,        
+                                  classid      INT
+                                  )""")
+
+c.execute("""CREATE TABLE methodshist(id INTEGER PRIMARY KEY, 
+                                      memberid     INT, 
+                                      oldname     TEXT,
+                                      olddesc     TEXT, 
+                                      newname     TEXT, 
+                                      newdesc     TEXT, 
+                                      timestamp   REAL, 
+                                      time        TEXT, 
+                                      nick        TEXT
+                                      )""")
+
+c.execute("""CREATE TABLE fieldshist (id INTEGER PRIMARY KEY, 
+                                      memberid     INT, 
+                                      oldname     TEXT,
+                                      olddesc     TEXT, 
+                                      newname     TEXT, 
+                                      newdesc     TEXT, 
+                                      timestamp   REAL, 
+                                      time        TEXT, 
+                                      nick        TEXT
+                                      )""")                                  
+
+dir_lookup   = {'client':'minecraft', 'server':'minecraft_server'}
+side_lookup  = {'client':0, 'server':1}
+package_list = []
+members_list = {'fields':{'client':[], 'server':[]}, 'methods':{'client':[], 'server':[]}}
 for side in ['client', 'server']:
     
-    fields  = {}
-    methods = {}
     classes = {}
-    classes_id = {}    
     
     #Here we read all the class files
     for path, dirlist, filelist in os.walk(os.path.join(unrenamed_classes_dir,dir_lookup[side])):
@@ -37,125 +125,88 @@ for side in ['client', 'server']:
             print '+ Reading %s'%class_file
             class_data = libof.ClassDef(class_file)
             
-            classes[class_data.getClassname()] = {'ID'        :class_id, 
-                                                  'Name'      :class_data.getClassname(), 
-                                                  'Super'     :class_data.getSuperName(), 
-                                                  'Interfaces':class_data.getInterfacesNames(),
-                                                  'Methods'   :class_data.methods,
-                                                  'Fields'    :class_data.fields}
-            classes_id[class_id] = classes[class_data.getClassname()]
-            class_id += 1
             
-            for field in class_data.fields:
-                name = field.getName().split()[0]
-                sig  = field.getName().split()[1]
-                
-                fields[field_id] = {'ID':field_id, 'Name':name, 'Signature':sig, 'Class':classes[class_data.getClassname()]['ID'], 'Implemented':True, 'Inherited':-1}
-                field_id += 1
+            thisclass = {'Name'      :class_data.getClassname().split('/')[-1], 
+                          'Package'   :'/'.join(class_data.getClassname().split('/')[:-1]), 
+                          'Super'     :class_data.getSuperName(), 
+                          'Interfaces':class_data.getInterfacesNames(),
+                          'methods'   :class_data.methods,
+                          'fields'    :class_data.fields}
 
-            for method in class_data.methods:
-                name = method.getName().split()[0]
-                sig  = method.getName().split()[1]
-                
-                if name == '<clinit>' : continue
-                
-                methods[method_id] = {'ID':method_id, 'Name':name, 'Signature':sig, 'Class':classes[class_data.getClassname()]['ID'], 'Implemented':True, 'Inherited':-1}
-                method_id += 1
+            classes[class_data.getClassname()] = thisclass
 
-    #We transform names into id references
-    for key, data in classes.items():
-        if data['Super'] in classes:
-            data['SuperID'] = classes[data['Super']]['ID']
-        else: data['SuperID'] = -1
-        data['InterfacesID'] = []
+            if not thisclass['Package'] in package_list:
+                package_list.append(thisclass['Package'])
+
+            c.execute("""INSERT OR IGNORE INTO packages VALUES (?,?)""",
+                (len(package_list), package_list[-1]))
+
+            #We insert the already available informations in the db
+            c.execute("""INSERT INTO classes (id, side, name, isinterf, packageid, versionid) VALUES (?, ?, ?, ?, ?, ?)""",
+                (None, side_lookup[side], thisclass['Name'], False, len(package_list), -1))
+
+            #We retrieve the automatic ID
+            c.execute("""SELECT id FROM classes WHERE name = ? AND side = ?""", (thisclass['Name'], side_lookup[side]))
+            thisclass['Id'] = c.fetchone()[0]
+
+            for mtype in ['fields', 'methods']:
+
+                for member in thisclass[mtype]:
+                    searge = member.getName().split()[0]
+                    sig    = member.getName().split()[-1].replace('net/minecraft/src/','').replace('net/minecraft/server/','').replace('net/minecraft/client/','')
+                    
+                    if searge == '<init>':
+                        searge = thisclass['Name']
+                    if searge == '<clinit>':
+                        continue
+
+                    name   = searge
+                    
+                    #We insert the method only if it has not be inserted before
+                    if not (searge+sig) in members_list[mtype][side]:
+                        members_list[mtype][side].append(searge+sig)
+                        c.execute("""INSERT INTO %s (id, side, searge, name, sig, dirtyid, versionid) VALUES (?, ?, ?, ?, ?, ?, ?)"""%mtype,
+                            (None, side_lookup[side], searge, name, sig, 0, -1))
+
+                    #We get the unique id for this method
+                    c.execute("""SELECT id FROM %s WHERE searge = ? AND sig = ? AND side = ?"""%mtype, (searge, sig, side_lookup[side]))
+                    membid = c.fetchone()[0]
+                    
+                    #We insert the corresponding key to the methlk
+                    c.execute("""INSERT INTO %slk VALUES (?, ?)"""%mtype,
+                        (membid, thisclass['Id']))
+                        
+    for key, class_ in classes.items():
         
-        if len(data['Interfaces']) > 5:
-            raise KeyError('Too many interfaces !')
+        #We get the super class index and put it in the class entry
+        c.execute("""SELECT id FROM classes WHERE name = ? AND side = ?""", (class_['Super'].split('/')[-1], side_lookup[side]))
+        row = c.fetchone()
+        if row:
+            superid = row[0]
+            c.execute("""UPDATE classes SET superid = ? WHERE id = ?""", (superid, class_['Id']))
         
-        for interface in data['Interfaces']:
-            if interface in classes:
-                data['InterfacesID'].append(classes[interface]['ID'])
-        while len(data['InterfacesID']) < 5:
-            data['InterfacesID'].append(-1)
-
-    #We go up the inheritance tree to find the super super class
-    for key, data in classes.items():
-        super    = data['SuperID']
-        topsuper = -1
-        while super != -1:
-            super = classes[classes_id[super]['Name']]['SuperID']
-            if super != -1: topsuper = super
-        data['TopSuperID'] = topsuper
-
-    #We go up the inheritance tree to find the last class defining a given method
-    for key, data in methods.items():
-        class_id = data['Class']
-        found_in = class_id
-        super    = classes_id[class_id]['SuperID']
-        while super != -1:
-            if data['Name'] in [i.getName().split()[0] for i in classes_id[super]['Methods']]:
-                found_in = classes_id[super]['ID']
-            super = classes_id[super]['SuperID']
-        data['Defined'] = found_in
-
-    #We go up the inheritance tree to find the last class defining a given field
-    for key, data in fields.items():
-        class_id = data['Class']
-        found_in = class_id
-        super    = classes_id[class_id]['SuperID']
-        while super != -1:
-            if data['Name'] in [i.getName().split()[0] for i in classes_id[super]['Fields']]:
-                found_in = classes_id[super]['ID']
-            super = classes_id[super]['SuperID']
-        data['Defined'] = found_in
-
-    for key, data in classes.items():
-        print '+ Inserting in the db : %s'%key
-        c.execute("""insert into classes values (%d, '%s', '%s', '-1', '%s', %d, %d, %d, %d, %d, %d, %d, '-1', '-1')"""%
-                (data['ID'], side, data['Name'].split('/')[-1], data['Name'].split('/')[-1], data['SuperID'], data['TopSuperID'], 
-                data['InterfacesID'][0], data['InterfacesID'][1], data['InterfacesID'][2], data['InterfacesID'][3], data['InterfacesID'][4]))
-
-    #Inherited is supposed to represent the methods not in the cpool (not implemented), but still available by inheritance.
-    for key, data in fields.items():
-        print '+ Inserting in the db : %s'%data['Name']
-        c.execute("""insert into fields values (?, ?, ?, 
-                                                ?, ?, ?, 
-                                                ?, ?, ?,
-                                                ?, ?, ?,
-                                                ?, ?)""",
-                                                (data['ID'], side, data['Name'], 
-                                                None, data['Name'], data['Signature'].replace('net/minecraft/src/',''),  
-                                                None, data['Class'], int(data['Implemented']), 
-                                                data['Inherited'], data['Defined'], None,
-                                                None, None))
-
-    for key, data in methods.items():
-        print '+ Inserting in the db : %s'%data['Name']
-        c.execute("""insert into methods values (?, ?, ?,
-                                                 ?, ?, ?,
-                                                 ?, ?, ?,
-                                                 ?, ?, ?,
-                                                 ?, ?)""",
-                                                (data['ID'], side, data['Name'], 
-                                                None,data['Name'], data['Signature'].replace('net/minecraft/src/',''),  
-                                                None,data['Class'], int(data['Implemented']), 
-                                                data['Inherited'], data['Defined'], None,
-                                                None, None))
-
+        #We get the interfaces ids and insert into interflk
+        for interface in class_['Interfaces']:
+            name = interface.split('/')[-1]
+            c.execute("""SELECT id FROM classes WHERE name = ? AND side = ?""", (name, side_lookup[side]))
+            
+            row = c.fetchone()
+            if row :
+                interfid = row[0]
+                c.execute("""INSERT INTO interfaceslk VALUES (?, ?)""", (class_['Id'], interfid))
 conn.commit()
 
-print "+ Scanning RGS files"
 for side in ['client', 'server']:
     rgs_dict = parse_rgs('%s.rgs'%dir_lookup[side])
     for class_ in rgs_dict['class_map']:
         trgname = class_['trg_name']
-        c.execute("""UPDATE classes SET notch = '%s' WHERE name = '%s' AND side = '%s'"""%(class_['src_name'].split('/')[-1], trgname, side))
+        c.execute("""UPDATE classes SET notch = ? WHERE name = ? AND side = ?""",(class_['src_name'].split('/')[-1], trgname, side_lookup[side]))
 
     for method in rgs_dict['method_map']:
-        c.execute("""UPDATE methods SET notch = '%s', notchsig = '%s' WHERE name = '%s' AND side = '%s'"""%(method['src_name'].split('/')[-1], method['src_sig'], method['trg_name'], side))
+        c.execute("""UPDATE methods SET notch = ?, notchsig = ? WHERE searge = ? AND side = ?""",(method['src_name'].split('/')[-1], method['src_sig'], method['trg_name'], side_lookup[side]))
 
     for field in rgs_dict['field_map']:
-        c.execute("""UPDATE fields SET notch = '%s' WHERE name = '%s' AND side = '%s'"""%(field['src_name'].split('/')[-1], field['trg_name'], side))
+        c.execute("""UPDATE fields SET notch = ? WHERE searge = ? AND side = ?""",(field['src_name'].split('/')[-1], field['trg_name'], side_lookup[side]))
 
 conn.commit()
 
@@ -163,34 +214,102 @@ method_csv = parse_csv('methods.csv', 4, ',', ['trashbin',  'searge_c', 'trashbi
 field_csv  = parse_csv('fields.csv',  3, ',', ['trashbin',  'trashbin', 'searge_c', 'trashbin',  'trashbin', 'searge_s', 'full', 'description'])    
 
 for method in method_csv:
-    c.execute("""UPDATE methods SET decoded  = ?, description = ? WHERE name  = ? AND side = 'client'""",(method['full'], method['description'], method['searge_c']))    
-    c.execute("""UPDATE methods SET decoded  = ?, description = ? WHERE name  = ? AND side = 'server'""",(method['full'], method['description'], method['searge_s']))
+    if method['description'] == '*': method['description'] = None
+    c.execute("""UPDATE methods SET name = ?, desc = ? WHERE searge  = ? AND side = 0""",(method['full'], method['description'], method['searge_c']))    
+    c.execute("""UPDATE methods SET name = ?, desc = ? WHERE searge  = ? AND side = 1""",(method['full'], method['description'], method['searge_s']))
     
 for field in field_csv:
-    c.execute("""UPDATE fields SET decoded = ?, description = ? WHERE name = ? AND side = 'client'""",(field['full'], field['description'], field['searge_c']))
-    c.execute("""UPDATE fields SET decoded = ?, description = ? WHERE name = ? AND side = 'server'""",(field['full'], field['description'], field['searge_s']))    
+    if field['description'] == '*': field['description'] = None
+    c.execute("""UPDATE fields SET name = ?, desc = ? WHERE searge = ? AND side = 0""",(field['full'], field['description'], field['searge_c']))
+    c.execute("""UPDATE fields SET name = ?, desc = ? WHERE searge = ? AND side = 1""",(field['full'], field['description'], field['searge_s']))    
 
 conn.commit()
 
-gc = conn.cursor()
-gc.execute("""SELECT m.id, c.name, c.notch
-             FROM methods m
-             INNER JOIN classes c ON c.id=m.class
-             WHERE m.name='<init>'""")
-             
+c.execute("""UPDATE classes SET notch = name WHERE notch ISNULL""")
+
+#We select all the constructors
+c.execute("""SELECT m.id, c.notch
+             FROM   methods m
+             INNER JOIN methodslk ml ON ml.memberid = m.id
+             INNER JOIN classes c    ON ml.classid  = c.id
+             WHERE m.notch ISNULL AND m.name = c.name""")
+
+rows = c.fetchall()
+
+#We update constructors with the notch class name and than, we fill all the remaining blanks with name
+for row in rows:
+    c.execute("""UPDATE methods SET notch = ? WHERE id = ?""", (row[1], row[0]))
+c.execute("""UPDATE methods SET notch    = name WHERE notch    ISNULL""")
+c.execute("""UPDATE methods SET notchsig =  sig WHERE notchsig ISNULL""")
+c.execute("""UPDATE fields  SET notch    = name WHERE notch    ISNULL""")
+c.execute("""UPDATE fields  SET notchsig =  sig WHERE notchsig ISNULL""")
+
+#We set the isinterf column
+c.execute("""SELECT interfid FROM interfaceslk""")
+for row in c.fetchall():
+    c.execute("""UPDATE classes SET isinterf = ? WHERE id = ?""",(True, row[0]))
+
+for mtype in ['fields', 'methods']:
+    print '+ Updating %s TopIDs'%mtype
+    #We get all the methods defined in interfaces and set the topid to it.
+    c.execute("""SELECT c.id, m.id
+                 FROM classes c
+                 INNER JOIN %slk lk ON lk.classid = c.id
+                 INNER JOIN %s   m ON lk.memberid = m.id
+                 WHERE c.isinterf = 1"""%(mtype,mtype))
+    for row in c.fetchall():
+        c.execute("""UPDATE %s SET topid = ? WHERE id = ?"""%mtype, (row[0], row[1]))
+
+    #We get all the methods which are implemented in classes without a super and we set the top id
+    c.execute("""SELECT c.id, m.id
+                 FROM   %s m
+                 INNER JOIN %slk ml ON ml.memberid = m.id
+                 INNER JOIN classes c    ON ml.classid  = c.id
+                 WHERE c.superid ISNULL AND m.topid ISNULL"""%(mtype,mtype))
+
+    for row in c.fetchall():
+        c.execute("""UPDATE %s SET topid = ? WHERE id = ?"""%mtype, (row[0], row[1]))
+     
+
+    #We get all the methods not yet with a top id
+    c.execute("""SELECT m.name, m.id FROM %s m WHERE m.topid ISNULL"""%mtype)
+    for mid in c.fetchall():
+        methodname = mid[0]
+        methodid   = mid[1]
+
+        #We get all classes for this method. Also, we drop the interfaces.
+        c.execute("""SELECT c.id, c.superid
+                    FROM   %s m
+                    INNER JOIN %slk ml ON ml.memberid = m.id
+                    INNER JOIN classes c    ON ml.classid  = c.id
+                    WHERE m.id = ? AND c.isinterf = 0"""%(mtype, mtype), (methodid,))
+        rows = c.fetchall()
+        classids = [row[0] for row in rows]
+        superids = [row[1] for row in rows]
+        results  = []
+        for row in rows:
+            if not row[1] in classids:
+                results.append(row[0])
+        
+        #If we have only one result, this is the top id.
+        if len(results) == 1 :
+            c.execute("""UPDATE %s SET topid = ? WHERE id = ?"""%mtype, (results[0], methodid))
+            
+        #If we have more than one result, we have to walk the tree
+        if len(results) > 1 :
+            c.execute("""SELECT c.id, c.superid FROM classes c WHERE c.isinterf = 0""")
+            classsuper = {}
+            for row in c.fetchall(): classsuper[row[0]] = row[1]
+            deepresults = Set(results)
+            for result in results:
+                super = classsuper[result]
+                while not super == None:
+                    if super in results: deepresults.discard(result)
+                    super = classsuper[super]
+            
+            if len(deepresults) == 1:
+                c.execute("""UPDATE %s SET topid = ? WHERE id = ?"""%mtype, (list(deepresults)[0], methodid))
+            else:
+                raise KeyError("WE COULDN'T FIND A TOP ID !")
+            
 conn.commit()
-for row in gc:
-    c.execute("""UPDATE methods SET name = ?, notch = ?, decoded = ? WHERE id=?""",(row[1].split('/')[-1], row[2], row[1].split('/')[-1], row[0]))
-
-#c.execute("""DELETE FROM methods WHERE name='<clinit>'""")
-c.execute("""UPDATE methods SET notchsig = signature WHERE notchsig = -1""")
-c.execute("""UPDATE methods SET notch    = name WHERE notch = '-1'""")
-c.execute("""UPDATE classes SET notch    = name WHERE notch = '-1'""")
-c.execute("""UPDATE fields  SET notch    = name WHERE notch = '-1'""")
-
-conn.commit()
-
-gc.close()
-c.close()
-#pprint (classes_id[174])
-#pprint (methods)

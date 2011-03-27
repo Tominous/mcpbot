@@ -41,7 +41,4 @@ class NickServCommands(object):
         pass
         
     def status(self, nick):
-        if self.bot.irc_status['Registered']:
-            self.rawcmd('STATUS %s'%nick)
-        else:
-            self.pending_actions.put((self.rawcmd, ('STATUS %s'%nick,), "self.irc_status['Registered']"))
+        self.rawcmd('ACC %s'%nick)  #Yeah, I know, this is not the right command, but they changed the nickserv on esper, and status doesn't returns the right value anymore :(

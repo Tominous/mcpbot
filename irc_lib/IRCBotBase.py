@@ -56,6 +56,7 @@ class IRCBotBase(IRCBotAdvMtd):
         self.users           = {}
 
         self.threadpool.add_task(self.print_loop)
+        self.threadpool.add_task(self.logging_loop)
 
     def outbound_loop(self):
         """Outgoing messages thread. Check for new messages on the queue and push them to the socket if any."""
@@ -78,6 +79,7 @@ class IRCBotBase(IRCBotAdvMtd):
             except Empty:
                 continue
             self.out_msg.task_done()
+            self.printq.put('OUT    ' + msg.strip())
             if len(msg) > int(allowed_chars) : time.sleep((len(msg)*1.25)/(self.floodprotec/30.0))
             try:
                 self.irc_socket.send(msg)
@@ -120,13 +122,14 @@ class IRCBotBase(IRCBotAdvMtd):
                 continue
             self.printq.task_done()
             print msg
-            
-            if self.log:
-                try:
-                    ev = self.loggingq.get(True, 1)
-                except Empty:
-                    continue
-            
+
+    def logging_loop(self):
+        while not self.exit:
+            try:
+                ev = self.loggingq.get(True, 1)
+            except Empty:
+                continue            
+            if self.log:            
                 self.log.write('%s; %s; %s; %s; %s; %s\n'%(time.ctime(), ev.type.ljust(5), ev.cmd.ljust(15), ev.sender.ljust(20), ev.target.ljust(20), ev.msg))
                 self.log.flush()        
                 os.fsync(self.log.fileno())                

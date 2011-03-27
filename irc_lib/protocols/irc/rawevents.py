@@ -12,7 +12,8 @@ class IRCRawEvents(object):
         if self.bot.log:
             self.bot.loggingq.put(ev)
         
-        if ev.target == 'AUTH':
+        if ev.target in ['AUTH', '*']:
+            self.bot.printq.put('> Connected to server %s'%ev.sender)
             self.bot.irc_status['Server'] = ev.sender
             return
 
@@ -54,6 +55,7 @@ class IRCRawEvents(object):
             self.bot.irc_status['Registered'] = True
             self.locks['ServReg'].notifyAll()
             self.locks['ServReg'].release()
+            self.bot.printq.put('> MOTD found. Registered with server.')   
     
     def onRawRPL_NAMREPLY(self, ev):
         weirdsymbol = ev.msg.split()[0]     #Used for channel status, "@" is used for secret channels, "*" for private channels, and "=" for others (public channels).

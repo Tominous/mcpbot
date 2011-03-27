@@ -359,7 +359,7 @@ for mtype in ['fields', 'methods']:
         ON m.dirtyid = h.id
     """%(mtype,mtype,mtype,mtype))
     
-c.execute("""CREATE VIEW vclass AS
+c.execute("""CREATE VIEW vclasses AS
     SELECT c.id, c.side, c.name, c.notch, c1.name AS supername, c.isinterf, p.name AS package, c.versionid
     FROM classes c
     INNER JOIN packages p
@@ -369,10 +369,10 @@ c.execute("""CREATE VIEW vclass AS
     """)
 
 c.execute("""CREATE VIEW vconstructors AS
-    SELECT m.name, m.notch, m.sig, m.notchsig
+    SELECT m.id, m.side, m.name, m.notch, m.sig, m.notchsig
     FROM methods m
     INNER JOIN classes c
-        ON m.name = c.name
+        ON (m.name = c.name AND m.side = c.side)
     """)
 
 #Triggers to mark entries as dirty
@@ -382,3 +382,4 @@ for mtype in ['methods', 'fields']:
                 UPDATE %s SET dirtyid = new.id WHERE id = new.memberid;
                 END"""%(mtype, mtype, mtype))
 
+conn.commit()

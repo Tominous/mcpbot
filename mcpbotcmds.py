@@ -1,7 +1,7 @@
 import sqlite3
 import time
 from irc_lib.utils.restricted import restricted
-from database import database, getMembers
+from database import database
 
 class MCPBotCmds(object):
     def cmdDefault(self, sender, chan, cmd, msg):
@@ -39,89 +39,97 @@ class MCPBotCmds(object):
     @database
     def getClass(self, sender, chan, cmd, msg, side, c):
         side_lookup = {'client':0, 'server':1}
-        c.execute("""SELECT c1.name, c1.notch, c2.name, c2.notch 
-                     FROM classes c1 LEFT JOIN classes c2 ON c1.super = c2.id 
-                     WHERE (c1.name = ? OR c1.notch = ?) AND c1.side= ?""",
-                     (msg,msg,side_lookup[side]))
+        msg = msg.strip()
+        c.execute("""SELECT name, notch, supername FROM vclasses WHERE (name = ? OR notch = ?) AND side = ?""", (msg, msg, side_lookup[side]))
         
-        rows = c.fetchall()
-                
-        for row in rows:
+        classresults = c.fetchall()
+        
+        if not classresults:
+            self.say(sender, "=== GET %s CLASS ==="%side.upper())
+            self.say(sender, " No results found for $B%s"%msg)
+        
+        for classresult in classresults:
+            name, notch, supername = classresult
+
+            c.execute("""SELECT sig FROM vconstructors WHERE (name = ? OR notch = ?) AND side = ?""",(msg, msg, side_lookup[side]))
+            constructorsresult = c.fetchall()
+
             self.say(sender, "=== GET %s CLASS ==="%side.upper())
             self.say(sender, " $BSide$N        : %s"%side)
-            self.say(sender, " $BName$N        : %s"%row[0])
-            self.say(sender, " $BNotch$N       : %s"%row[1])
-            self.say(sender, " $BSuper$N       : %s"%row[2])
+            self.say(sender, " $BName$N        : %s"%name)
+            self.say(sender, " $BNotch$N       : %s"%notch)
+            self.say(sender, " $BSuper$N       : %s"%supername)
 
-        if not rows:
-            self.say(sender, "=== GET %s CLASS ==="%side.upper())
-            self.say(sender, " No result for %s"%msg)
-            c.close()
-            return
-
-        c.execute("""SELECT m.signature 
-                     FROM methods m 
-                     INNER JOIN classes c ON m.class = c.id 
-                     WHERE (m.name = ? OR m.notch = ?) AND m.side = ? AND m.name = c.name""",(msg,msg,side_lookup[side]))
-        for row in c:
-            self.say(sender, " $BConstructor$N : %s"%row[0])            
+            for constructor in constructorsresult:
+                self.say(sender, " $BConstructor$N : %s"%constructor[0]) 
 
     #===================================================================
 
     #================== Getters members ================================
     def cmdGcm(self, sender, chan, cmd, msg):
-        self.outputMembers(sender, chan, cmd, msg, 'client', 'method')
+        self.outputMembers(sender, chan, cmd, msg, 'client', 'methods')
 
     def cmdGsm(self, sender, chan, cmd, msg):
-        self.outputMembers(sender, chan, cmd, msg, 'server', 'method')
+        self.outputMembers(sender, chan, cmd, msg, 'server', 'methods')
 
     def cmdGm(self, sender, chan, cmd, msg):
-        self.outputMembers(sender, chan, cmd, msg, 'client', 'method')        
-        self.outputMembers(sender, chan, cmd, msg, 'server', 'method')
+        self.outputMembers(sender, chan, cmd, msg, 'client', 'methods')        
+        self.outputMembers(sender, chan, cmd, msg, 'server', 'methods')
 
     def cmdGcf(self, sender, chan, cmd, msg):
-        self.outputMembers(sender, chan, cmd, msg, 'client', 'field')
+        self.outputMembers(sender, chan, cmd, msg, 'client', 'fields')
 
     def cmdGsf(self, sender, chan, cmd, msg):
-        self.outputMembers(sender, chan, cmd, msg, 'server', 'field')
+        self.outputMembers(sender, chan, cmd, msg, 'server', 'fields')
 
     def cmdGf(self, sender, chan, cmd, msg):
-        self.outputMembers(sender, chan, cmd, msg, 'client', 'field')        
-        self.outputMembers(sender, chan, cmd, msg, 'server', 'field')
+        self.outputMembers(sender, chan, cmd, msg, 'client', 'fields')        
+        self.outputMembers(sender, chan, cmd, msg, 'server', 'fields')
 
-    def outputMembers(self, sender, chan, cmd, msg, side, etype):
+    @database
+    def outputMembers(self, sender, chan, cmd, msg, side, etype, c):
+        side_lookup = {'client':0, 'server':1}
+        type_lookup = {'fields':'field', 'methods':'func'}
+        msg = msg.strip()
+        if   len(msg.split('.')) == 1:
+            c.execute("""SELECT m.name, m.notch, m.searge, m.sig, m.notchsig, m.desc, m.classname, m.classnotch FROM v%s m
+                         WHERE ((m.searge LIKE ? ESCAPE '!') OR m.notch = ? OR m.name = ?) AND m.side = ?"""%etype, 
+                         ('%s!_%s!_%%'%(type_lookup[etype],msg),msg,msg,side_lookup[side]))
+        elif len(msg.split('.')) == 2:
+            cname = msg.split('.')[0]
+            mname = msg.split('.')[0]
+            c.execute("""SELECT m.name, m.notch, m.searge, m.sig, m.notchsig, m.desc, m.classname, m.classnotch FROM v%s m
+                         WHERE ((m.searge LIKE ? ESCAPE '!') OR m.notch = ? OR m.name = ?) AND m.side = ? AND (m.classname = ? OR m.classnotch = ?)"""%etype, 
+                         ('%s!_%s!_%%'%(type_lookup[etype],msg),mname,mname,side_lookup[side], cname,cname))
+        
+        results = c.fetchall()
 
-        rows = getMembers(msg, side, etype) #m.name, m.notch, m.decoded, m.signature, m.notchsig, c.name, c.notch, m.description
-
-        if len(rows) > 10:
+        if len(results) > 10:
             self.say(sender, "=== GET %s %s ==="%(side.upper(),etype.upper()))
             self.say(sender, " $BVERY$N ambiguous request $R'%s'$N"%msg)
-            self.say(sender, " Found %s possible answers"%len(rows))        
+            self.say(sender, " Found %s possible answers"%len(results))        
             self.say(sender, " Not displaying any !")        
-        elif 10 >= len(rows) > 1:
+        elif 10 >= len(results) > 1:
             self.say(sender, "=== GET %s %s ==="%(side.upper(),etype.upper()))
             self.say(sender, " Ambiguous request $R'%s'$N"%msg)
-            self.say(sender, " Found %s possible answers"%len(rows))
-            maxlencsv   = max(map(len, ['%s.%s'%(row[5], row[2])   for row in rows]))
-            maxlennotch = max(map(len, ['[%s.%s]'%(row[6], row[1]) for row in rows]))
-            for row in rows:
-                fullcsv   = '%s.%s'%(row[5], row[2])
-                fullnotch = '[%s.%s]'%(row[6], row[1])
-                self.say(sender, " %s %s %s"%(fullcsv.ljust(maxlencsv+2), fullnotch.ljust(maxlennotch+2), row[3]))
-                
-        elif len(rows) == 1:
-            row = rows[0]
+            self.say(sender, " Found %s possible answers"%len(results))
+            maxlencsv   = max(map(len, ['%s.%s'%(result[6], result[0])   for result in results]))
+            maxlennotch = max(map(len, ['[%s.%s]'%(result[7], result[1]) for result in results]))
+            for result in results:
+                name, notch, searge, sig, notchsig, desc, classname, classnotch = result
+                fullcsv   = '%s.%s'%(classname, name)
+                fullnotch = '[%s.%s]'%(classnotch, notch)
+                self.say(sender, " %s %s %s"%(fullcsv.ljust(maxlencsv+2), fullnotch.ljust(maxlennotch+2), sig))
+        elif len(results) == 1:
+            result = results
             self.say(sender, "=== GET %s %s ==="%(side.upper(),etype.upper()))
             self.say(sender, " $BSide$N        : %s"%side)
-            self.say(sender, " $BName$N        : %s.%s"%(row[5],row[2],))
-            self.say(sender, " $BNotch$N       : %s.%s"%(row[6],row[1],))
-            self.say(sender, " $BSearge$N      : %s"%row[0])
-            self.say(sender, " $BType/Sig$N    : %s"%row[3])
-            #self.say(sender, " $BNotchType$N   : %s"%row[4])            
-            #self.say(sender, " $BClass$N       : %s"%row[5])
-            if row[7]:      
-                self.say(sender, " $BDescription$N : %s"%row[7])
-            
+            self.say(sender, " $BName$N        : %s.%s"%(classname, name,))
+            self.say(sender, " $BNotch$N       : %s.%s"%(classnotch, notch,))
+            self.say(sender, " $BSearge$N      : %s"%searge)
+            self.say(sender, " $BType/Sig$N    : %s"%sig)
+            if desc:      
+                self.say(sender, " $BDescription$N : %s"%desc)
         else:
             self.say(sender, "=== GET %s %s ==="%(side.upper(),etype.upper()))
             self.say(sender, " No result for %s"%msg)
@@ -133,49 +141,7 @@ class MCPBotCmds(object):
     #====================== Search commands ============================
     @database
     def cmdSearch(self, sender, chan, cmd, msg, c):
-        type_lookup = {'method':'func','field':'field'}
-        side_lookup = {'client':0, 'server':1}
-
-        self.say(sender, "=== SEARCH RESULTS ===")
-        for side in ['client', 'server']:
-                c.execute("""SELECT c.name, c.notch
-                            FROM classes c 
-                            WHERE (c.name LIKE ?) AND c.side = ?""",
-                            ('%%%s%%'%(msg), side_lookup[side]))                   
- 
-                rows = c.fetchall()
-                if not rows:
-                    self.say(sender, " [%s][ CLASS] No results"%side.upper())
-                else:                
-                    maxlencsv   = max(map(len, [row[0] for row in rows]))
-                    maxlennotch = max(map(len, [row[1] for row in rows]))
-                    if len(rows) > 10:
-                        self.say(sender, " [%s][ CLASS] Too many results : %d"%(side.upper(),len(rows)))
-                    else:
-                        for row in rows:
-                            self.say(sender, " [%s][ CLASS] %s %s"%(side.upper(), row[0].ljust(maxlencsv+2), row[1].ljust(maxlennotch+2)))
-               
-        for side in ['client', 'server']:
-            for etype in ['field', 'method']:
-                c.execute("""SELECT m.name, m.notch, m.decoded, m.signature, m.notchsig, c.name, c.notch, m.description, m.id, m.dirty
-                            FROM %ss m LEFT JOIN classes c ON m.class = c.id
-                            WHERE (m.decoded LIKE ?) AND m.side = ?"""%
-                            etype,
-                            ('%%%s%%'%(msg), side_lookup[side]))                
-                rows = c.fetchall()
-               
-                if not rows:
-                    self.say(sender, " [%s][%6s] No results"%(side.upper(), etype.upper()))
-                else:
-                    maxlencsv   = max(map(len, ['%s.%s'%(row[5], row[2])   for row in rows]))
-                    maxlennotch = max(map(len, ['[%s.%s]'%(row[6], row[1]) for row in rows]))
-                    if len(rows) > 10:
-                        self.say(sender, " [%s][%6s] Too many results : %d"%(side.upper(),etype.upper(),len(rows)))
-                    else:
-                        for row in rows:
-                            fullcsv   = '%s.%s'%(row[5], row[2])
-                            fullnotch = '[%s.%s]'%(row[6], row[1])
-                            self.say(sender, " [%s][%6s] %s %s %s"%(side.upper(),etype.upper(), fullcsv.ljust(maxlencsv+2), fullnotch.ljust(maxlennotch+2), row[3]))                
+        pass
                 
     #===================================================================
 
@@ -199,43 +165,7 @@ class MCPBotCmds(object):
 
     @database
     def setMember(self, sender, chan, cmd, msg, side, etype, c):
-        
-        if len(msg.strip().split()) < 2:
-            self.say(sender, "=== SET %s %s ==="%(side.upper(),etype.upper()))            
-            self.say(sender, " Not enough parameters : $B%s <oldname> <newname> [description]"%cmd.lower())            
-            return
-        
-        oldname = msg.strip().split()[0]
-        newname = msg.strip().split()[1]
-        newdesc = None
-        if len(msg.strip().split()) > 2:
-            newdesc = ' '.join(msg.strip().split()[2:])
-        
-        rows = getMembers(oldname, side, etype) #m.name, m.notch, m.decoded, m.signature, m.notchsig, c.name, c.notch, m.description
-
-        if len(rows) > 1:
-            self.say(sender, "=== SET %s %s ==="%(side.upper(),etype.upper()))            
-            self.say(sender, " Ambiguous request $R'%s'$N"%oldname)
-            self.say(sender, " Found %s possible answers"%len(rows))
-            maxlencsv   = max(map(len, ['%s.%s'%(row[5], row[2])   for row in rows]))
-            maxlennotch = max(map(len, ['[%s.%s]'%(row[6], row[1]) for row in rows]))
-            for row in rows:
-                fullcsv   = '%s.%s'%(row[5], row[2])
-                fullnotch = '[%s.%s]'%(row[6], row[1])
-                self.say(sender, " %s %s %s"%(fullcsv.ljust(maxlencsv+2), fullnotch.ljust(maxlennotch+2), row[3]))
-        elif len(rows) == 0:
-            self.say(sender, "=== SET %s %s ==="%(side.upper(),etype.upper()))
-            self.say(sender, " No result for %s"%oldname)
-        else:
-            row = rows[0]
-            self.say(sender, "=== SET %s %s ==="%(side.upper(),etype.upper()))
-            self.say(sender, "$BName$N     : %s => %s"%(row[0], newname))
-            self.say(sender, "$BOld desc$N : %s"%(row[7]))
-            self.say(sender, "$BNew desc$N : %s"%(newdesc))
-
-            c.execute("""UPDATE %ss SET dirty = ? WHERE id = ?"""%etype, (True, row[8]))
-            c.execute("""INSERT INTO %shist VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"""%etype[0],
-                        (None, row[8], row[2], row[7], newname, newdesc, time.time(), time.ctime(), sender))
+        pass
 
     #===================================================================
 

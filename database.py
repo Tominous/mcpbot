@@ -3,7 +3,7 @@ import sqlite3
 #====================== DB Decorator ===================================
 def database(f):
     def warp_f(*args):
-        dbase = sqlite3.connect('database.db')
+        dbase = sqlite3.connect('database.sqlite')
         c = dbase.cursor()        
         
         args = list(args)

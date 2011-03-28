@@ -74,40 +74,48 @@ c.execute("""CREATE TABLE fields(id INTEGER PRIMARY KEY,
 
 #TABLE interflk : link between classes and interfaces. Contains a serie of pairs like classid / interfid
 c.execute("""CREATE TABLE interfaceslk (
-                                  classid     INT,        
-                                  interfid    INT 
+                                  classid     INT NOT NULL,        
+                                  interfid    INT NOT NULL,
+                                  UNIQUE(classid, interfid)
                                   )""")
 
 #TABLE methlk : link between methods and classes. Contains a serie of pairs like methodid / classid
 c.execute("""CREATE TABLE methodslk (
-                                  memberid     INT,        
-                                  classid      INT
+                                  memberid     INT NOT NULL,        
+                                  classid      INT NOT NULL,
+                                  UNIQUE(memberid, classid)
                                   )""")
 
 c.execute("""CREATE TABLE fieldslk (
-                                  memberid     INT,        
-                                  classid      INT
+                                  memberid     INT NOT NULL,        
+                                  classid      INT NOT NULL,
+                                  UNIQUE(memberid, classid)
                                   )""")
 
 c.execute("""CREATE TABLE methodshist(id INTEGER PRIMARY KEY, 
-                                      memberid     INT, 
-                                      oldname     TEXT,
-                                      olddesc     TEXT, 
-                                      newname     TEXT, 
+                                      memberid     INT NOT NULL, 
+                                      oldname     TEXT NOT NULL,
+                                      olddesc     TEXT NOT NULL, 
+                                      newname     TEXT NOT NULL, 
                                       newdesc     TEXT, 
-                                      timestamp   INTEGER, 
-                                      nick        TEXT
+                                      timestamp   INTEGER NOT NULL, 
+                                      nick        TEXT NOT NULL
                                       )""")
 
 c.execute("""CREATE TABLE fieldshist (id INTEGER PRIMARY KEY, 
-                                      memberid     INT, 
-                                      oldname     TEXT,
-                                      olddesc     TEXT, 
-                                      newname     TEXT, 
+                                      memberid     INT NOT NULL, 
+                                      oldname     TEXT NOT NULL,
+                                      olddesc     TEXT NOT NULL, 
+                                      newname     TEXT NOT NULL, 
                                       newdesc     TEXT, 
-                                      timestamp   INTEGER, 
-                                      nick        TEXT
-                                      )""")                                  
+                                      timestamp   INTEGER NOT NULL, 
+                                      nick        TEXT NOT NULL
+                                      )""")
+                                      
+c.execute("""CREATE TABLE commits (id INTEGER PRIMARY KEY, 
+                                      timestamp   INTEGER NOT NULL, 
+                                      nick        TEXT NOT NULL
+                                      )""")                                                                        
 
 dir_lookup   = {'client':'minecraft', 'server':'minecraft_server'}
 side_lookup  = {'client':0, 'server':1}

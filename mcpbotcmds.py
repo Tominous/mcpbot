@@ -47,9 +47,11 @@ class MCPBotCmds(object):
 
     #================== Getters classes ================================
     def cmdGcc(self, sender, chan, cmd, msg):
+        """$Bgcc <classname>$N              : Get Client Class."""
         self.getClass(sender, chan, cmd, msg, 'client')
 
     def cmdGsc(self, sender, chan, cmd, msg):
+        """$Bgsc <classname>$N              : Get Server Class."""
         self.getClass(sender, chan, cmd, msg, 'server')
 
     def cmdGc(self, sender, chan, cmd, msg):
@@ -87,9 +89,11 @@ class MCPBotCmds(object):
 
     #================== Getters members ================================
     def cmdGcm(self, sender, chan, cmd, msg):
+        """$Bgcm [classname.]<methodname>$N : Get Client Method."""
         self.outputMembers(sender, chan, cmd, msg, 'client', 'methods')
 
     def cmdGsm(self, sender, chan, cmd, msg):
+        """$Bgsm [classname.]<methodname>$N : Get Server Method."""
         self.outputMembers(sender, chan, cmd, msg, 'server', 'methods')
 
     def cmdGm(self, sender, chan, cmd, msg):
@@ -97,9 +101,11 @@ class MCPBotCmds(object):
         self.outputMembers(sender, chan, cmd, msg, 'server', 'methods')
 
     def cmdGcf(self, sender, chan, cmd, msg):
+        """$Bgcf [classname.]<fieldname>$N  : Get Client Field."""
         self.outputMembers(sender, chan, cmd, msg, 'client', 'fields')
 
     def cmdGsf(self, sender, chan, cmd, msg):
+        """$Bgsf [classname.]<fieldname>$N  : Get Server Field."""
         self.outputMembers(sender, chan, cmd, msg, 'server', 'fields')
 
     def cmdGf(self, sender, chan, cmd, msg):
@@ -168,6 +174,7 @@ class MCPBotCmds(object):
     #====================== Search commands ============================
     @database
     def cmdSearch(self, sender, chan, cmd, msg, c):
+        """$Bsearch <pattern>$N  : Search for a pattern."""        
         msg.strip()
         type_lookup = {'method':'func','field':'field'}
         side_lookup = {'client':0, 'server':1}
@@ -218,15 +225,19 @@ class MCPBotCmds(object):
     #====================== Setters for members ========================
     
     def cmdScm(self, sender, chan, cmd, msg):
+        """$Bscm [<id>|<searge>] <newname> [description]$N : Set Client Method."""
         self.setMember(sender, chan, cmd, msg, 'client', 'methods')
         
     def cmdScf(self, sender, chan, cmd, msg):
+        """$Bscf [<id>|<searge>] <newname> [description]$N : Set Server Method."""
         self.setMember(sender, chan, cmd, msg, 'client', 'fields')
         
     def cmdSsm(self, sender, chan, cmd, msg):
+        """$Bssm [<id>|<searge>] <newname> [description]$N : Set Client Field."""
         self.setMember(sender, chan, cmd, msg, 'server', 'methods')
 
     def cmdSsf(self, sender, chan, cmd, msg):
+        """$Bssf [<id>|<searge>] <newname> [description]$N : Set Server Field."""
         self.setMember(sender, chan, cmd, msg, 'server', 'fields')
 
     @database
@@ -281,7 +292,7 @@ class MCPBotCmds(object):
 
     #===================================================================
 
-    #====================== Login Methods ==============================
+    #====================== Log Methods ================================
     @database
     def cmdGetlog(self, sender, chan, cmd, msg, c):
         msg = msg.strip()
@@ -294,7 +305,7 @@ class MCPBotCmds(object):
         self.say(sender, "=== LOGS ===")
         for side  in ['server', 'client']:
             for etype in ['methods', 'fields']:
-                c.execute("""SELECT m.name, m.searge, m.desc, h.newname, h.newdesc, strftime('%s',h.timestamp, 'unixepoch','localtime') as htimestamp, h.nick
+                c.execute("""SELECT m.name, m.searge, m.desc, h.newname, h.newdesc, strftime('%s',h.timestamp, 'unixepoch') as htimestamp, h.nick
                             FROM  %s m 
                             INNER JOIN %shist h ON m.dirtyid = h.id
                             WHERE m.side = ?"""%('%m-%d %H:%M',etype,etype), (side_lookup[side],))
@@ -304,7 +315,7 @@ class MCPBotCmds(object):
                 if results:
                     maxlennick   = max(map(len, [result[6] for result in results]))
                     maxlensearge = max(map(len, [result[1] for result in results]))
-                    maxlenmnane  = max(map(len, [result[0] for result in results]))
+                    maxlenmname  = max(map(len, [result[0] for result in results]))
 
                 for result in results:
                     mname, msearge, mdesc, hname, hdesc, htimestamp, hnick = result
@@ -316,6 +327,31 @@ class MCPBotCmds(object):
                     else:
                         self.say(sender, "+ %s, %s [%s%s] %s => %s"%(htimestamp, hnick.ljust(maxlennick), side[0].upper(), etype[0].upper(), msearge.ljust(maxlensearge), hname))
 
+    @restricted
+    @database
+    def cmdCommit(self, sender, chan, cmd, msg, c):
+
+        nentries = 0
+        for etype in ['methods', 'fields']:
+
+            c.execute("""SELECT m.id, h.id, h.newname, h.newdesc FROM %s m
+                        INNER JOIN %shist h ON m.dirtyid = h.id
+                        """%(etype, etype))
+        
+            results = c.fetchall()
+            nentries += len(results)
+            
+            for result in results:
+                mid, hid, hnewname, hnewdesc = result
+                c.execute("""UPDATE %s SET name = ?, desc = ?, dirtyid = 0 WHERE id = ?"""%etype, (hnewname, hnewdesc, mid))  
+
+        if nentries:
+            c.execute("""INSERT INTO commits VALUES (?, ?, ?)""",(None, int(time.time()), sender))
+            self.say(sender, "=== COMMIT ===")
+            self.say(sender, " Committed %d new updates"%nentries)
+        else:
+            self.say(sender, "=== COMMIT ===")
+            self.say(sender, " No new entries to commit")            
     
     #===================================================================
 
@@ -344,6 +380,7 @@ class MCPBotCmds(object):
     #====================== Misc commands ==============================
     @restricted
     def cmdExec(self, sender, chan, cmd, msg):
+        if sender != 'ProfMobius': return
         try:
             print msg
             exec(msg) in self.globaldic, self.localdic
@@ -351,6 +388,26 @@ class MCPBotCmds(object):
             self.printq.put ('ERROR : %s'%errormsg)
             self.say(sender, 'ERROR : %s'%errormsg)
 
+    def cmdDcc(self, sender, chan, cmd, msg):
+        """$Bdcc$N : Starts a dcc session. Faster and not under the flood protection."""        
+        self.dcc.dcc(sender)        
+    
+    @restricted
+    def cmdKick(self, sender, chan, cmd, msg):
+        msg = msg.strip()
+        msg = msg.split()
+        self.irc.kick(msg[0], msg[1])
+
+    @restricted
+    def cmdRawcmd(self, sender, chan, cmd, msg):
+        self.irc.rawcmd(msg.strip())
+
+    def cmdHelp(self, sender, chan, cmd, msg):
+        self.say(sender, "====== HELP =====")
+        members = dir(self)
+        for member in members:
+            if member[:3] == 'cmd' and getattr(self, member).__doc__:
+                self.say(sender, getattr(self, member).__doc__)
 
 #==END OF CLASS==
 

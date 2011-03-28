@@ -26,11 +26,14 @@ class IRCProtocol(IRCCommands, IRCRawEvents):
             except Empty:
                 continue  
             self.in_msg.task_done()
-                
+            
+            if self.bot.rawmsg:
+                self.bot.printq.put('< ' + msg)
+            
             msg = msg.split()
             
             try:
-                msg[1] = IRC_REPLIES.get(int(msg[1]), 'UNKNOWN')
+                msg[1] = IRC_REPLIES.get(int(msg[1]), 'UNKNOWN_%d'%int(msg[1]))
             except ValueError:
                 pass
             

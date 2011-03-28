@@ -43,6 +43,9 @@ class DCCProtocol(DCCCommands, DCCRawEvents):
                 continue  
             self.in_msg.task_done()
 
+            if self.bot.rawmsg:
+                self.bot.printq.put('< ' + msg)
+
             msg = msg.split()
             
             sender   = get_nick(msg[0])

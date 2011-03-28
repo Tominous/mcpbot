@@ -78,6 +78,7 @@ class IRCRawEvents(object):
         self.locks['WhoIs'].notifyAll()
         self.locks['WhoIs'].release()
     
+    
     def onRawNICK(self, ev):
         if ev.sender == self.cnick:return
         self.bot.users[ev.target] = self.bot.users[ev.sender]

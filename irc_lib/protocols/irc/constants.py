@@ -98,6 +98,7 @@ IRC_REPLIES = {
         322:     'RPL_LIST',
         323:     'RPL_LISTEND',
         324:     'RPL_CHANNELMODEIS',
+        330:     'RPL_WHOISSTATUS',
         331:     'RPL_NOTOPIC',
         332:     'RPL_TOPIC',
         341:     'RPL_INVITING',

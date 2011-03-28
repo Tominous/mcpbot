@@ -25,6 +25,8 @@ class IRCBotBase(IRCBotAdvMtd):
         
         self.cnick       = _nick
         
+        self.rawmsg      = False
+        
         self.locks           = {
             'WhoIs'    :Condition(),
             'ServReg'  :Condition(),
@@ -79,7 +81,8 @@ class IRCBotBase(IRCBotAdvMtd):
             except Empty:
                 continue
             self.out_msg.task_done()
-            self.printq.put('OUT    ' + msg.strip())
+            if self.rawmsg:
+                self.printq.put('> ' + msg.strip())
             if len(msg) > int(allowed_chars) : time.sleep((len(msg)*1.25)/(self.floodprotec/30.0))
             try:
                 self.irc_socket.send(msg)

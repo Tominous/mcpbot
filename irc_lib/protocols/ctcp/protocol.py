@@ -27,6 +27,9 @@ class CTCPProtocol(CTCPCommands, CTCPRawEvents):
                 continue  
             self.in_msg.task_done()
 
+            if self.bot.rawmsg:
+                self.bot.printq.put('< ' + msg)
+
             msg = msg.split()
             msg[3] = msg[3].replace('\x01','') #We remove the leading/tailing \x01
             

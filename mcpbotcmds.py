@@ -6,7 +6,7 @@ from database import database
 
 class MCPBotCmds(object):
     def cmdDefault(self, sender, chan, cmd, msg):
-        print sender, chan, cmd, msg
+        pass
 
     #================== Base chatting commands =========================
     @restricted
@@ -137,12 +137,19 @@ class MCPBotCmds(object):
                          
         results = c.fetchall()
 
-        if len(results) > 10:
+        if sender in self.dcc.sockets and self.dcc.sockets[sender]:
+            lowlimit  = 10
+            highlimit = 999
+        else:
+            lowlimit  = 1
+            highlimit = 10
+
+        if len(results) > highlimit:
             self.say(sender, "=== GET %s %s ==="%(side.upper(),etype.upper()))
             self.say(sender, " $BVERY$N ambiguous request $R'%s'$N"%msg)
             self.say(sender, " Found %s possible answers"%len(results))        
             self.say(sender, " Not displaying any !")        
-        elif 10 >= len(results) > 1:
+        elif highlimit >= len(results) > lowlimit:
             self.say(sender, "=== GET %s %s ==="%(side.upper(),etype.upper()))
             self.say(sender, " Ambiguous request $R'%s'$N"%msg)
             self.say(sender, " Found %s possible answers"%len(results))
@@ -153,7 +160,7 @@ class MCPBotCmds(object):
                 fullcsv   = '%s.%s'%(classname, name)
                 fullnotch = '[%s.%s]'%(classnotch, notch)
                 self.say(sender, " %s %s %s"%(fullcsv.ljust(maxlencsv+2), fullnotch.ljust(maxlennotch+2), sig))
-        elif len(results) == 1:
+        elif lowlimit >= len(results) > 0:
             name, notch, searge, sig, notchsig, desc, classname, classnotch = results[0]
             self.say(sender, "=== GET %s %s ==="%(side.upper(),etype.upper()))
             self.say(sender, " $BSide$N        : %s"%side)
@@ -181,6 +188,13 @@ class MCPBotCmds(object):
 
         results = {'classes':None, 'fields':None, 'methods':None}
 
+        if sender in self.dcc.sockets and self.dcc.sockets[sender]:
+            lowlimit  = 0
+            highlimit = 100
+        else:
+            lowlimit  = 1
+            highlimit = 10
+
         self.say(sender, "=== SEARCH RESULTS ===")    
         for side in ['client', 'server']:
             c.execute("""SELECT c.name, c.notch FROM vclasses c WHERE (c.name LIKE ?) AND c.side = ?""",('%%%s%%'%(msg), side_lookup[side]))                   
@@ -197,7 +211,7 @@ class MCPBotCmds(object):
             else:                
                 maxlenname  = max(map(len, [result[0] for result in results['classes']]))
                 maxlennotch = max(map(len, [result[1] for result in results['classes']]))
-                if len(results['classes']) > 10:
+                if len(results['classes']) > highlimit:
                     self.say(sender, " [%s][  CLASS] Too many results : %d"%(side.upper(),len(results['classes'])))
                 else:
                     for result in results['classes']:
@@ -211,7 +225,7 @@ class MCPBotCmds(object):
                 else:
                     maxlenname  = max(map(len, ['%s.%s'%(result[6], result[0])   for result in results[etype]]))
                     maxlennotch = max(map(len, ['[%s.%s]'%(result[7], result[1]) for result in results[etype]]))
-                    if len(results[etype]) > 10:
+                    if len(results[etype]) > highlimit:
                         self.say(sender, " [%s][%7s] Too many results : %d"%(side.upper(),etype.upper(),len(results[etype])))
                     else:
                         for result in results[etype]:
@@ -287,8 +301,15 @@ class MCPBotCmds(object):
             self.say(sender, "$BOld desc$N : %s"%(desc))
             self.say(sender, "$BNew desc$N : %s"%(newdesc))
 
-            c.execute("""INSERT INTO %shist VALUES (?, ?, ?, ?, ?, ?, ?, ?)"""%etype,
-                (None, int(id), name, desc, newname, newdesc, int(time.time()), sender))
+            if not newdesc:
+                c.execute("""INSERT INTO %shist VALUES (?, ?, ?, ?, ?, ?, ?, ?)"""%etype,
+                    (None, int(id), name, desc, newname, desc, int(time.time()), sender))
+            elif newdesc == 'None':
+                c.execute("""INSERT INTO %shist VALUES (?, ?, ?, ?, ?, ?, ?, ?)"""%etype,
+                    (None, int(id), name, desc, newname, None, int(time.time()), sender))                
+            else:
+                c.execute("""INSERT INTO %shist VALUES (?, ?, ?, ?, ?, ?, ?, ?)"""%etype,
+                    (None, int(id), name, desc, newname, newdesc, int(time.time()), sender))
 
     #===================================================================
 
@@ -404,10 +425,7 @@ class MCPBotCmds(object):
 
     def cmdHelp(self, sender, chan, cmd, msg):
         self.say(sender, "====== HELP =====")
-        members = dir(self)
-        for member in members:
-            if member[:3] == 'cmd' and getattr(self, member).__doc__:
-                self.say(sender, getattr(self, member).__doc__)
+        self.say(sender, "For help, please check : http://mcp.ocean-labs.de/index.php/MCPBot")
 
 #==END OF CLASS==
 

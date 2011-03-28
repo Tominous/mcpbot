@@ -8,16 +8,18 @@ class DCCRawEvents(object):
 
     def onRawDCCMsg(self, ev):
         if self.bot.log:
-            self.bot.log.write('%s %s %s %s %s %s\n'%(time.ctime(), ev.type.ljust(5), ev.cmd.ljust(15), ev.sender.ljust(20), ev.target.ljust(20), ev.msg))
+            self.bot.log.write('%s; %s; %s; %s; %s; %s;\n'%(time.ctime(), ev.type.ljust(5), ev.cmd.ljust(15), ev.sender.ljust(20), ev.target.ljust(20), ev.msg))
             self.bot.log.flush()
             os.fsync(self.bot.log.fileno())
-                    
-        if ev.msg[0] == self.bot.controlchar: ev.msg = ev.msg[1:]
-        if len(ev.msg.split()) < 2: outmsg = ' '
-        else: outmsg = ' '.join(ev.msg.split()[1:])
-        outev = Event(ev.sender, ev.msg.split()[0], self.cnick, outmsg, self.cnick, 'CMD')
 
-        self.bot.raise_onCmd(outev)
+        ev.msg = ev.msg.strip()
+        if len(ev.msg) > 1:
+            if ev.msg[0] == self.bot.controlchar: ev.msg = ev.msg[1:]
+            if len(ev.msg.split()) < 2: outmsg = ' '
+            else: outmsg = ' '.join(ev.msg.split()[1:])
+            outev = Event(ev.sender, ev.msg.split()[0], self.cnick, outmsg, self.cnick, 'CMD')
+
+            self.bot.raise_onCmd(outev)
 
     def onRawDCCCHAT(self, sender, dcccmd, dccarg, dccip, dccport):
         nick    = get_nick(sender)

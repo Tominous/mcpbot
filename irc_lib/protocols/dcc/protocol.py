@@ -9,6 +9,16 @@ import socket
 import thread
 import time
 import urllib
+import select
+
+class DCCSocket(object):
+    def __init__(self, socket, nick):
+        self.buffer = ''
+        self.socket = socket
+        self.nick   = nick
+    
+    def fileno(self):
+        return self.socket.fileno()
 
 class DCCProtocol(DCCCommands, DCCRawEvents):
 
@@ -20,13 +30,12 @@ class DCCProtocol(DCCCommands, DCCRawEvents):
         self.locks           = _locks
         
         self.sockets         = {}
-        self.buffers         = {}
         self.ip2nick         = {}
 
         self.insocket      = socket.socket()
         try:
             self.insocket.listen(10)
-            self.insocket.setblocking(0)
+            #self.insocket.setblocking(0)
             self.inip, self.inport = self.insocket.getsockname()
             self.inip = self.conv_ip_std_long(urllib.urlopen('http://www.whatismyip.com/automation/n09230945.asp').readlines()[0])
         except socket.error:
@@ -101,35 +110,50 @@ class DCCProtocol(DCCCommands, DCCRawEvents):
         return longip
 
     def inbound_loop(self):
+        input = [self.insocket] 
         while not self.bot.exit:
-            try:
-                if not self.insocket : raise socket.error
-                buffsocket, buffip = self.insocket.accept()
-                self.sockets[self.ip2nick[buffip[0]]] = buffsocket
-                self.sockets[self.ip2nick[buffip[0]]].setblocking(0)
-                self.say(self.ip2nick[buffip[0]], 'Connection with user %s established.\r\n'%self.ip2nick[buffip[0]])
-            except socket.error as msg:
-                pass
+            inputready,outputready,exceptready = select.select(input,[],[],5) 
+            
+            for s in inputready:
 
-            for nick, isocket in self.sockets.items():
-                if not isocket:continue
-                if not nick in self.buffers: self.buffers[nick]=''
+                if s == self.insocket:
+                    self.bot.printq.put('> Received connection request') 
+                    # handle the server socket
+                    buffsocket, buffip = self.insocket.accept()
+                    self.bot.printq.put('> User identified as : %s %s'%(self.ip2nick[buffip[0]], buffip[0]))
+                    self.sockets[self.ip2nick[buffip[0]]] = DCCSocket(buffsocket, self.ip2nick[buffip[0]])
+                    #self.sockets[self.ip2nick[buffip[0]]].setblocking(0)
+                    self.say(self.ip2nick[buffip[0]], 'Connection with user %s established.\r\n'%self.ip2nick[buffip[0]])
+                    input.append(self.sockets[self.ip2nick[buffip[0]]])
 
-                try:
-                    self.buffers[nick]  += isocket.recv(512)
-                except socket.error as msg:
-                    continue
-                msg_list = self.buffers[nick].splitlines()
+                else:
+                    # handle all other sockets
+                    data = s.socket.recv(512)
+                    if data:
+                        s.buffer += data
 
-                #We push all the msg beside the last one (in case it is truncated)
-                for msg in msg_list:
-                    ev = Event(nick, 'DCCMSG', self.cnick, msg.strip(), self.cnick, 'DCCMSG')
-                    self.bot.threadpool.add_task(self.onRawDCCMsg,ev)
-                    if hasattr(self.bot, 'onDCCMsg'): 
-                        self.bot.threadpool.add_task(self.bot.onDCCMsg,ev)
-                    else: 
-                        self.bot.threadpool.add_task(self.bot.onDefault,ev)
-                
-                self.buffers[nick] = ''
+                        if self.bot.rawmsg:
+                            self.bot.printq.put('< ' + s.buffer)                    
+                        
+                        if not s.buffer.strip(): continue
+                        
+                        msg_list = s.buffer.splitlines()
 
-            time.sleep(.1)
+                        #We push all the msg beside the last one (in case it is truncated)
+                        for msg in msg_list:
+                            ev = Event(s.nick, 'DCCMSG', self.cnick, msg.strip(), self.cnick, 'DCCMSG')
+                            self.bot.threadpool.add_task(self.onRawDCCMsg,ev)
+                            if hasattr(self.bot, 'onDCCMsg'): 
+                                self.bot.threadpool.add_task(self.bot.onDCCMsg,ev)
+                            else: 
+                                self.bot.threadpool.add_task(self.bot.onDefault,ev)
+                        
+                        s.buffer = ''                    
+                        
+                    else:
+                        self.bot.printq.put('> Connection closed with : %s'%s.nick) 
+                        del self.sockets[s.nick]
+                        s.socket.close()
+                        input.remove(s)
+                     
+     

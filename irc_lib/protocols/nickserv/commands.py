@@ -5,8 +5,14 @@ class NickServCommands(object):
 
     def register(self):
         pass
-    def identify(self):
-        pass
+    def identify(self, password):
+        self.locks['ServReg'].acquire()
+        while not self.bot.irc_status['Registered']:
+            self.locks['ServReg'].wait()
+        self.locks['ServReg'].release()
+        
+        self.rawcmd('IDENTIFY %s'%password)
+        
     def drop(self):
         pass
     def auth(self):

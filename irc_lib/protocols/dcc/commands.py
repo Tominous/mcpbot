@@ -16,7 +16,7 @@ class DCCCommands(object):
         isGone = False
         while not isGone:
             try:
-                self.sockets[nick].send(msg.strip()+'\r\n')
+                self.sockets[nick].socket.send(msg.strip()+'\r\n')
                 isGone = True
             except socket.error:
                 print 'Socket error !'

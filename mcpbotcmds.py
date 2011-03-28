@@ -6,7 +6,7 @@ from database import database
 
 class MCPBotCmds(object):
     def cmdDefault(self, sender, chan, cmd, msg):
-        pass
+        print sender, chan, cmd, msg
 
     #================== Base chatting commands =========================
     @restricted
@@ -24,6 +24,25 @@ class MCPBotCmds(object):
     @restricted
     def cmdAction(self, sender, chan, cmd, msg):
         self.ctcp.action(msg.split()[0], ' '.join(msg.split()[1:]))
+
+    @restricted        
+    def cmdPub(self, sender, chan, cmd, msg):
+        cmd = msg.split()[0]
+        if len(msg.split()) > 1:
+            msg = ' '.join(msg.split()[1:])
+
+        cmd = cmd.lower()
+        cmd = cmd[0].upper() + cmd[1:]
+        
+        if cmd in ['Ssf, Ssm, Scf, Scm']:
+            self.say(sender, 'No public setters !')
+            return
+        
+        try:
+            getattr(self, 'cmd%s'%cmd )(chan, chan, cmd, msg)
+        except AttributeError:
+            getattr(self, 'cmdDefault')(chan, chan, cmd, msg)
+        
     #===================================================================
 
     #================== Getters classes ================================
@@ -210,6 +229,7 @@ class MCPBotCmds(object):
     def cmdSsf(self, sender, chan, cmd, msg):
         self.setMember(sender, chan, cmd, msg, 'server', 'fields')
 
+    @database
     def setMember(self, sender, chan, cmd, msg, side, etype, c):
         msg = msg.strip()
         type_lookup = {'methods':'func','fields':'field'}
@@ -257,8 +277,46 @@ class MCPBotCmds(object):
             self.say(sender, "$BNew desc$N : %s"%(newdesc))
 
             c.execute("""INSERT INTO %shist VALUES (?, ?, ?, ?, ?, ?, ?, ?)"""%etype,
-                (None, int(id), name, desc, newname, newdesc, time.time(), sender))
+                (None, int(id), name, desc, newname, newdesc, int(time.time()), sender))
 
+    #===================================================================
+
+    #====================== Login Methods ==============================
+    @database
+    def cmdGetlog(self, sender, chan, cmd, msg, c):
+        msg = msg.strip()
+        if msg == 'full':fulllog=True
+        else: fulllog = False
+        
+        type_lookup = {'methods':'func','fields':'field'}
+        side_lookup = {'client':0, 'server':1}
+
+        self.say(sender, "=== LOGS ===")
+        for side  in ['server', 'client']:
+            for etype in ['methods', 'fields']:
+                c.execute("""SELECT m.name, m.searge, m.desc, h.newname, h.newdesc, strftime('%s',h.timestamp, 'unixepoch','localtime') as htimestamp, h.nick
+                            FROM  %s m 
+                            INNER JOIN %shist h ON m.dirtyid = h.id
+                            WHERE m.side = ?"""%('%m-%d %H:%M',etype,etype), (side_lookup[side],))
+                    
+                results = c.fetchall()
+        
+                if results:
+                    maxlennick   = max(map(len, [result[6] for result in results]))
+                    maxlensearge = max(map(len, [result[1] for result in results]))
+                    maxlenmnane  = max(map(len, [result[0] for result in results]))
+
+                for result in results:
+                    mname, msearge, mdesc, hname, hdesc, htimestamp, hnick = result
+                    
+                    if fulllog:
+                        self.say(sender, "+ %s, %s"%(htimestamp, hnick))
+                        self.say(sender, "  [%s%s][%s] %s => %s"%(side[0].upper(), etype[0].upper(), msearge.ljust(maxlensearge), mname.ljust(maxlenmname), hname))
+                        self.say(sender, "  [%s%s][%s] %s => %s"%(side[0].upper(), etype[0].upper(), msearge.ljust(maxlensearge), mdesc, hdesc))
+                    else:
+                        self.say(sender, "+ %s, %s [%s%s] %s => %s"%(htimestamp, hnick.ljust(maxlennick), side[0].upper(), etype[0].upper(), msearge.ljust(maxlensearge), hname))
+
+    
     #===================================================================
 
     #====================== Whitelist Handling =========================
@@ -269,6 +327,18 @@ class MCPBotCmds(object):
     @restricted
     def cmdRmwhite(self, sender, chan, cmd, msg):
         self.rmWhitelist(msg)
+    
+    @restricted    
+    def cmdGetwhite(self, sender, chan, cmd, msg):
+        self.say(sender, "Whitelist : %s"%self.whitelist)
+        
+    @restricted    
+    def cmdSavewhite(self, sender, chan, cmd, msg):
+        self.saveWhitelist()
+        
+    @restricted    
+    def cmdLoadwhite(self, sender, chan, cmd, msg):
+        self.loadWhitelist()        
     #===================================================================
 
     #====================== Misc commands ==============================

@@ -147,12 +147,13 @@ dir_lookup   = {'client':'minecraft', 'server':'minecraft_server'}
 side_lookup  = {'client':0, 'server':1}
 package_list = []
 members_list = {'fields':{'client':[], 'server':[]}, 'methods':{'client':[], 'server':[]}}
+
+c.execute("""INSERT INTO versions VALUES (?, ?, ?, ?, ?, ?, ?)""",
+                (None, '2.9a', '2.0', '1.0', '1.3_01', '1.3', int(time.time())))
+
 for side in ['client', 'server']:
     
     classes = {}
-
-    c.execute("""INSERT INTO versions VALUES (?, ?, ?, ?, ?, ?, ?)""",
-                (None, '2.9a', '2.0', '1.0', '1.3_01', '1.3', int(time.time())))
     
     #Here we read all the class files
     for path, dirlist, filelist in os.walk(os.path.join(unrenamed_classes_dir,dir_lookup[side])):

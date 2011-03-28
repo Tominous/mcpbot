@@ -30,6 +30,10 @@ class CTCPProtocol(CTCPCommands, CTCPRawEvents):
             if self.bot.rawmsg:
                 self.bot.printq.put('< ' + msg)
 
+            msg = msg.strip()
+            if not msg:
+                continue
+
             msg = msg.split()
             msg[3] = msg[3].replace('\x01','') #We remove the leading/tailing \x01
             

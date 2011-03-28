@@ -3,6 +3,7 @@ from pprint import pprint
 from parsers.parsers import parse_csv, parse_rgs
 import os,sys
 import sqlite3
+import time
 from sets import Set
 import libobfuscathon.class_def.class_def as libof
 
@@ -134,7 +135,12 @@ c.execute("""CREATE TABLE commits (id INTEGER PRIMARY KEY AUTOINCREMENT,
                                       )""")                                                                        
 
 c.execute("""CREATE TABLE versions (id INTEGER PRIMARY KEY AUTOINCREMENT, 
-                                    name   TEXT NOT NULL
+                                    mcpversion      TEXT NOT NULL,
+                                    botversion      TEXT NOT NULL,
+                                    dbversion       TEXT NOT NULL,
+                                    clientversion   TEXT NOT NULL,
+                                    serverversion   TEXT NOT NULL,
+                                    timestamp       INTEGER NOT NULL
                                       )""")                                                                        
 
 dir_lookup   = {'client':'minecraft', 'server':'minecraft_server'}
@@ -144,6 +150,9 @@ members_list = {'fields':{'client':[], 'server':[]}, 'methods':{'client':[], 'se
 for side in ['client', 'server']:
     
     classes = {}
+
+    c.execute("""INSERT INTO versions VALUES (?, ?, ?, ?, ?, ?, ?)""",
+                (None, '2.9a', '2.0', '1.0', '1.3_01', '1.3', int(time.time())))
     
     #Here we read all the class files
     for path, dirlist, filelist in os.walk(os.path.join(unrenamed_classes_dir,dir_lookup[side])):
@@ -169,7 +178,7 @@ for side in ['client', 'server']:
 
             #We insert the already available informations in the db
             c.execute("""INSERT INTO classes (id, side, name, isinterf, packageid, versionid) VALUES (?, ?, ?, ?, ?, ?)""",
-                (None, side_lookup[side], thisclass['Name'], False, len(package_list), None))
+                (None, side_lookup[side], thisclass['Name'], False, len(package_list), 1))
 
             #We retrieve the automatic ID
             c.execute("""SELECT id FROM classes WHERE name = ? AND side = ?""", (thisclass['Name'], side_lookup[side]))
@@ -192,7 +201,7 @@ for side in ['client', 'server']:
                     if not (searge+sig) in members_list[mtype][side]:
                         members_list[mtype][side].append(searge+sig)
                         c.execute("""INSERT INTO %s (id, side, searge, name, sig, dirtyid, versionid) VALUES (?, ?, ?, ?, ?, ?, ?)"""%mtype,
-                            (None, side_lookup[side], searge, name, sig, 0, None))
+                            (None, side_lookup[side], searge, name, sig, 0, 1))
 
                     #We get the unique id for this method
                     c.execute("""SELECT id FROM %s WHERE searge = ? AND sig = ? AND side = ?"""%mtype, (searge, sig, side_lookup[side]))

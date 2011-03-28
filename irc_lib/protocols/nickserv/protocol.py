@@ -30,6 +30,10 @@ class NickServProtocol(NickServCommands, NickServRawEvents):
             if self.bot.rawmsg:
                 self.bot.printq.put('< ' + msg)
                 
+            msg = msg.strip()
+            if not msg:
+                continue
+                
             msg = msg.split()
 
             if len(msg) < 5 : msg.append(' ')

@@ -29,6 +29,10 @@ class IRCProtocol(IRCCommands, IRCRawEvents):
             
             if self.bot.rawmsg:
                 self.bot.printq.put('< ' + msg)
+
+            msg = msg.strip()
+            if not msg:
+                continue
             
             msg = msg.split()
             

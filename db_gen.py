@@ -20,7 +20,7 @@ c    = conn.cursor()
 #topsuperid    : id in classes of the ultimate parent
 #packageid     : id in packages of the class package
 #versionid     : for which version this entry is valid. Also correspond to a entry in versionid
-c.execute("""CREATE TABLE classes(id INTEGER PRIMARY KEY, 
+c.execute("""CREATE TABLE classes(id INTEGER PRIMARY KEY AUTOINCREMENT, 
                                   side        INT,
                                   name       TEXT, 
                                   notch      TEXT,
@@ -28,11 +28,15 @@ c.execute("""CREATE TABLE classes(id INTEGER PRIMARY KEY,
                                   topsuperid  INT,
                                   isinterf    INT,
                                   packageid   INT,
-                                  versionid   INT 
+                                  versionid   INT,
+                                  FOREIGN KEY(superid)    REFERENCES classes(id)  ON UPDATE RESTRICT ON DELETE RESTRICT,
+                                  FOREIGN KEY(topsuperid) REFERENCES classes(id)  ON UPDATE RESTRICT ON DELETE RESTRICT,
+                                  FOREIGN KEY(packageid)  REFERENCES packages(id) ON UPDATE RESTRICT ON DELETE RESTRICT,
+                                  FOREIGN KEY(versionid)  REFERENCES version(id) ON UPDATE RESTRICT ON DELETE RESTRICT 
                                   )""")
 
 #TABLE packages : Contains the list of possible packages.
-c.execute("""CREATE TABLE packages(id INTEGER PRIMARY KEY,
+c.execute("""CREATE TABLE packages(id INTEGER PRIMARY KEY AUTOINCREMENT,
                                    name TEXT)""")
 
 #TABLE methods : table containing methods information
@@ -46,7 +50,7 @@ c.execute("""CREATE TABLE packages(id INTEGER PRIMARY KEY,
 #topid         : top class where the method/field is first defined
 #dirtyid       : id of the most recent history entry. 0 is none
 #versionid     : for which version this entry is valid. Also correspond to a entry in versionid
-c.execute("""CREATE TABLE methods(id INTEGER PRIMARY KEY, 
+c.execute("""CREATE TABLE methods(id INTEGER PRIMARY KEY AUTOINCREMENT, 
                                   side         INT,        
                                   searge      TEXT, 
                                   notch       TEXT, 
@@ -56,10 +60,12 @@ c.execute("""CREATE TABLE methods(id INTEGER PRIMARY KEY,
                                   desc        TEXT,
                                   topid        INT, 
                                   dirtyid      INT,
-                                  versionid    INT
+                                  versionid    INT,
+                                  FOREIGN KEY(topid)      REFERENCES classes(id) ON UPDATE RESTRICT ON DELETE RESTRICT,
+                                  FOREIGN KEY(versionid)  REFERENCES version(id) ON UPDATE RESTRICT ON DELETE RESTRICT 
                                   )""")
 
-c.execute("""CREATE TABLE fields(id INTEGER PRIMARY KEY, 
+c.execute("""CREATE TABLE fields(id INTEGER PRIMARY KEY AUTOINCREMENT, 
                                   side         INT,        
                                   searge      TEXT, 
                                   notch       TEXT, 
@@ -69,52 +75,66 @@ c.execute("""CREATE TABLE fields(id INTEGER PRIMARY KEY,
                                   desc        TEXT,
                                   topid        INT, 
                                   dirtyid      INT,
-                                  versionid    INT
+                                  versionid    INT,
+                                  FOREIGN KEY(topid)      REFERENCES classes(id) ON UPDATE RESTRICT ON DELETE RESTRICT,                                
+                                  FOREIGN KEY(versionid)  REFERENCES version(id) ON UPDATE RESTRICT ON DELETE RESTRICT                                  
                                   )""")
 
 #TABLE interflk : link between classes and interfaces. Contains a serie of pairs like classid / interfid
 c.execute("""CREATE TABLE interfaceslk (
                                   classid     INT NOT NULL,        
                                   interfid    INT NOT NULL,
-                                  UNIQUE(classid, interfid)
+                                  UNIQUE(classid, interfid),
+                                  FOREIGN KEY(classid)  REFERENCES classes(id) ON UPDATE RESTRICT ON DELETE RESTRICT,
+                                  FOREIGN KEY(interfid) REFERENCES classes(id) ON UPDATE RESTRICT ON DELETE RESTRICT                                                                         
                                   )""")
 
 #TABLE methlk : link between methods and classes. Contains a serie of pairs like methodid / classid
 c.execute("""CREATE TABLE methodslk (
                                   memberid     INT NOT NULL,        
                                   classid      INT NOT NULL,
-                                  UNIQUE(memberid, classid)
+                                  UNIQUE(memberid, classid),
+                                  FOREIGN KEY(memberid)  REFERENCES methods(id) ON UPDATE RESTRICT ON DELETE RESTRICT,
+                                  FOREIGN KEY(classid)   REFERENCES classes(id) ON UPDATE RESTRICT ON DELETE RESTRICT                                   
                                   )""")
 
 c.execute("""CREATE TABLE fieldslk (
                                   memberid     INT NOT NULL,        
                                   classid      INT NOT NULL,
-                                  UNIQUE(memberid, classid)
+                                  UNIQUE(memberid, classid),
+                                  FOREIGN KEY(memberid)  REFERENCES fields(id) ON UPDATE RESTRICT ON DELETE RESTRICT,
+                                  FOREIGN KEY(classid)   REFERENCES classes(id) ON UPDATE RESTRICT ON DELETE RESTRICT                                  
                                   )""")
 
-c.execute("""CREATE TABLE methodshist(id INTEGER PRIMARY KEY, 
+c.execute("""CREATE TABLE methodshist(id INTEGER PRIMARY KEY AUTOINCREMENT, 
                                       memberid     INT NOT NULL, 
                                       oldname     TEXT NOT NULL,
                                       olddesc     TEXT, 
                                       newname     TEXT NOT NULL, 
                                       newdesc     TEXT, 
                                       timestamp   INTEGER NOT NULL, 
-                                      nick        TEXT NOT NULL
+                                      nick        TEXT NOT NULL,
+                                      FOREIGN KEY(memberid)  REFERENCES methods(id) ON UPDATE RESTRICT ON DELETE RESTRICT
                                       )""")
 
-c.execute("""CREATE TABLE fieldshist (id INTEGER PRIMARY KEY, 
+c.execute("""CREATE TABLE fieldshist (id INTEGER PRIMARY KEY AUTOINCREMENT, 
                                       memberid     INT NOT NULL, 
                                       oldname     TEXT NOT NULL,
                                       olddesc     TEXT, 
                                       newname     TEXT NOT NULL, 
                                       newdesc     TEXT, 
                                       timestamp   INTEGER NOT NULL, 
-                                      nick        TEXT NOT NULL
+                                      nick        TEXT NOT NULL,
+                                      FOREIGN KEY(memberid)  REFERENCES fields(id) ON UPDATE RESTRICT ON DELETE RESTRICT
                                       )""")
                                       
-c.execute("""CREATE TABLE commits (id INTEGER PRIMARY KEY, 
+c.execute("""CREATE TABLE commits (id INTEGER PRIMARY KEY AUTOINCREMENT, 
                                       timestamp   INTEGER NOT NULL, 
                                       nick        TEXT NOT NULL
+                                      )""")                                                                        
+
+c.execute("""CREATE TABLE versions (id INTEGER PRIMARY KEY AUTOINCREMENT, 
+                                    name   TEXT NOT NULL
                                       )""")                                                                        
 
 dir_lookup   = {'client':'minecraft', 'server':'minecraft_server'}
@@ -149,7 +169,7 @@ for side in ['client', 'server']:
 
             #We insert the already available informations in the db
             c.execute("""INSERT INTO classes (id, side, name, isinterf, packageid, versionid) VALUES (?, ?, ?, ?, ?, ?)""",
-                (None, side_lookup[side], thisclass['Name'], False, len(package_list), -1))
+                (None, side_lookup[side], thisclass['Name'], False, len(package_list), None))
 
             #We retrieve the automatic ID
             c.execute("""SELECT id FROM classes WHERE name = ? AND side = ?""", (thisclass['Name'], side_lookup[side]))
@@ -172,7 +192,7 @@ for side in ['client', 'server']:
                     if not (searge+sig) in members_list[mtype][side]:
                         members_list[mtype][side].append(searge+sig)
                         c.execute("""INSERT INTO %s (id, side, searge, name, sig, dirtyid, versionid) VALUES (?, ?, ?, ?, ?, ?, ?)"""%mtype,
-                            (None, side_lookup[side], searge, name, sig, 0, -1))
+                            (None, side_lookup[side], searge, name, sig, 0, None))
 
                     #We get the unique id for this method
                     c.execute("""SELECT id FROM %s WHERE searge = ? AND sig = ? AND side = ?"""%mtype, (searge, sig, side_lookup[side]))

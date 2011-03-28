@@ -10,6 +10,7 @@ import thread
 import time
 import urllib
 import select
+import traceback
 
 class DCCSocket(object):
     def __init__(self, socket, nick):
@@ -113,7 +114,7 @@ class DCCProtocol(DCCCommands, DCCRawEvents):
         input = [self.insocket] 
         while not self.bot.exit:
             inputready,outputready,exceptready = select.select(input,[],[],5) 
-            
+                    
             for s in inputready:
 
                 if s == self.insocket:
@@ -125,7 +126,7 @@ class DCCProtocol(DCCCommands, DCCRawEvents):
                     #self.sockets[self.ip2nick[buffip[0]]].setblocking(0)
                     self.say(self.ip2nick[buffip[0]], 'Connection with user %s established.\r\n'%self.ip2nick[buffip[0]])
                     input.append(self.sockets[self.ip2nick[buffip[0]]])
-
+                        
                 else:
                     # handle all other sockets
                     data = s.socket.recv(512)
@@ -134,9 +135,12 @@ class DCCProtocol(DCCCommands, DCCRawEvents):
 
                         if self.bot.rawmsg:
                             self.bot.printq.put('< ' + s.buffer)                    
-                        
-                        if not s.buffer.strip(): continue
-                        
+
+                        #print r'>%s<'%s.buffer
+                        if not s.buffer.strip():
+                            s.buffer = ''
+                            continue
+                                
                         msg_list = s.buffer.splitlines()
 
                         #We push all the msg beside the last one (in case it is truncated)
@@ -147,13 +151,11 @@ class DCCProtocol(DCCCommands, DCCRawEvents):
                                 self.bot.threadpool.add_task(self.bot.onDCCMsg,ev)
                             else: 
                                 self.bot.threadpool.add_task(self.bot.onDefault,ev)
-                        
+                                
                         s.buffer = ''                    
-                        
+                                
                     else:
                         self.bot.printq.put('> Connection closed with : %s'%s.nick) 
                         del self.sockets[s.nick]
                         s.socket.close()
                         input.remove(s)
-                     
-     

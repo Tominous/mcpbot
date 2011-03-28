@@ -349,8 +349,60 @@ class MCPBotCmds(object):
                         self.say(sender, "+ %s, %s [%s%s] %s => %s"%(htimestamp, hnick.ljust(maxlennick), side[0].upper(), etype[0].upper(), msearge.ljust(maxlensearge), hname))
 
     @restricted
+    def cmdCommit(self, sender, chan, cmd, msg):
+        self.dbCommit (sender, chan, cmd, msg)
+
+    @restricted
+    def cmdUpdatecsv(self, sender, chan, cmd, msg):
+        self.dbCommit (sender, chan, cmd, msg)
+        self.updateCsv(sender, chan, cmd, msg)
+    
     @database
-    def cmdCommit(self, sender, chan, cmd, msg, c):
+    def updateCsv(self, sender, chan, cmd, msg, c):
+        
+        directory  = '/home/mcpfiles/renamer_csv'
+        #directory = "."
+
+        outfieldcsv  = 'fields.csv'
+        outmethodcsv = 'methods.csv'        
+    
+        ffmetho = open('%s/%s'%(directory, outmethodcsv), 'w')
+        fffield = open('%s/%s'%(directory, outfieldcsv),  'w')
+        
+        for i in range(2):
+            ffmetho.write('NULL,NULL,NULL,NULL,NULL,NULL\n')
+            fffield.write('NULL,NULL,NULL,NULL,NULL,NULL\n')
+        fffield.write('Class,Field,Name,Class,Field,Name,Name,Notes\n')
+        ffmetho.write('NULL,NULL,NULL,NULL,NULL,NULL\n')
+        ffmetho.write('class (for reference only),Reference,class (for reference only),Reference,Name,Notes\n')
+        
+        c.execute("""SELECT classname, searge, name, desc FROM vfields WHERE side = 0""")
+        for row in c.fetchall():
+            classname, searge, name, desc = row
+            if not desc:desc = ''
+            fffield.write('%s,*,%s,*,*,*,%s,"%s"\n'%(classname, searge, name, desc.replace('"', "'")))
+        c.execute("""SELECT classname, searge, name, desc FROM vfields WHERE side = 1""")
+        for row in c.fetchall():
+            classname, searge, name, desc = row
+            if not desc:desc = ''
+            fffield.write('*,*,*,%s,*,%s,%s,"%s"\n'%(classname, searge, name, desc.replace('"', "'")))
+
+        c.execute("""SELECT classname, searge, name, desc FROM vmethods WHERE side = 0""")
+        for row in c.fetchall():
+            classname, searge, name, desc = row
+            if not desc:desc = ''
+            ffmetho.write('%s,%s,*,*,%s,"%s"\n'%(classname, searge, name, desc.replace('"', "'")))
+        c.execute("""SELECT classname, searge, name, desc FROM vmethods WHERE side = 1""")
+        for row in c.fetchall():
+            classname, searge, name, desc = row
+            if not desc:desc = ''
+            ffmetho.write('*,*,%s,%s,%s,"%s"\n'%(classname, searge, name, desc.replace('"', "'")))
+
+        ffmetho.close()
+        fffield.close()   
+    
+    @database   
+    def dbCommit(self, sender, chan, cmd, msg, c):
 
         nentries = 0
         for etype in ['methods', 'fields']:
@@ -372,7 +424,7 @@ class MCPBotCmds(object):
             self.say(sender, " Committed %d new updates"%nentries)
         else:
             self.say(sender, "=== COMMIT ===")
-            self.say(sender, " No new entries to commit")            
+            self.say(sender, " No new entries to commit")    
     
     #===================================================================
 

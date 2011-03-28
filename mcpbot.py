@@ -28,7 +28,7 @@ if __name__ == "__main__":
         print 'No password given. Try python mcpbot.py <password>.'
         sys.exit(0)
     
-    bot = MCPBot('MCPBot', '!')
+    bot = MCPBot('MCPBot_NG', '$')
     bot.connect('irc.esper.net')
     bot.nickserv.identify(sys.argv[1])
     bot.irc.join('#test')

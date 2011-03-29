@@ -36,9 +36,18 @@ class Dispatcher(object):
 
             self.in_msg.task_done()
 
+
+            msg = msg.strip()
+            if not msg:
+                continue
+
+            if self.bot.rawmsg:
+                self.bot.printq.put('< "%s"'%msg)
+
             sender = get_nick(msg.split()[0])
             cmd    = msg.split()[1]
             
+
             if sender.lower() == 'nickserv':
                 self.nse_queue.put(msg)
             elif self.isCTCP(cmd, msg) and msg.split()[3][2:] == 'DCC':
@@ -49,5 +58,6 @@ class Dispatcher(object):
                 self.irc_queue.put(msg)
 
     def isCTCP(self, cmd, msg):
+        if len(' '.join(msg.split()[3:])) < 2 : return False
         if cmd in ['PRIVMSG', 'NOTICE'] and ' '.join(msg.split()[3:])[1] == '\x01' and ' '.join(msg.split()[3:])[-1] == '\x01': return True
         else: return False

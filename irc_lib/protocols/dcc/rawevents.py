@@ -7,6 +7,7 @@ from irc_lib.protocols.user import User
 class DCCRawEvents(object):
 
     def onRawDCCMsg(self, ev):
+        if not ev.msg: return
         if self.bot.log:
             self.bot.log.write('%s; %s; %s; %s; %s; %s;\n'%(time.ctime(), ev.type.ljust(5), ev.cmd.ljust(15), ev.sender.ljust(20), ev.target.ljust(20), ev.msg))
             self.bot.log.flush()

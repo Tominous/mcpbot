@@ -9,6 +9,7 @@ class IRCRawEvents(object):
         self.pong(msg[1])
     
     def onRawNOTICE(self, ev):
+        if not ev.msg:return
         if self.bot.log:
             self.bot.loggingq.put(ev)
         
@@ -20,6 +21,8 @@ class IRCRawEvents(object):
         self.onRawPRIVMSG(ev)
 
     def onRawPRIVMSG(self, ev):
+        if not ev.msg:return
+        
         if self.bot.log:
             self.bot.loggingq.put(ev)
         
@@ -58,6 +61,7 @@ class IRCRawEvents(object):
             self.bot.printq.put('> MOTD found. Registered with server.')   
     
     def onRawRPL_NAMREPLY(self, ev):
+        if not ev.msg: return
         weirdsymbol = ev.msg.split()[0]     #Used for channel status, "@" is used for secret channels, "*" for private channels, and "=" for others (public channels).
         channel     = ev.msg.split()[1]
         nicks       = ev.msg.split()[2:]
@@ -66,6 +70,7 @@ class IRCRawEvents(object):
             self.add_user(nick, channel)
     
     def onRawRPL_WHOISUSER(self, ev):
+        if not ev.msg: return
         nick = ev.msg.split()[0]
         user = ev.msg.split()[1]
         host = ev.msg.split()[2]
@@ -85,6 +90,7 @@ class IRCRawEvents(object):
         del self.bot.users[ev.sender]
 
     def onRawINVITE(self, ev):
+        if not ev.msg: return
         self.join(ev.msg)
     
     def onRawDefault(self, ev):

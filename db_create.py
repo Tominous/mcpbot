@@ -1,10 +1,16 @@
 ################ DB_CREATE.PY ##################
 # Used to create the database                  #
 # Contains the schemas. No data is added here. #
+# External dependencies :                      #
+#  + None                                      #
+# External files :                             #
+#  + None                                      #
+# Author  : ProfMobius                         #
+# License : GPLv3                              #
 ################################################
 
 import sqlite3
-import os, sys, time
+import os, sys, time, glob
 from optparse import OptionParser
 
 def main(options, args):
@@ -160,8 +166,77 @@ def main(options, args):
                                         dbversion       TEXT NOT NULL,
                                         clientversion   TEXT NOT NULL,
                                         serverversion   TEXT NOT NULL,
-                                        timestamp       INTEGER NOT NULL
+                                        timestamp       INTEGER NOT NULL,
+                                        UNIQUE(mcpversion, botversion, dbversion, clientversion, serverversion)
                                           )""")        
+
+    ######### WE NOW DEFINE THE VIEWS WE WILL BE USING ###########
+
+    # For methods and fields, we want id, side, searge, notch, name, sig, notchsig, desc, topclass name, topclass notch, package, version
+    for mtype in ['fields', 'methods']:
+        c.execute("""CREATE VIEW v%s AS
+            SELECT m.id, m.side, m.searge, m.notch, 
+            CASE WHEN m.dirtyid > 0 THEN h.newname
+                                ELSE m.name
+            END AS name,  
+            CASE WHEN m.dirtyid > 0 THEN h.newdesc
+                                ELSE m.desc
+            END AS desc,
+                m.sig, m.notchsig, c.name AS classname, c.notch AS classnotch, p.name AS package, c.versionid
+        FROM %s m
+        INNER JOIN classes c
+            ON m.topid = c.id
+        INNER JOIN packages p
+            ON c.packageid = p.id
+        LEFT  JOIN %shist h
+            ON m.dirtyid = h.id
+        """%(mtype,mtype,mtype))
+
+    for mtype in ['fields', 'methods']:
+        c.execute("""CREATE VIEW v%sall AS
+            SELECT m.id, m.side, m.searge, m.notch, 
+            CASE WHEN m.dirtyid > 0 THEN h.newname
+                                ELSE m.name
+            END AS name,  
+            CASE WHEN m.dirtyid > 0 THEN h.newdesc
+                                ELSE m.desc
+            END AS desc,
+                m.sig, m.notchsig, c.name AS classname, c.notch AS classnotch, c1.name AS topname, c1.notch AS topnotch, p.name AS package, c.versionid
+        FROM %s m
+        INNER JOIN %slk mlk
+            ON mlk.memberid = m.id
+        INNER JOIN classes c
+            ON mlk.classid = c.id        
+        INNER JOIN classes c1
+            ON m.topid = c1.id        
+        INNER JOIN packages p
+            ON c.packageid = p.id
+        LEFT  JOIN %shist h
+            ON m.dirtyid = h.id
+        """%(mtype,mtype,mtype,mtype))
+        
+    c.execute("""CREATE VIEW vclasses AS
+        SELECT c.id, c.side, c.name, c.notch, c1.name AS supername, c.isinterf, p.name AS package, c.versionid
+        FROM classes c
+        INNER JOIN packages p
+            ON c.packageid = p.id
+        LEFT JOIN classes c1
+            ON c.superid = c1.id 
+        """)
+
+    c.execute("""CREATE VIEW vconstructors AS
+        SELECT m.id, m.side, m.name, m.notch, m.sig, m.notchsig
+        FROM methods m
+        INNER JOIN classes c
+            ON (m.name = c.name AND m.side = c.side)
+        """)
+
+    #Triggers to mark entries as dirty
+    for mtype in ['methods', 'fields']:
+        c.execute("""CREATE TRIGGER update_%s_dirty AFTER INSERT ON %shist
+                    BEGIN
+                    UPDATE %s SET dirtyid = new.id WHERE id = new.memberid;
+                    END"""%(mtype, mtype, mtype))
 
     conn.commit()
     c.close()

@@ -27,9 +27,6 @@ class IRCProtocol(IRCCommands, IRCRawEvents):
                 continue  
             self.in_msg.task_done()
             
-            if self.bot.rawmsg:
-                self.bot.printq.put('< ' + msg)
-
             msg = msg.strip()
             if not msg:
                 continue

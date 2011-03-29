@@ -11,18 +11,22 @@ class MCPBotCmds(object):
     #================== Base chatting commands =========================
     @restricted
     def cmdSay(self, sender, chan, cmd, msg):
+        if not len(msg.split()) > 1: return
         self.say(msg.split()[0], ' '.join(msg.split()[1:]))
 
     @restricted
     def cmdMsg(self, sender, chan, cmd, msg):
+        if not len(msg.split()) > 1: return
         self.irc.privmsg(msg.split()[0], ' '.join(msg.split()[1:]))
 
     @restricted
     def cmdNotice(self, sender, chan, cmd, msg):
+        if not len(msg.split()) > 1: return
         self.irc.notice(msg.split()[0], ' '.join(msg.split()[1:]))
 
     @restricted
     def cmdAction(self, sender, chan, cmd, msg):
+        if not len(msg.split()) > 1: return
         self.ctcp.action(msg.split()[0], ' '.join(msg.split()[1:]))
 
     @restricted        
@@ -467,6 +471,7 @@ class MCPBotCmds(object):
     
     @restricted
     def cmdKick(self, sender, chan, cmd, msg):
+        if not msg.strip.split() == 2:return
         msg = msg.strip()
         msg = msg.split()
         self.irc.kick(msg[0], msg[1])

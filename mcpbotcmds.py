@@ -1,6 +1,7 @@
 import sqlite3
 import time
 import string
+import csv
 from irc_lib.utils.restricted import restricted
 from database import database
 
@@ -391,7 +392,7 @@ class MCPBotCmds(object):
             if not newdesc:
                 self.say(sender, "$BNew desc$N : %s"%(desc))
                 c.execute("""INSERT INTO %shist VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"""%etype,
-                    (None, int(id), name, desc, newname, desc, int(time.time()), sender, forced, cmd))
+                    (None, int(id), name, desc, newname, desc.replace('"',"'"), int(time.time()), sender, forced, cmd))
             elif newdesc == 'None':
                 self.say(sender, "$BNew desc$N : None")
                 c.execute("""INSERT INTO %shist VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"""%etype,
@@ -399,7 +400,7 @@ class MCPBotCmds(object):
             else:
                 self.say(sender, "$BNew desc$N : %s"(newdesc))
                 c.execute("""INSERT INTO %shist VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"""%etype,
-                    (None, int(id), name, desc, newname, newdesc, int(time.time()), sender, forced, cmd))
+                    (None, int(id), name, desc, newname, newdesc.replace('"',"'"), int(time.time()), sender, forced, cmd))
 
     #===================================================================
 
@@ -500,6 +501,27 @@ class MCPBotCmds(object):
 
         ffmetho.close()
         fffield.close()   
+    
+    @restricted
+    @database
+    def cmdAltcsv(self, sender, chan, cmd, msg, *args, **kwargs):
+        c         = kwargs['cursor']
+        idversion = kwargs['idvers']  
+        
+        methodswriter = csv.writer(open('methods.csv', 'wb'), delimiter=',',quotechar='"', quoting=csv.QUOTE_ALL)
+        c.execute("""SELECT * FROM methods WHERE versionid = ?""",(idversion,))
+        for row in c:
+            methodswriter.writerow(row)
+
+        fieldswriter = csv.writer(open('fields.csv', 'wb'), delimiter=',',quotechar='"', quoting=csv.QUOTE_ALL)
+        c.execute("""SELECT * FROM fields WHERE versionid = ?""",(idversion,))
+        for row in c:
+            fieldswriter.writerow(row)
+            
+        classeswriter = csv.writer(open('classes.csv', 'wb'), delimiter=',',quotechar='"', quoting=csv.QUOTE_ALL)
+        c.execute("""SELECT * FROM classes WHERE versionid = ?""",(idversion,))
+        for row in c:
+            classeswriter.writerow(row)            
     
     @database   
     def dbCommit(self, sender, chan, cmd, msg, *args, **kwargs):

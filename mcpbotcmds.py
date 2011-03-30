@@ -523,18 +523,44 @@ class MCPBotCmds(object):
             c.execute ("""SELECT mcpversion, botversion, dbversion, clientversion, serverversion FROM versions WHERE id = ?""", (idversion,)).fetchone()
             
         self.say(sender, "===== STATUS =====")
-        self.say(sender, "$B MCP$N    : %s"%mcpversion)
-        self.say(sender, "$B Bot$N    : %s"%botversion)
-        self.say(sender, "$B Client$N : %s"%clientversion)
-        self.say(sender, "$B Server$N : %s"%serverversion)
+        self.say(sender, " $B MCP$N    : %s"%mcpversion)
+        self.say(sender, " $B Bot$N    : %s"%botversion)
+        self.say(sender, " $B Client$N : %s"%clientversion)
+        self.say(sender, " $B Server$N : %s"%serverversion)
 
-        for side  in ['server', 'client']:
+        for side  in ['client', 'server']:
             for etype in ['methods', 'fields']:
                 total, ren, urn = c.execute("""SELECT total(%st), total(%sr), total(%su) 
                                       FROM vclassesstats WHERE side = ? AND versionid = ?"""%(etype,etype,etype), 
                                       (side_lookup[side], idversion)).fetchone()
                                       
-                self.say(sender, "$B[%s][%7s]$N : T %4d | R %4d | U %4d | %5.2f%%" %(side[0].upper(), etype.upper(), total, ren, urn, float(ren)/float(total)*100))
+                self.say(sender, " $B[%s][%7s]$N : T $B%4d$N | R $B%4d$N | U $B%4d$N | $B%5.2f%%$N" %(side[0].upper(), etype.upper(), total, ren, urn, float(ren)/float(total)*100))
+
+    @database
+    def cmdTodo(self, sender, chan, cmd, msg, *args, **kwargs):
+        c         = kwargs['cursor']
+        idversion = kwargs['idvers']
+
+        type_lookup = {'methods':'func','fields':'field'}
+        side_lookup = {'client':0, 'server':1}
+        
+        if not msg in ['client', 'server']:
+            self.say(sender, "$Btodo <client|server>")
+            return
+
+        results = c.execute("""SELECT id, name, methodst + fieldst, methodsr  + fieldsr, methodsu  + fieldsu
+                                FROM vclassesstats WHERE side = ? AND versionid = ? ORDER BY methodsu + fieldsu DESC LIMIT 10""",
+                                (side_lookup[msg], idversion)).fetchall()
+
+        self.say(sender, "===== TODO %s ====="%msg.upper())
+        for result in results:
+            id, name, memberst, membersr, membersu = result
+            if not memberst: memberst = 0
+            if not membersr: membersr = 0
+            if not membersu: membersu = 0
+            if membersr == 0: percent = 0.
+            else: percent = float(membersr)/float(memberst)*100.0
+            self.say(sender, " $B%s$N : U $B%4d$N [ T $B%4d$N | R $B%4d$N | $B%5.2f%%$N ] "%(name.ljust(20), membersu, memberst, membersr, percent))
 
 #==END OF CLASS==
 

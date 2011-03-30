@@ -525,8 +525,8 @@ class MCPBotCmds(object):
         self.say(sender, "===== STATUS =====")
         self.say(sender, "$B MCP$N    : %s"%mcpversion)
         self.say(sender, "$B Bot$N    : %s"%botversion)
-        self.say(sender, "$B Client$N : %s"%dbversion)
-        self.say(sender, "$B Server$N : %s"%clientversion)
+        self.say(sender, "$B Client$N : %s"%clientversion)
+        self.say(sender, "$B Server$N : %s"%serverversion)
 
         for side  in ['server', 'client']:
             for etype in ['methods', 'fields']:

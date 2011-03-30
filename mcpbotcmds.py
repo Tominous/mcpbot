@@ -126,22 +126,61 @@ class MCPBotCmds(object):
         type_lookup = {'fields':'field', 'methods':'func'}
         msg = msg.strip()
 
-        if len(msg.split('.')) > 2 or not msg:
+        cname = ''
+        mname = ''
+        sname = ''
+        searchpattern = ''
+
+        tmpmsg = msg
+
+        if len(tmpmsg.split('.')) > 2 or len(tmpmsg.split()) > 2 or not tmpmsg:
             self.say(sender, "$B[ GET %s %s ]"%(side.upper(),etype.upper()))
             self.say(sender, " Syntax error. Use $B%s <membername>$N or $B%s <classname>.<membername>$N"%(cmd,cmd))
             return
 
-        elif len(msg.split('.')) == 1:
-            c.execute("""SELECT m.name, m.notch, m.searge, m.sig, m.notchsig, m.desc, m.classname, m.classnotch FROM v%s m
-                         WHERE ((m.searge LIKE ? ESCAPE '!') OR m.searge = ? OR m.notch = ? OR m.name = ?) AND m.side = ? AND m.versionid = ?"""%etype, 
-                         ('%s!_%s!_%%'%(type_lookup[etype],msg),msg,msg,msg,side_lookup[side], idversion))
+    
+        if len(tmpmsg.split()) == 2:   #Do we have a signature to search for
+            sname    = tmpmsg.split()[1]
+            tmpmsg   = tmpmsg.split()[0]
 
-        elif len(msg.split('.')) == 2:
-            cname = msg.split('.')[0]
-            mname = msg.split('.')[1]
+        if len(tmpmsg.split('.')) == 2:
+            cname = tmpmsg.split('.')[0]
+            mname = tmpmsg.split('.')[1]
+
+        else:
+            mname = tmpmsg
+
+        if cname and sname:
             c.execute("""SELECT m.name, m.notch, m.searge, m.sig, m.notchsig, m.desc, m.classname, m.classnotch FROM v%s m
-                         WHERE ((m.searge LIKE ? ESCAPE '!') OR m.searge = ? OR m.notch = ? OR m.name = ?) AND m.side = ? AND (m.classname = ? OR m.classnotch = ?) AND m.versionid = ?"""%etype, 
-                         ('%s!_%s!_%%'%(type_lookup[etype],msg),mname,mname,mname,side_lookup[side], cname,cname, idversion))
+                         WHERE ((m.searge LIKE ? ESCAPE '!') OR m.searge = ? OR m.notch = ? OR m.name = ?) 
+                         AND m.side = ? AND m.versionid = ?
+                         AND (m.classname = ? OR m.classnotch = ?)
+                         AND (m.sig = ? OR m.notchsig = ?)
+                         """%etype, 
+                         ('%s!_%s!_%%'%(type_lookup[etype],mname),mname,mname,mname,side_lookup[side], idversion, cname, cname, sname, sname))
+                         
+        elif cname and not sname:
+            c.execute("""SELECT m.name, m.notch, m.searge, m.sig, m.notchsig, m.desc, m.classname, m.classnotch FROM v%s m
+                         WHERE ((m.searge LIKE ? ESCAPE '!') OR m.searge = ? OR m.notch = ? OR m.name = ?) 
+                         AND m.side = ? AND m.versionid = ?
+                         AND (m.classname = ? OR m.classnotch = ?)
+                         """%etype, 
+                         ('%s!_%s!_%%'%(type_lookup[etype],mname),mname,mname,mname,side_lookup[side], idversion, cname, cname))
+
+        elif not cname and sname:
+            c.execute("""SELECT m.name, m.notch, m.searge, m.sig, m.notchsig, m.desc, m.classname, m.classnotch FROM v%s m
+                         WHERE ((m.searge LIKE ? ESCAPE '!') OR m.searge = ? OR m.notch = ? OR m.name = ?) 
+                         AND m.side = ? AND m.versionid = ?
+                         AND (m.sig = ? OR m.notchsig = ?)
+                         """%etype, 
+                         ('%s!_%s!_%%'%(type_lookup[etype],mname),mname,mname,mname,side_lookup[side], idversion, sname, sname))
+
+        else:
+            c.execute("""SELECT m.name, m.notch, m.searge, m.sig, m.notchsig, m.desc, m.classname, m.classnotch FROM v%s m
+                         WHERE ((m.searge LIKE ? ESCAPE '!') OR m.searge = ? OR m.notch = ? OR m.name = ?) 
+                         AND m.side = ? AND m.versionid = ?
+                         """%etype, 
+                         ('%s!_%s!_%%'%(type_lookup[etype],mname),mname,mname,mname,side_lookup[side], idversion))
                          
         results = c.fetchall()
 

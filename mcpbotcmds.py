@@ -291,25 +291,42 @@ class MCPBotCmds(object):
     
     def cmdScm(self, sender, chan, cmd, msg, *args, **kwargs):
         """$Bscm [<id>|<searge>] <newname> [description]$N : Set Client Method."""
-        self.setMember(sender, chan, cmd, msg, 'client', 'methods')
+        self.setMember(sender, chan, cmd, msg, 'client', 'methods', forced=False)
         
     def cmdScf(self, sender, chan, cmd, msg, *args, **kwargs):
         """$Bscf [<id>|<searge>] <newname> [description]$N : Set Server Method."""
-        self.setMember(sender, chan, cmd, msg, 'client', 'fields')
+        self.setMember(sender, chan, cmd, msg, 'client', 'fields', forced=False)
         
     def cmdSsm(self, sender, chan, cmd, msg, *args, **kwargs):
         """$Bssm [<id>|<searge>] <newname> [description]$N : Set Client Field."""
-        self.setMember(sender, chan, cmd, msg, 'server', 'methods')
+        self.setMember(sender, chan, cmd, msg, 'server', 'methods', forced=False)
 
     def cmdSsf(self, sender, chan, cmd, msg, *args, **kwargs):
         """$Bssf [<id>|<searge>] <newname> [description]$N : Set Server Field."""
-        self.setMember(sender, chan, cmd, msg, 'server', 'fields')
+        self.setMember(sender, chan, cmd, msg, 'server', 'fields', forced=False)
+
+    def cmdFscm(self, sender, chan, cmd, msg, *args, **kwargs):
+        """$Bscm [<id>|<searge>] <newname> [description]$N : Set Client Method."""
+        self.setMember(sender, chan, cmd, msg, 'client', 'methods', forced=True)
+        
+    def cmdFscf(self, sender, chan, cmd, msg, *args, **kwargs):
+        """$Bscf [<id>|<searge>] <newname> [description]$N : Set Server Method."""
+        self.setMember(sender, chan, cmd, msg, 'client', 'fields', forced=True)
+        
+    def cmdFssm(self, sender, chan, cmd, msg, *args, **kwargs):
+        """$Bssm [<id>|<searge>] <newname> [description]$N : Set Client Field."""
+        self.setMember(sender, chan, cmd, msg, 'server', 'methods', forced=True)
+
+    def cmdFssf(self, sender, chan, cmd, msg, *args, **kwargs):
+        """$Bssf [<id>|<searge>] <newname> [description]$N : Set Server Field."""
+        self.setMember(sender, chan, cmd, msg, 'server', 'fields', forced=True)
 
     @database
     def setMember(self, sender, chan, cmd, msg, side, etype, *args, **kwargs):
         
         c         = kwargs['cursor']
         idversion = kwargs['idvers']      
+        forced    = kwargs['forced']
         
         msg = msg.strip()
         type_lookup = {'methods':'func','fields':'field'}
@@ -327,6 +344,25 @@ class MCPBotCmds(object):
         if len(msg) > 2:
             newdesc = ' '.join(msg[2:])        
 
+        self.say(sender, "$B[ SET %s %s ]"%(side.upper(),etype.upper()))
+        if forced: self.say(sender, "$RCAREFULL, YOU ARE FORCING AN UPDATE !")
+
+        result = c.execute("""SELECT m.name FROM vclasses m WHERE m.name = ? AND m.side = ? AND m.versionid = ?""", (newname, side_lookup[side], idversion)).fetchone()
+        if result: 
+            self.say(sender, "$RIt is illegal to use class names for fields or methods !")
+            return
+        
+        if not forced:
+            result = c.execute("""SELECT m.searge, m.name FROM vmethods m WHERE m.name = ? AND m.side = ? AND m.versionid = ?""", (newname, side_lookup[side], idversion)).fetchone()
+            if result: 
+                self.say(sender, "$RYou are conflicting with at least one other method: %s. Please use forced update only if you are certain !"%result[0])
+                return
+
+            result = c.execute("""SELECT m.searge, m.name FROM vfields m WHERE m.name = ? AND m.side = ? AND m.versionid = ?""", (newname, side_lookup[side], idversion)).fetchone()
+            if result: 
+                self.say(sender, "$RYou are conflicting with at least one other field: %s. Please use forced update only if you are certain !"%result[0])
+                return
+
         c.execute("""SELECT m.name, m.notch, m.searge, m.sig, m.notchsig, m.desc, m.classname, m.classnotch, m.id FROM v%s m
                     WHERE ((m.searge LIKE ? ESCAPE '!') OR m.searge = ?) AND m.side = ? AND m.versionid = ?"""%etype, 
                     ('%s!_%s!_%%'%(type_lookup[etype],oldname),oldname,side_lookup[side], idversion))            
@@ -334,7 +370,6 @@ class MCPBotCmds(object):
         results = c.fetchall()
 
         if len(results) > 1:
-            self.say(sender, "$B[ SET %s %s ]"%(side.upper(),etype.upper()))            
             self.say(sender, " Ambiguous request $R'%s'$N"%oldname)
             self.say(sender, " Found %s possible answers"%len(rows))
             
@@ -347,24 +382,24 @@ class MCPBotCmds(object):
                 self.say(sender, " %s %s %s"%(fullcsv.ljust(maxlencsv+2), fullnotch.ljust(maxlennotch+2), sig))
                 
         elif len(results) == 0:
-            self.say(sender, "$B[ SET %s %s ]"%(side.upper(),etype.upper()))
             self.say(sender, " No result for %s"%oldname)
         else:
             name, notch, searge, sig, notchsig, desc, classname, classnotch, id = results[0]
-            self.say(sender, "$B[ SET %s %s ]"%(side.upper(),etype.upper()))
             self.say(sender, "Name     : $B%s => %s"%(name, newname))
             self.say(sender, "$BOld desc$N : %s"%(desc))
-            self.say(sender, "$BNew desc$N : %s"%(newdesc))
 
             if not newdesc:
-                c.execute("""INSERT INTO %shist VALUES (?, ?, ?, ?, ?, ?, ?, ?)"""%etype,
-                    (None, int(id), name, desc, newname, desc, int(time.time()), sender))
+                self.say(sender, "$BNew desc$N : %s"%(desc))
+                c.execute("""INSERT INTO %shist VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"""%etype,
+                    (None, int(id), name, desc, newname, desc, int(time.time()), sender, forced, cmd))
             elif newdesc == 'None':
-                c.execute("""INSERT INTO %shist VALUES (?, ?, ?, ?, ?, ?, ?, ?)"""%etype,
-                    (None, int(id), name, desc, newname, None, int(time.time()), sender))                
+                self.say(sender, "$BNew desc$N : None")
+                c.execute("""INSERT INTO %shist VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"""%etype,
+                    (None, int(id), name, desc, newname, None, int(time.time()), sender, forced, cmd))                
             else:
-                c.execute("""INSERT INTO %shist VALUES (?, ?, ?, ?, ?, ?, ?, ?)"""%etype,
-                    (None, int(id), name, desc, newname, newdesc, int(time.time()), sender))
+                self.say(sender, "$BNew desc$N : %s"(newdesc))
+                c.execute("""INSERT INTO %shist VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"""%etype,
+                    (None, int(id), name, desc, newname, newdesc, int(time.time()), sender, forced, cmd))
 
     #===================================================================
 

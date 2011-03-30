@@ -141,6 +141,8 @@ def main(options, args):
                                           newdesc     TEXT, 
                                           timestamp   INTEGER NOT NULL, 
                                           nick        TEXT NOT NULL,
+                                          forced      INT NOT NULL,
+                                          cmd         TEXT NOT NULL,
                                           FOREIGN KEY(memberid)  REFERENCES methods(id) ON UPDATE RESTRICT ON DELETE RESTRICT
                                           )""")
 
@@ -152,6 +154,8 @@ def main(options, args):
                                           newdesc     TEXT, 
                                           timestamp   INTEGER NOT NULL, 
                                           nick        TEXT NOT NULL,
+                                          forced      INT NOT NULL,
+                                          cmd         TEXT NOT NULL,                                          
                                           FOREIGN KEY(memberid)  REFERENCES fields(id) ON UPDATE RESTRICT ON DELETE RESTRICT
                                           )""")
                                           

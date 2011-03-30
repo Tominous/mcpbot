@@ -68,7 +68,7 @@ class MCPBotCmds(object):
         idversion = kwargs['idvers']
         side_lookup = {'client':0, 'server':1}
         msg = msg.strip()
-        c.execute("""SELECT name, notch, supername FROM vclasses WHERE (name = ? OR notch = ?) AND side = ?""", (msg, msg, side_lookup[side]))
+        c.execute("""SELECT name, notch, supername FROM vclasses WHERE (name = ? OR notch = ?) AND side = ? AND versionid = ?""", (msg, msg, side_lookup[side], idversion))
         
         classresults = c.fetchall()
         
@@ -79,7 +79,7 @@ class MCPBotCmds(object):
         for classresult in classresults:
             name, notch, supername = classresult
 
-            c.execute("""SELECT sig FROM vconstructors WHERE (name = ? OR notch = ?) AND side = ?""",(msg, msg, side_lookup[side]))
+            c.execute("""SELECT sig FROM vconstructors WHERE (name = ? OR notch = ?) AND side = ? AND versionid = ?""",(msg, msg, side_lookup[side], idversion))
             constructorsresult = c.fetchall()
 
             self.say(sender, "=== GET %s CLASS ==="%side.upper())
@@ -133,15 +133,15 @@ class MCPBotCmds(object):
 
         elif len(msg.split('.')) == 1:
             c.execute("""SELECT m.name, m.notch, m.searge, m.sig, m.notchsig, m.desc, m.classname, m.classnotch FROM v%s m
-                         WHERE ((m.searge LIKE ? ESCAPE '!') OR m.searge = ? OR m.notch = ? OR m.name = ?) AND m.side = ?"""%etype, 
-                         ('%s!_%s!_%%'%(type_lookup[etype],msg),msg,msg,msg,side_lookup[side]))
+                         WHERE ((m.searge LIKE ? ESCAPE '!') OR m.searge = ? OR m.notch = ? OR m.name = ?) AND m.side = ? AND m.versionid = ?"""%etype, 
+                         ('%s!_%s!_%%'%(type_lookup[etype],msg),msg,msg,msg,side_lookup[side], idversion))
 
         elif len(msg.split('.')) == 2:
             cname = msg.split('.')[0]
             mname = msg.split('.')[1]
             c.execute("""SELECT m.name, m.notch, m.searge, m.sig, m.notchsig, m.desc, m.classname, m.classnotch FROM v%s m
-                         WHERE ((m.searge LIKE ? ESCAPE '!') OR m.searge = ? OR m.notch = ? OR m.name = ?) AND m.side = ? AND (m.classname = ? OR m.classnotch = ?)"""%etype, 
-                         ('%s!_%s!_%%'%(type_lookup[etype],msg),mname,mname,mname,side_lookup[side], cname,cname))
+                         WHERE ((m.searge LIKE ? ESCAPE '!') OR m.searge = ? OR m.notch = ? OR m.name = ?) AND m.side = ? AND (m.classname = ? OR m.classnotch = ?) AND m.versionid = ?"""%etype, 
+                         ('%s!_%s!_%%'%(type_lookup[etype],msg),mname,mname,mname,side_lookup[side], cname,cname, idversion))
                          
         results = c.fetchall()
 
@@ -209,13 +209,13 @@ class MCPBotCmds(object):
 
         self.say(sender, "=== SEARCH RESULTS ===")    
         for side in ['client', 'server']:
-            c.execute("""SELECT c.name, c.notch FROM vclasses c WHERE (c.name LIKE ?) AND c.side = ?""",('%%%s%%'%(msg), side_lookup[side]))                   
+            c.execute("""SELECT c.name, c.notch FROM vclasses c WHERE (c.name LIKE ?) AND c.side = ? AND c.versionid = ?""",('%%%s%%'%(msg), side_lookup[side], idversion))                   
             results['classes'] = c.fetchall()
 
             for etype in ['fields', 'methods']:
                 c.execute("""SELECT m.name, m.notch, m.searge, m.sig, m.notchsig, m.desc, m.classname, m.classnotch FROM v%s m
-                            WHERE (m.name LIKE ? ESCAPE '!') AND m.side = ?"""%etype, 
-                            ('%%%s%%'%(msg), side_lookup[side]))
+                            WHERE (m.name LIKE ? ESCAPE '!') AND m.side = ? AND m.versionid = ?"""%etype, 
+                            ('%%%s%%'%(msg), side_lookup[side], idversion))
                 results[etype] = c.fetchall()
 
             if not results['classes']:
@@ -289,8 +289,8 @@ class MCPBotCmds(object):
             newdesc = ' '.join(msg[2:])        
 
         c.execute("""SELECT m.name, m.notch, m.searge, m.sig, m.notchsig, m.desc, m.classname, m.classnotch, m.id FROM v%s m
-                    WHERE ((m.searge LIKE ? ESCAPE '!') OR m.searge = ?) AND m.side = ?"""%etype, 
-                    ('%s!_%s!_%%'%(type_lookup[etype],oldname),oldname,side_lookup[side]))            
+                    WHERE ((m.searge LIKE ? ESCAPE '!') OR m.searge = ?) AND m.side = ? AND m.versionid = ?"""%etype, 
+                    ('%s!_%s!_%%'%(type_lookup[etype],oldname),oldname,side_lookup[side], idversion))            
         
         results = c.fetchall()
 
@@ -349,7 +349,7 @@ class MCPBotCmds(object):
                 c.execute("""SELECT m.name, m.searge, m.desc, h.newname, h.newdesc, strftime('%s',h.timestamp, 'unixepoch') as htimestamp, h.nick
                             FROM  %s m 
                             INNER JOIN %shist h ON m.dirtyid = h.id
-                            WHERE m.side = ? ORDER BY h.timestamp"""%('%m-%d %H:%M',etype,etype), (side_lookup[side],))
+                            WHERE m.side = ?  AND m.versionid = ? ORDER BY h.timestamp"""%('%m-%d %H:%M',etype,etype), (side_lookup[side], idversion))
                     
                 results = c.fetchall()
         
@@ -402,23 +402,23 @@ class MCPBotCmds(object):
         ffmetho.write('NULL,NULL,NULL,NULL,NULL,NULL\n')
         ffmetho.write('class (for reference only),Reference,class (for reference only),Reference,Name,Notes\n')
         
-        c.execute("""SELECT classname, searge, name, desc FROM vfields WHERE side = 0 ORDER BY searge""")
+        c.execute("""SELECT classname, searge, name, desc FROM vfields WHERE side = 0  AND versionid = ? ORDER BY searge""", (idversion,))
         for row in c.fetchall():
             classname, searge, name, desc = row
             if not desc:desc = ''
             fffield.write('%s,*,%s,*,*,*,%s,"%s"\n'%(classname, searge, name, desc.replace('"', "'")))
-        c.execute("""SELECT classname, searge, name, desc FROM vfields WHERE side = 1 ORDER BY searge""")
+        c.execute("""SELECT classname, searge, name, desc FROM vfields WHERE side = 1  AND versionid = ? ORDER BY searge""", (idversion,))
         for row in c.fetchall():
             classname, searge, name, desc = row
             if not desc:desc = ''
             fffield.write('*,*,*,%s,*,%s,%s,"%s"\n'%(classname, searge, name, desc.replace('"', "'")))
 
-        c.execute("""SELECT classname, searge, name, desc FROM vmethods WHERE side = 0 ORDER BY searge""")
+        c.execute("""SELECT classname, searge, name, desc FROM vmethods WHERE side = 0  AND versionid = ? ORDER BY searge""", (idversion,))
         for row in c.fetchall():
             classname, searge, name, desc = row
             if not desc:desc = ''
             ffmetho.write('%s,%s,*,*,%s,"%s"\n'%(classname, searge, name, desc.replace('"', "'")))
-        c.execute("""SELECT classname, searge, name, desc FROM vmethods WHERE side = 1 ORDER BY searge""")
+        c.execute("""SELECT classname, searge, name, desc FROM vmethods WHERE side = 1  AND versionid = ? ORDER BY searge""", (idversion,))
         for row in c.fetchall():
             classname, searge, name, desc = row
             if not desc:desc = ''
@@ -438,7 +438,8 @@ class MCPBotCmds(object):
 
             c.execute("""SELECT m.id, h.id, h.newname, h.newdesc FROM %s m
                         INNER JOIN %shist h ON m.dirtyid = h.id
-                        """%(etype, etype))
+                        WHERE m.versionid = ?
+                        """%(etype, etype), (idversion,))
         
             results = c.fetchall()
             nentries += len(results)

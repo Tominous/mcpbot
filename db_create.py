@@ -225,10 +225,10 @@ def main(options, args):
         """)
 
     c.execute("""CREATE VIEW vconstructors AS
-        SELECT m.id, m.side, m.name, m.notch, m.sig, m.notchsig
+        SELECT m.id, m.side, m.name, m.notch, m.sig, m.notchsig, m.versionid
         FROM methods m
         INNER JOIN classes c
-            ON (m.name = c.name AND m.side = c.side)
+            ON (m.name = c.name AND m.side = c.side AND m.versionid = c.versionid)
         """)
 
     #Triggers to mark entries as dirty

@@ -658,6 +658,11 @@ class MCPBotCmds(object):
             else: percent = float(membersr)/float(memberst)*100.0
             self.say(sender, " %s : $B%2d$N [ T $B%3d$N | R $B%3d$N | $B%5.2f%%$N ] "%(name.ljust(20), membersu, memberst, membersr, percent))
 
+    @restricted
+    def cmdTestcrash(self, sender, chan, cmd, msg, *args, **kwargs):
+        if sender != 'ProfMobius': return
+        raise Exception('This is a test error !')
+
 #==END OF CLASS==
 
 

@@ -1,5 +1,7 @@
 from Queue import Queue
 from threading import Thread
+import traceback
+import sys
 
 class Worker(Thread):
     """Thread executing tasks from a given tasks queue"""
@@ -13,7 +15,8 @@ class Worker(Thread):
         while True:
             func, args, kargs = self.tasks.get()
             try: func(*args, **kargs)
-            except Exception, e: print e
+            except Exception, e:
+                traceback.print_exception(sys.exc_info()[0], e, sys.exc_info()[2])
             self.tasks.task_done()
 
 class ThreadPool:

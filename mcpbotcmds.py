@@ -209,15 +209,16 @@ class MCPBotCmds(object):
                 fullnotch = '[%s.%s]'%(classnotch, notch)
                 self.say(sender, " %s %s %s %s"%(fullcsv.ljust(maxlencsv+2), fullnotch.ljust(maxlennotch+2), sig, notchsig))
         elif lowlimit >= len(results) > 0:
-            name, notch, searge, sig, notchsig, desc, classname, classnotch = results[0]
-            self.say(sender, "$B[ GET %s %s ]"%(side.upper(),etype.upper()))
-            self.say(sender, " Side        : $B%s"%side)
-            self.say(sender, " Name        : $B%s.%s"%(classname, name,))
-            self.say(sender, " Notch       : $B%s.%s"%(classnotch, notch,))
-            self.say(sender, " Searge      : $B%s"%searge)
-            self.say(sender, " Type/Sig    : $B%s$N | $B%s$N"%(sig,notchsig))
-            if desc:      
-                self.say(sender, " Description : %s"%desc)
+            for result in results:
+                name, notch, searge, sig, notchsig, desc, classname, classnotch = result
+                self.say(sender, "$B[ GET %s %s ]"%(side.upper(),etype.upper()))
+                self.say(sender, " Side        : $B%s"%side)
+                self.say(sender, " Name        : $B%s.%s"%(classname, name,))
+                self.say(sender, " Notch       : $B%s.%s"%(classnotch, notch,))
+                self.say(sender, " Searge      : $B%s"%searge)
+                self.say(sender, " Type/Sig    : $B%s$N | $B%s$N"%(sig,notchsig))
+                if desc:      
+                    self.say(sender, " Description : %s"%desc)
         else:
             self.say(sender, "$B[ GET %s %s ]"%(side.upper(),etype.upper()))
             self.say(sender, " No result for %s"%msg)
@@ -657,11 +658,6 @@ class MCPBotCmds(object):
             if membersr == 0: percent = 0.
             else: percent = float(membersr)/float(memberst)*100.0
             self.say(sender, " %s : $B%2d$N [ T $B%3d$N | R $B%3d$N | $B%5.2f%%$N ] "%(name.ljust(20), membersu, memberst, membersr, percent))
-
-    @restricted
-    def cmdTestcrash(self, sender, chan, cmd, msg, *args, **kwargs):
-        if sender != 'ProfMobius': return
-        raise Exception('This is a test error !')
 
 #==END OF CLASS==
 

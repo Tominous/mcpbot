@@ -34,8 +34,10 @@ class IRCBotAdvMtd(object):
         #if not nick in self.users: return
         if nick in self.dcc.sockets and self.dcc.sockets[nick]:     #May have to come back here at some point if the users start holding their own socket
             self.dcc.say(nick, str(msg))
+        elif nick[0] in ['#', '&']:
+            self.irc.privmsg(nick, msg)
         else:
-            self.irc.notice(nick, str(msg))
+            self.irc.notice(nick, msg)
 
     def raise_onCmd(self, ev):
         if self.log:

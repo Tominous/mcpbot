@@ -42,9 +42,13 @@ class IRCProtocol(IRCCommands, IRCRawEvents):
                 self.onRawPING(msg)
                 if hasattr(self.bot, 'onPING'):
                     self.bot.onPING(msg)
+
             else:
                 if len(msg) < 4 : msg.append(' ')
-                ev = Event(msg[0], msg[1], msg[2], ' '.join(msg[3:]), self.cnick, 'IRC')
+                elif msg[1] == 'QUIT':
+                    ev = Event(msg[0], msg[1], '', ' '.join(msg[2:]), self.cnick, 'IRC')
+                else:
+                    ev = Event(msg[0], msg[1], msg[2], ' '.join(msg[3:]), self.cnick, 'IRC')
 
                 if hasattr(self, 'onRaw%s'%ev.cmd):
                     self.bot.threadpool.add_task(getattr(self, 'onRaw%s'%ev.cmd),ev)

@@ -1,6 +1,7 @@
 from irc_lib.utils.irc_name import get_nick, get_ip
 from irc_lib.protocols.event import Event
 from irc_lib.protocols.user import User
+from binascii import hexlify
 import time,os
 
 class IRCRawEvents(object):
@@ -18,7 +19,6 @@ class IRCRawEvents(object):
             self.bot.irc_status['Server'] = ev.sender
             return
 
-        self.onRawPRIVMSG(ev)
 
     def onRawPRIVMSG(self, ev):
         if not ev.msg:return

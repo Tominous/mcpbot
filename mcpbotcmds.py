@@ -333,7 +333,7 @@ class MCPBotCmds(object):
                 c.execute("""SELECT m.name, m.searge, m.desc, h.newname, h.newdesc, strftime('%s',h.timestamp, 'unixepoch') as htimestamp, h.nick
                             FROM  %s m 
                             INNER JOIN %shist h ON m.dirtyid = h.id
-                            WHERE m.side = ?"""%('%m-%d %H:%M',etype,etype), (side_lookup[side],))
+                            WHERE m.side = ? ORDER BY h.timestamp"""%('%m-%d %H:%M',etype,etype), (side_lookup[side],))
                     
                 results = c.fetchall()
         
@@ -364,7 +364,10 @@ class MCPBotCmds(object):
     @database
     def updateCsv(self, sender, chan, cmd, msg, c):
         
-        directory  = '/home/mcpfiles/renamer_csv'
+        if self.cnick == 'MCPBot_NG':
+            directory='.'
+        else:
+            directory  = '/home/mcpfiles/renamer_csv'
         #directory = "."
 
         outfieldcsv  = 'fields.csv'
@@ -380,23 +383,23 @@ class MCPBotCmds(object):
         ffmetho.write('NULL,NULL,NULL,NULL,NULL,NULL\n')
         ffmetho.write('class (for reference only),Reference,class (for reference only),Reference,Name,Notes\n')
         
-        c.execute("""SELECT classname, searge, name, desc FROM vfields WHERE side = 0""")
+        c.execute("""SELECT classname, searge, name, desc FROM vfields WHERE side = 0 ORDER BY searge""")
         for row in c.fetchall():
             classname, searge, name, desc = row
             if not desc:desc = ''
             fffield.write('%s,*,%s,*,*,*,%s,"%s"\n'%(classname, searge, name, desc.replace('"', "'")))
-        c.execute("""SELECT classname, searge, name, desc FROM vfields WHERE side = 1""")
+        c.execute("""SELECT classname, searge, name, desc FROM vfields WHERE side = 1 ORDER BY searge""")
         for row in c.fetchall():
             classname, searge, name, desc = row
             if not desc:desc = ''
             fffield.write('*,*,*,%s,*,%s,%s,"%s"\n'%(classname, searge, name, desc.replace('"', "'")))
 
-        c.execute("""SELECT classname, searge, name, desc FROM vmethods WHERE side = 0""")
+        c.execute("""SELECT classname, searge, name, desc FROM vmethods WHERE side = 0 ORDER BY searge""")
         for row in c.fetchall():
             classname, searge, name, desc = row
             if not desc:desc = ''
             ffmetho.write('%s,%s,*,*,%s,"%s"\n'%(classname, searge, name, desc.replace('"', "'")))
-        c.execute("""SELECT classname, searge, name, desc FROM vmethods WHERE side = 1""")
+        c.execute("""SELECT classname, searge, name, desc FROM vmethods WHERE side = 1 ORDER BY searge""")
         for row in c.fetchall():
             classname, searge, name, desc = row
             if not desc:desc = ''

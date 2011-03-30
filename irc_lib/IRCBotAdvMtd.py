@@ -39,15 +39,6 @@ class IRCBotAdvMtd(object):
         else:
             self.irc.notice(nick, msg)
 
-    def raise_onCmd(self, ev):
-        if self.log:
-            self.loggingq.put(ev)
-        
-        if hasattr(self, 'onCmd'):
-            self.threadpool.add_task(getattr(self, 'onCmd'),ev)
-        else:
-            self.threadpool.add_task(getattr(self, 'onDefault'),ev)
-                   
     def addWhitelist(self, nick):
         self.whitelist.add(nick)
 
@@ -78,3 +69,12 @@ class IRCBotAdvMtd(object):
         if self.log:
             self.log.close()
             self.log = None
+
+    def clearOutQueue(self):
+        while not self.out_msg.empty():
+            try:
+                msg = self.out_msg.get_nowait()
+            except Empty:
+                continue
+        self.out_msg.task_done()        
+

@@ -7,7 +7,7 @@ def database(f):
         #dbase.isolation_level = None
         c = dbase.cursor()        
         
-        (idversion,) = c.execute("""SELECT max(id) FROM versions""").fetchone()
+        (idversion,) = c.execute("""SELECT value FROM config WHERE name='currentversion'""").fetchone()
         
         kwargs['cursor'] = c
         kwargs['idvers'] = idversion

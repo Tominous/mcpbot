@@ -170,6 +170,16 @@ def main(options, args):
                                         UNIQUE(mcpversion, botversion, dbversion, clientversion, serverversion)
                                           )""")        
 
+    c.execute("""CREATE TABLE config (id INTEGER PRIMARY KEY AUTOINCREMENT, 
+                                        name   TEXT NOT NULL,
+                                        value  TEXT NOT NULL,
+                                        UNIQUE(name)
+                                        )""")
+
+    ######### WE SETUP SOME CONFIGURATION KEYS #########
+
+    c.execute("""INSERT INTO config (id, name, value) VALUES (?, ?, ?)""", (None, 'currentversion', -1))
+
     ######### WE NOW DEFINE THE VIEWS WE WILL BE USING ###########
 
     # For methods and fields, we want id, side, searge, notch, name, sig, notchsig, desc, topclass name, topclass notch, package, version
@@ -230,6 +240,66 @@ def main(options, args):
         INNER JOIN classes c
             ON (m.name = c.name AND m.side = c.side AND m.versionid = c.versionid)
         """)
+
+    c.execute("""CREATE VIEW vclassesstats AS
+             SELECT c.id, c.name, 
+            (SELECT COUNT(*)
+                    FROM classes c1
+                    INNER JOIN methods m ON c1.id = m.topid
+                    WHERE c1.id = c.id
+                    AND NOT m.name = c1.name
+                    AND c1.versionid=m.versionid
+                    GROUP BY c1.id
+            ) as methodst,
+            (SELECT COUNT(*)
+                    FROM classes c1
+                    INNER JOIN methods m ON c1.id = m.topid
+                    WHERE c1.id = c.id
+                    AND NOT m.name = m.searge
+                    AND NOT m.name = c1.name
+                    AND c1.versionid=m.versionid
+                    GROUP BY c1.id
+            ) as methodsr,
+            (SELECT COUNT(*)
+                    FROM classes c1
+                    INNER JOIN methods m ON c1.id = m.topid
+                    WHERE c1.id = c.id
+                    AND m.name = m.searge
+                    AND NOT m.name = c1.name
+                    AND c1.versionid=m.versionid
+                    GROUP BY c1.id
+            ) as methodsu,
+            (SELECT COUNT(*)
+                    FROM classes c1
+                    INNER JOIN fields m ON c1.id = m.topid
+                    WHERE c1.id = c.id
+                    AND NOT m.name = c1.name
+                    AND c1.versionid=m.versionid
+                    GROUP BY c1.id
+            ) as fieldst,
+            (SELECT COUNT(*)
+                    FROM classes c1
+                    INNER JOIN fields m ON c1.id = m.topid
+                    WHERE c1.id = c.id
+                    AND NOT m.name = m.searge
+                    AND NOT m.name = c1.name
+                    AND c1.versionid=m.versionid
+                    GROUP BY c1.id
+            ) as fieldsr,
+            (SELECT COUNT(*)
+                    FROM classes c1
+                    INNER JOIN fields m ON c1.id = m.topid
+                    WHERE c1.id = c.id
+                    AND m.name = m.searge
+                    AND NOT m.name = c1.name
+                    AND c1.versionid=m.versionid
+                    GROUP BY c1.id
+            ) as fieldsu,            
+            c.side, c.versionid
+            FROM classes c""")
+
+
+    ######### THE DB TRIGGERS ###########
 
     #Triggers to mark entries as dirty
     for mtype in ['methods', 'fields']:

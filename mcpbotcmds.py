@@ -510,6 +510,32 @@ class MCPBotCmds(object):
         self.say(sender, "====== HELP =====")
         self.say(sender, "For help, please check : http://mcp.ocean-labs.de/index.php/MCPBot")
 
+    @database
+    def cmdStatus(self, sender, chan, cmd, msg, *args, **kwargs):
+        c         = kwargs['cursor']
+        idversion = kwargs['idvers']
+
+        type_lookup = {'methods':'func','fields':'field'}
+        side_lookup = {'client':0, 'server':1}
+
+        
+        mcpversion, botversion, dbversion, clientversion, serverversion = \
+            c.execute ("""SELECT mcpversion, botversion, dbversion, clientversion, serverversion FROM versions WHERE id = ?""", (idversion,)).fetchone()
+            
+        self.say(sender, "===== STATUS =====")
+        self.say(sender, "$B MCP$N    : %s"%mcpversion)
+        self.say(sender, "$B Bot$N    : %s"%botversion)
+        self.say(sender, "$B Client$N : %s"%dbversion)
+        self.say(sender, "$B Server$N : %s"%clientversion)
+
+        for side  in ['server', 'client']:
+            for etype in ['methods', 'fields']:
+                total, ren, urn = c.execute("""SELECT total(%st), total(%sr), total(%su) 
+                                      FROM vclassesstats WHERE side = ? AND versionid = ?"""%(etype,etype,etype), 
+                                      (side_lookup[side], idversion)).fetchone()
+                                      
+                self.say(sender, "$B[%s][%7s]$N : T %4d | R %4d | U %4d | %5.2f%%" %(side[0].upper(), etype.upper(), total, ren, urn, float(ren)/float(total)*100))
+
 #==END OF CLASS==
 
 

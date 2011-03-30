@@ -70,11 +70,4 @@ class IRCBotAdvMtd(object):
             self.log.close()
             self.log = None
 
-    def clearOutQueue(self):
-        while not self.out_msg.empty():
-            try:
-                msg = self.out_msg.get_nowait()
-            except Empty:
-                continue
-        self.out_msg.task_done()        
 

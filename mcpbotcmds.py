@@ -79,7 +79,7 @@ class MCPBotCmds(object):
         for classresult in classresults:
             name, notch, supername = classresult
 
-            c.execute("""SELECT sig FROM vconstructors WHERE (name = ? OR notch = ?) AND side = ? AND versionid = ?""",(msg, msg, side_lookup[side], idversion))
+            c.execute("""SELECT sig, notchsig FROM vconstructors WHERE (name = ? OR notch = ?) AND side = ? AND versionid = ?""",(msg, msg, side_lookup[side], idversion))
             constructorsresult = c.fetchall()
 
             self.say(sender, "$B[ GET %s CLASS ]"%side.upper())
@@ -89,7 +89,7 @@ class MCPBotCmds(object):
             self.say(sender, " Super       : $B%s"%supername)
 
             for constructor in constructorsresult:
-                self.say(sender, " Constructor : $B%s"%constructor[0]) 
+                self.say(sender, " Constructor : $B%s$N | $B%s$N"%(constructor[0], constructor[1]))
 
     #===================================================================
 
@@ -167,7 +167,7 @@ class MCPBotCmds(object):
                 name, notch, searge, sig, notchsig, desc, classname, classnotch = result
                 fullcsv   = '%s.%s'%(classname, name)
                 fullnotch = '[%s.%s]'%(classnotch, notch)
-                self.say(sender, " %s %s %s"%(fullcsv.ljust(maxlencsv+2), fullnotch.ljust(maxlennotch+2), sig))
+                self.say(sender, " %s %s %s %s"%(fullcsv.ljust(maxlencsv+2), fullnotch.ljust(maxlennotch+2), sig, notchsig))
         elif lowlimit >= len(results) > 0:
             name, notch, searge, sig, notchsig, desc, classname, classnotch = results[0]
             self.say(sender, "$B[ GET %s %s ]"%(side.upper(),etype.upper()))
@@ -175,7 +175,7 @@ class MCPBotCmds(object):
             self.say(sender, " Name        : $B%s.%s"%(classname, name,))
             self.say(sender, " Notch       : $B%s.%s"%(classnotch, notch,))
             self.say(sender, " Searge      : $B%s"%searge)
-            self.say(sender, " Type/Sig    : $B%s"%sig)
+            self.say(sender, " Type/Sig    : $B%s$N | $B%s$N"%(sig,notchsig))
             if desc:      
                 self.say(sender, " Description : %s"%desc)
         else:
@@ -244,7 +244,7 @@ class MCPBotCmds(object):
                             name, notch, searge, sig, notchsig, desc, classname, classnotch = result
                             fullname   = '%s.%s'%(classname, name)
                             fullnotch = '[%s.%s]'%(classnotch, notch)
-                            self.say(sender, " [%s][%7s] %s %s %s"%(side.upper(),etype.upper(), fullname.ljust(maxlenname+2), fullnotch.ljust(maxlennotch+2), sig))                
+                            self.say(sender, " [%s][%7s] %s %s %s %s"%(side.upper(),etype.upper(), fullname.ljust(maxlenname+2), fullnotch.ljust(maxlennotch+2), sig, notchsig))                
                 
     #===================================================================
 

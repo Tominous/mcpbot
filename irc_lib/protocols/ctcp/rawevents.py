@@ -18,8 +18,8 @@ class CTCPRawEvents(object):
 
 
     def onRawCTCPPING(self, ev):
-        if not ev.msg: return
-        self.rawnotice(ev.sender, 'PING :%s'%ev.msg)
+        #if not ev.msg: return
+        self.rawnotice(ev.sender, 'PING %s'%ev.msg)
 
     def onRawCTCPTIME(self, ev):
         self.rawnotice(ev.sender, 'TIME :%s'%time.ctime())

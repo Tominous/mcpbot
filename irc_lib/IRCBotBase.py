@@ -40,7 +40,7 @@ class IRCBotBase(IRCBotAdvMtd, IRCBotIO):
         
         self.exit            = False
         
-        self.nthreads        = 16
+        self.nthreads        = 15
         self.threadpool      = ThreadPool(self.nthreads)
         
         self.out_msg         = Queue()                                  #Outbound msgs

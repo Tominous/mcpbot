@@ -124,7 +124,6 @@ class DCCProtocol(DCCCommands, DCCRawEvents):
                     buffsocket, buffip = self.insocket.accept()
                     self.bot.printq.put('> User identified as : %s %s'%(self.ip2nick[buffip[0]], buffip[0]))
                     self.sockets[self.ip2nick[buffip[0]]] = DCCSocket(buffsocket, self.ip2nick[buffip[0]])
-                    #self.sockets[self.ip2nick[buffip[0]]].setblocking(0)
                     self.say(self.ip2nick[buffip[0]], 'Connection with user %s established.\r\n'%self.ip2nick[buffip[0]])
                     input.append(self.sockets[self.ip2nick[buffip[0]]])
                         
@@ -137,7 +136,7 @@ class DCCProtocol(DCCCommands, DCCRawEvents):
                         if self.bot.rawmsg:
                             self.bot.printq.put('< ' + s.buffer)                    
 
-                        #print r'>%s<'%s.buffer
+                        print r'>%s<'%s.buffer
                         if not s.buffer.strip():
                             s.buffer = ''
                             continue

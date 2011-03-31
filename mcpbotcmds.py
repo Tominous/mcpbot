@@ -38,14 +38,13 @@ class MCPBotCmds(object):
             msg = ' '.join(msg.split()[1:])
 
         cmd = cmd.lower()
-        cmd = cmd[0].upper() + cmd[1:]
         
-        if cmd in ['Ssf, Ssm, Scf, Scm']:
+        if cmd in ['ssf, ssm, scf, scm']:
             self.say(sender, 'No public setters !')
             return
         
         try:
-            getattr(self, 'cmd%s'%cmd )(chan, chan, cmd, msg)
+            getattr(self, 'cmd_%s'%cmd )(chan, chan, cmd, msg)
         except AttributeError:
             getattr(self, 'cmdDefault')(chan, chan, cmd, msg)
         
@@ -400,7 +399,7 @@ class MCPBotCmds(object):
                 c.execute("""INSERT INTO %shist VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"""%etype,
                     (None, int(id), name, desc, newname, None, int(time.time()), sender, forced, cmd))                
             else:
-                self.say(sender, "$BNew desc$N : %s"(newdesc))
+                self.say(sender, "$BNew desc$N : %s"%(newdesc))
                 c.execute("""INSERT INTO %shist VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"""%etype,
                     (None, int(id), name, desc, newname, newdesc.replace('"',"'"), int(time.time()), sender, forced, cmd))
 
@@ -646,12 +645,20 @@ class MCPBotCmds(object):
         threads.pop(0)
         self.say(sender, "$B[ THREADS ]")
         threads = sorted(threads, cmp=lambda a,b:cmp(a.ncalls,b.ncalls))
-        print threads
         maxthreadname = max([len(i.name) for i in threads])
-        for index, i in enumerate(threads):
-            #if not 'Thread' in i.name:
-                self.say(sender, '%2d %s %5d %5d %5d'%(index, i.name.ljust(maxthreadname), i.ncalls, i.nscalls, i.nfcalls))
-                time.sleep(0.2)
+        
+        displayorder = zip(range(0,len(threads),2), range(1,len(threads),2))
+        
+        for i,j in displayorder:
+            it = threads[i]
+            jt = threads[j]
+            self.say(sender, '%2d %s %4d %4d %4d | %2d %s %4d %4d %4d'%
+            (i, it.name.ljust(maxthreadname), it.ncalls, it.nscalls, it.nfcalls,
+             j, jt.name.ljust(maxthreadname), jt.ncalls, jt.nscalls, jt.nfcalls))
+        
+        if len(threads)%2 == 1:
+            i = threads[-1]
+            self.say(sender, '%2d %s %4d %4d %4d'%(len(threads)-1, i.name.ljust(maxthreadname), i.ncalls, i.nscalls, i.nfcalls))
 
     @database
     def cmd_todo(self, sender, chan, cmd, msg, *args, **kwargs):

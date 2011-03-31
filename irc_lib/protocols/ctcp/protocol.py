@@ -32,6 +32,8 @@ class CTCPProtocol(CTCPCommands, CTCPRawEvents):
                 continue
 
             msg = msg.split()
+            msg[3] = ' '.join(msg[3:])
+            msg    = msg[:4]
             msg[3] = msg[3].replace('\x01','') #We remove the leading/tailing \x01
             
             if len(msg[3].split()) < 2: outmsg = ' '

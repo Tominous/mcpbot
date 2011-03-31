@@ -42,8 +42,8 @@ class DCCProtocol(DCCCommands, DCCRawEvents):
         except socket.error:
             self.bot.printq.put("If you see this, it means you can't create listening sockets. This is a bug from Iron Python. Desactivating dcc.")
 
-        self.bot.threadpool.add_task(self.treat_msg)        
-        self.bot.threadpool.add_task(self.inbound_loop)        
+        self.bot.threadpool.add_task(self.treat_msg, _threadname='DCCHandler')        
+        self.bot.threadpool.add_task(self.inbound_loop, _threadname='DCCInLoop')        
 
     def treat_msg(self):
         while not self.bot.exit:

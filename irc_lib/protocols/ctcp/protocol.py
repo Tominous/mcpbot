@@ -16,7 +16,7 @@ class CTCPProtocol(CTCPCommands, CTCPRawEvents):
         self.bot             = _bot
         self.locks           = _locks
         
-        self.bot.threadpool.add_task(self.treat_msg)
+        self.bot.threadpool.add_task(self.treat_msg, _threadname='CTCPHandler')
         #thread.start_new_thread(self.treat_msg,  ())
 
     def treat_msg(self):

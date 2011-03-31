@@ -40,7 +40,8 @@ class IRCBotBase(IRCBotAdvMtd, IRCBotIO):
         
         self.exit            = False
         
-        self.threadpool      = ThreadPool(20)
+        self.nthreads        = 16
+        self.threadpool      = ThreadPool(self.nthreads)
         
         self.out_msg         = Queue()                                  #Outbound msgs
         self.in_msg          = Queue()                                  #Inbound msgs
@@ -59,9 +60,9 @@ class IRCBotBase(IRCBotAdvMtd, IRCBotIO):
         self.irc_status      = {'Server':None, 'Registered':False, 'Channels':Set()}
         self.users           = {}
 
-        self.threadpool.add_task(self.print_loop)
-        self.threadpool.add_task(self.logging_loop)
-        self.threadpool.add_task(self.command_loop)
+        self.threadpool.add_task(self.print_loop,   _threadname='PrintLoop')
+        self.threadpool.add_task(self.logging_loop, _threadname='LoggingLoop')
+        self.threadpool.add_task(self.command_loop, _threadname='CommandLoop')
 
     def command_loop(self):
         while not self.exit:
@@ -89,8 +90,8 @@ class IRCBotBase(IRCBotAdvMtd, IRCBotIO):
         self.irc.password()
         self.irc.nick()
         self.irc.user()
-        self.threadpool.add_task(self.inbound_loop)
-        self.threadpool.add_task(self.outbound_loop)
+        self.threadpool.add_task(self.inbound_loop, _threadname='MainInLoop')
+        self.threadpool.add_task(self.outbound_loop, _threadname='MainOutLoop')
 
     def onDefault(self, sender, cmd, msg):
         """Default event handler (do nothing)"""

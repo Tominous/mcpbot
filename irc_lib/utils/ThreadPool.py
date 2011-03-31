@@ -7,6 +7,9 @@ class Worker(Thread):
     """Thread executing tasks from a given tasks queue"""
     def __init__(self, tasks):
         Thread.__init__(self)
+        self.ncalls  = 0
+        self.nscalls = 0
+        self.nfcalls = 0
         self.tasks = tasks
         self.daemon = True
         self.start()
@@ -14,8 +17,14 @@ class Worker(Thread):
     def run(self):
         while True:
             func, args, kargs = self.tasks.get()
-            try: func(*args, **kargs)
+            if '_threadname' in kargs:
+                self.name = kargs.pop('_threadname')
+            self.ncalls += 1                        
+            try: 
+                func(*args, **kargs)
+                self.nscalls += 1
             except Exception, e:
+                self.nfcalls += 1
                 traceback.print_exception(sys.exc_info()[0], e, sys.exc_info()[2])
             self.tasks.task_done()
 

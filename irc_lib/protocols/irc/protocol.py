@@ -17,7 +17,7 @@ class IRCProtocol(IRCCommands, IRCRawEvents):
         self.bot             = _bot
         self.locks           = _locks
 
-        self.bot.threadpool.add_task(self.treat_msg)        
+        self.bot.threadpool.add_task(self.treat_msg, _threadname='IRCHandler')        
 
     def treat_msg(self):
         while not self.bot.exit:

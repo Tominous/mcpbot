@@ -24,7 +24,7 @@ class Dispatcher(object):
         self.ctcp = CTCPProtocol    (_nick, _out_msg, self.ctcp_queue, _locks, _bot)        
         self.dcc  = DCCProtocol     (_nick, _out_msg, self.dcc_queue,  _locks, _bot)        
 
-        _bot.threadpool.add_task(self.treat_msg)
+        _bot.threadpool.add_task(self.treat_msg, _threadname='Dispatcher')
         #thread.start_new_thread(self.treat_msg,  ())
 
     def treat_msg(self):

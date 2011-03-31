@@ -2,6 +2,7 @@ import sqlite3
 import time
 import string
 import csv
+import threading
 from irc_lib.utils.restricted import restricted
 from database import database
 
@@ -11,27 +12,27 @@ class MCPBotCmds(object):
 
     #================== Base chatting commands =========================
     @restricted
-    def cmdSay(self, sender, chan, cmd, msg, *args, **kwargs):
+    def cmd_say(self, sender, chan, cmd, msg, *args, **kwargs):
         if not len(msg.split()) > 1: return
         self.say(msg.split()[0], ' '.join(msg.split()[1:]))
 
     @restricted
-    def cmdMsg(self, sender, chan, cmd, msg, *args, **kwargs):
+    def cmd_msg(self, sender, chan, cmd, msg, *args, **kwargs):
         if not len(msg.split()) > 1: return
         self.irc.privmsg(msg.split()[0], ' '.join(msg.split()[1:]))
 
     @restricted
-    def cmdNotice(self, sender, chan, cmd, msg, *args, **kwargs):
+    def cmd_notice(self, sender, chan, cmd, msg, *args, **kwargs):
         if not len(msg.split()) > 1: return
         self.irc.notice(msg.split()[0], ' '.join(msg.split()[1:]))
 
     @restricted
-    def cmdAction(self, sender, chan, cmd, msg, *args, **kwargs):
+    def cmd_action(self, sender, chan, cmd, msg, *args, **kwargs):
         if not len(msg.split()) > 1: return
         self.ctcp.action(msg.split()[0], ' '.join(msg.split()[1:]))
 
     @restricted        
-    def cmdPub(self, sender, chan, cmd, msg, *args, **kwargs):
+    def cmd_pub(self, sender, chan, cmd, msg, *args, **kwargs):
         cmd = msg.split()[0]
         if len(msg.split()) > 1:
             msg = ' '.join(msg.split()[1:])
@@ -51,15 +52,15 @@ class MCPBotCmds(object):
     #===================================================================
 
     #================== Getters classes ================================
-    def cmdGcc(self, sender, chan, cmd, msg, *args, **kwargs):
+    def cmd_gcc(self, sender, chan, cmd, msg, *args, **kwargs):
         """$Bgcc <classname>$N              : Get Client Class."""
         self.getClass(sender, chan, cmd, msg, 'client')
 
-    def cmdGsc(self, sender, chan, cmd, msg, *args, **kwargs):
+    def cmd_gsc(self, sender, chan, cmd, msg, *args, **kwargs):
         """$Bgsc <classname>$N              : Get Server Class."""
         self.getClass(sender, chan, cmd, msg, 'server')
 
-    def cmdGc(self, sender, chan, cmd, msg, *args, **kwargs):
+    def cmd_gc(self, sender, chan, cmd, msg, *args, **kwargs):
         self.getClass(sender, chan, cmd, msg, 'client')        
         self.getClass(sender, chan, cmd, msg, 'server')
 
@@ -95,27 +96,27 @@ class MCPBotCmds(object):
     #===================================================================
 
     #================== Getters members ================================
-    def cmdGcm(self, sender, chan, cmd, msg, *args, **kwargs):
+    def cmd_gcm(self, sender, chan, cmd, msg, *args, **kwargs):
         """$Bgcm [classname.]<methodname>$N : Get Client Method."""
         self.outputMembers(sender, chan, cmd, msg, 'client', 'methods')
 
-    def cmdGsm(self, sender, chan, cmd, msg, *args, **kwargs):
+    def cmd_gsm(self, sender, chan, cmd, msg, *args, **kwargs):
         """$Bgsm [classname.]<methodname>$N : Get Server Method."""
         self.outputMembers(sender, chan, cmd, msg, 'server', 'methods')
 
-    def cmdGm(self, sender, chan, cmd, msg, *args, **kwargs):
+    def cmd_gm(self, sender, chan, cmd, msg, *args, **kwargs):
         self.outputMembers(sender, chan, cmd, msg, 'client', 'methods')        
         self.outputMembers(sender, chan, cmd, msg, 'server', 'methods')
 
-    def cmdGcf(self, sender, chan, cmd, msg, *args, **kwargs):
+    def cmd_gcf(self, sender, chan, cmd, msg, *args, **kwargs):
         """$Bgcf [classname.]<fieldname>$N  : Get Client Field."""
         self.outputMembers(sender, chan, cmd, msg, 'client', 'fields')
 
-    def cmdGsf(self, sender, chan, cmd, msg, *args, **kwargs):
+    def cmd_gsf(self, sender, chan, cmd, msg, *args, **kwargs):
         """$Bgsf [classname.]<fieldname>$N  : Get Server Field."""
         self.outputMembers(sender, chan, cmd, msg, 'server', 'fields')
 
-    def cmdGf(self, sender, chan, cmd, msg, *args, **kwargs):
+    def cmd_gf(self, sender, chan, cmd, msg, *args, **kwargs):
         self.outputMembers(sender, chan, cmd, msg, 'client', 'fields')        
         self.outputMembers(sender, chan, cmd, msg, 'server', 'fields')
 
@@ -229,7 +230,7 @@ class MCPBotCmds(object):
 
     #====================== Search commands ============================
     @database
-    def cmdSearch(self, sender, chan, cmd, msg, *args, **kwargs):
+    def cmd_search(self, sender, chan, cmd, msg, *args, **kwargs):
         """$Bsearch <pattern>$N  : Search for a pattern."""        
 
         c         = kwargs['cursor']
@@ -291,35 +292,35 @@ class MCPBotCmds(object):
 
     #====================== Setters for members ========================
     
-    def cmdScm(self, sender, chan, cmd, msg, *args, **kwargs):
+    def cmd_scm(self, sender, chan, cmd, msg, *args, **kwargs):
         """$Bscm [<id>|<searge>] <newname> [description]$N : Set Client Method."""
         self.setMember(sender, chan, cmd, msg, 'client', 'methods', forced=False)
         
-    def cmdScf(self, sender, chan, cmd, msg, *args, **kwargs):
+    def cmd_scf(self, sender, chan, cmd, msg, *args, **kwargs):
         """$Bscf [<id>|<searge>] <newname> [description]$N : Set Server Method."""
         self.setMember(sender, chan, cmd, msg, 'client', 'fields', forced=False)
         
-    def cmdSsm(self, sender, chan, cmd, msg, *args, **kwargs):
+    def cmd_ssm(self, sender, chan, cmd, msg, *args, **kwargs):
         """$Bssm [<id>|<searge>] <newname> [description]$N : Set Client Field."""
         self.setMember(sender, chan, cmd, msg, 'server', 'methods', forced=False)
 
-    def cmdSsf(self, sender, chan, cmd, msg, *args, **kwargs):
+    def cmd_ssf(self, sender, chan, cmd, msg, *args, **kwargs):
         """$Bssf [<id>|<searge>] <newname> [description]$N : Set Server Field."""
         self.setMember(sender, chan, cmd, msg, 'server', 'fields', forced=False)
 
-    def cmdFscm(self, sender, chan, cmd, msg, *args, **kwargs):
+    def cmd_fscm(self, sender, chan, cmd, msg, *args, **kwargs):
         """$Bscm [<id>|<searge>] <newname> [description]$N : Set Client Method."""
         self.setMember(sender, chan, cmd, msg, 'client', 'methods', forced=True)
         
-    def cmdFscf(self, sender, chan, cmd, msg, *args, **kwargs):
+    def cmd_fscf(self, sender, chan, cmd, msg, *args, **kwargs):
         """$Bscf [<id>|<searge>] <newname> [description]$N : Set Server Method."""
         self.setMember(sender, chan, cmd, msg, 'client', 'fields', forced=True)
         
-    def cmdFssm(self, sender, chan, cmd, msg, *args, **kwargs):
+    def cmd_fssm(self, sender, chan, cmd, msg, *args, **kwargs):
         """$Bssm [<id>|<searge>] <newname> [description]$N : Set Client Field."""
         self.setMember(sender, chan, cmd, msg, 'server', 'methods', forced=True)
 
-    def cmdFssf(self, sender, chan, cmd, msg, *args, **kwargs):
+    def cmd_fssf(self, sender, chan, cmd, msg, *args, **kwargs):
         """$Bssf [<id>|<searge>] <newname> [description]$N : Set Server Field."""
         self.setMember(sender, chan, cmd, msg, 'server', 'fields', forced=True)
 
@@ -407,7 +408,7 @@ class MCPBotCmds(object):
 
     #====================== Log Methods ================================
     @database
-    def cmdGetlog(self, sender, chan, cmd, msg, *args, **kwargs):
+    def cmd_getlog(self, sender, chan, cmd, msg, *args, **kwargs):
 
         c         = kwargs['cursor']
         idversion = kwargs['idvers']    
@@ -445,11 +446,11 @@ class MCPBotCmds(object):
                         self.say(sender, "+ %s, %s [%s%s] %s => %s"%(htimestamp, hnick.ljust(maxlennick), side[0].upper(), etype[0].upper(), msearge.ljust(maxlensearge), hname))
 
     @restricted
-    def cmdCommit(self, sender, chan, cmd, msg, *args, **kwargs):
+    def cmd_commit(self, sender, chan, cmd, msg, *args, **kwargs):
         self.dbCommit (sender, chan, cmd, msg)
 
     @restricted
-    def cmdUpdatecsv(self, sender, chan, cmd, msg, *args, **kwargs):
+    def cmd_updatecsv(self, sender, chan, cmd, msg, *args, **kwargs):
         self.dbCommit (sender, chan, cmd, msg)
         self.updateCsv(sender, chan, cmd, msg)
     
@@ -505,7 +506,7 @@ class MCPBotCmds(object):
     
     @restricted
     @database
-    def cmdAltcsv(self, sender, chan, cmd, msg, *args, **kwargs):
+    def cmd_altcsv(self, sender, chan, cmd, msg, *args, **kwargs):
         c         = kwargs['cursor']
         idversion = kwargs['idvers']  
         
@@ -557,29 +558,29 @@ class MCPBotCmds(object):
 
     #====================== Whitelist Handling =========================
     @restricted
-    def cmdAddwhite(self, sender, chan, cmd, msg, *args, **kwargs):
+    def cmd_addwhite(self, sender, chan, cmd, msg, *args, **kwargs):
         self.addWhitelist(msg)
         
     @restricted
-    def cmdRmwhite(self, sender, chan, cmd, msg, *args, **kwargs):
+    def cmd_rmwhite(self, sender, chan, cmd, msg, *args, **kwargs):
         self.rmWhitelist(msg)
     
     @restricted    
-    def cmdGetwhite(self, sender, chan, cmd, msg, *args, **kwargs):
+    def cmd_getwhite(self, sender, chan, cmd, msg, *args, **kwargs):
         self.say(sender, "Whitelist : %s"%self.whitelist)
         
     @restricted    
-    def cmdSavewhite(self, sender, chan, cmd, msg, *args, **kwargs):
+    def cmd_savewhite(self, sender, chan, cmd, msg, *args, **kwargs):
         self.saveWhitelist()
         
     @restricted    
-    def cmdLoadwhite(self, sender, chan, cmd, msg, *args, **kwargs):
+    def cmd_loadwhite(self, sender, chan, cmd, msg, *args, **kwargs):
         self.loadWhitelist()        
     #===================================================================
 
     #====================== Misc commands ==============================
     @restricted
-    def cmdExec(self, sender, chan, cmd, msg, *args, **kwargs):
+    def cmd_exec(self, sender, chan, cmd, msg, *args, **kwargs):
         if sender != 'ProfMobius': return
         try:
             print msg
@@ -588,27 +589,27 @@ class MCPBotCmds(object):
             self.printq.put ('ERROR : %s'%errormsg)
             self.say(sender, 'ERROR : %s'%errormsg)
 
-    def cmdDcc(self, sender, chan, cmd, msg, *args, **kwargs):
+    def cmd_dcc(self, sender, chan, cmd, msg, *args, **kwargs):
         """$Bdcc$N : Starts a dcc session. Faster and not under the flood protection."""        
         self.dcc.dcc(sender)        
     
     @restricted
-    def cmdKick(self, sender, chan, cmd, msg, *args, **kwargs):
+    def cmd_kick(self, sender, chan, cmd, msg, *args, **kwargs):
         if not msg.strip.split() == 2:return
         msg = msg.strip()
         msg = msg.split()
         self.irc.kick(msg[0], msg[1])
 
     @restricted
-    def cmdRawcmd(self, sender, chan, cmd, msg, *args, **kwargs):
+    def cmd_rawcmd(self, sender, chan, cmd, msg, *args, **kwargs):
         self.irc.rawcmd(msg.strip())
 
-    def cmdHelp(self, sender, chan, cmd, msg, *args, **kwargs):
+    def cmd_help(self, sender, chan, cmd, msg, *args, **kwargs):
         self.say(sender, "$B[ HELP ]")
         self.say(sender, "For help, please check : http://mcp.ocean-labs.de/index.php/MCPBot")
 
     @database
-    def cmdStatus(self, sender, chan, cmd, msg, *args, **kwargs):
+    def cmd_status(self, sender, chan, cmd, msg, *args, **kwargs):
         c         = kwargs['cursor']
         idversion = kwargs['idvers']
 
@@ -632,9 +633,28 @@ class MCPBotCmds(object):
                                       (side_lookup[side], idversion)).fetchone()
                                       
                 self.say(sender, " [%s][%7s] : T $B%4d$N | R $B%4d$N | U $B%4d$N | $B%5.2f%%$N" %(side[0].upper(), etype.upper(), total, ren, urn, float(ren)/float(total)*100))
+                
+        nthreads = len(threading.enumerate())
+        if nthreads == self.nthreads + 1:
+            self.say(sender, " All threads up and running !")
+        else:
+            self.say(sender, " Found only $R%d$N threads ! $BThere is a problem !"%(nthreads-1))
+
+    @restricted
+    def cmd_listthreads(self, sender, chan, cmd, msg, *args, **kwargs):
+        threads = threading.enumerate()
+        threads.pop(0)
+        self.say(sender, "$B[ THREADS ]")
+        threads = sorted(threads, cmp=lambda a,b:cmp(a.ncalls,b.ncalls))
+        print threads
+        maxthreadname = max([len(i.name) for i in threads])
+        for index, i in enumerate(threads):
+            #if not 'Thread' in i.name:
+                self.say(sender, '%2d %s %5d %5d %5d'%(index, i.name.ljust(maxthreadname), i.ncalls, i.nscalls, i.nfcalls))
+                time.sleep(0.2)
 
     @database
-    def cmdTodo(self, sender, chan, cmd, msg, *args, **kwargs):
+    def cmd_todo(self, sender, chan, cmd, msg, *args, **kwargs):
         c         = kwargs['cursor']
         idversion = kwargs['idvers']
 

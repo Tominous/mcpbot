@@ -39,14 +39,12 @@ class IRCBotAdvMtd(object):
         else:
             self.irc.notice(nick, msg)
 
-    def addWhitelist(self, nick):
-        self.whitelist.add(nick)
+    def addWhitelist(self, nick, level=4):
+        self.whitelist[nick] = level
 
     def rmWhitelist(self, nick):
-        try:
-            self.whitelist.remove(nick)
-        except KeyError:
-            pass
+        del self.whitelist[nick]
+            
 
     def saveWhitelist(self, filename = 'whitelist.pck'):
         ff = open(filename, 'w')

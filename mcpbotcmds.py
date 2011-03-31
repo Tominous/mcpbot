@@ -11,27 +11,27 @@ class MCPBotCmds(object):
         pass
 
     #================== Base chatting commands =========================
-    @restricted
+    @restricted(4)
     def cmd_say(self, sender, chan, cmd, msg, *args, **kwargs):
         if not len(msg.split()) > 1: return
         self.say(msg.split()[0], ' '.join(msg.split()[1:]))
 
-    @restricted
+    @restricted(4)
     def cmd_msg(self, sender, chan, cmd, msg, *args, **kwargs):
         if not len(msg.split()) > 1: return
         self.irc.privmsg(msg.split()[0], ' '.join(msg.split()[1:]))
 
-    @restricted
+    @restricted(4)
     def cmd_notice(self, sender, chan, cmd, msg, *args, **kwargs):
         if not len(msg.split()) > 1: return
         self.irc.notice(msg.split()[0], ' '.join(msg.split()[1:]))
 
-    @restricted
+    @restricted(4)
     def cmd_action(self, sender, chan, cmd, msg, *args, **kwargs):
         if not len(msg.split()) > 1: return
         self.ctcp.action(msg.split()[0], ' '.join(msg.split()[1:]))
 
-    @restricted        
+    @restricted(4)      
     def cmd_pub(self, sender, chan, cmd, msg, *args, **kwargs):
         cmd = msg.split()[0]
         if len(msg.split()) > 1:
@@ -405,6 +405,46 @@ class MCPBotCmds(object):
 
     #===================================================================
 
+    #====================== Revert changes =============================
+    
+    @restricted(2)
+    def cmd_rcm(self, sender, chan, cmd, msg, *args, **kwargs):
+        self.revertChanges(sender, chan, cmd, msg, 'client', 'methods')    
+
+    @restricted(2)   
+    def cmd_rcf(self, sender, chan, cmd, msg, *args, **kwargs):
+        self.revertChanges(sender, chan, cmd, msg, 'client', 'fields')    
+    
+    @restricted(2)
+    def cmd_rsm(self, sender, chan, cmd, msg, *args, **kwargs):
+        self.revertChanges(sender, chan, cmd, msg, 'server', 'methods')
+    
+    @restricted(2)
+    def cmd_rsf(self, sender, chan, cmd, msg, *args, **kwargs):
+        self.revertChanges(sender, chan, cmd, msg, 'server', 'fields')
+    
+    @database
+    def revertChanges(self, sender, chan, cmd, msg, side, etype, *args, **kwargs):
+        c         = kwargs['cursor']
+        idversion = kwargs['idvers']    
+
+        type_lookup = {'methods':'func','fields':'field'}
+        side_lookup = {'client':0, 'server':1}
+        
+        self.say(sender, "$B[ REVERT %s %s ]"%(side.upper(), etype.upper()))
+        
+        msg = msg.strip()
+        if len(msg.split()) > 1:
+            self.say(sender, "Syntax error : $B%s <searge|index>"%cmd)
+            return
+            
+    
+        c.execute("""UPDATE %s SET dirtyid=0 WHERE ((searge LIKE ? ESCAPE '!') OR searge = ?) AND side = ? AND versionid = ?"""%etype,
+         ('%s!_%s!_%%'%(type_lookup[etype],msg),msg,side_lookup[side], idversion))
+        self.say(sender, " Reverting changes on $B%s$N is done."%msg)
+    
+    #===================================================================
+
     #====================== Log Methods ================================
     @database
     def cmd_getlog(self, sender, chan, cmd, msg, *args, **kwargs):
@@ -444,11 +484,11 @@ class MCPBotCmds(object):
                     else:
                         self.say(sender, "+ %s, %s [%s%s] %s => %s"%(htimestamp, hnick.ljust(maxlennick), side[0].upper(), etype[0].upper(), msearge.ljust(maxlensearge), hname))
 
-    @restricted
+    @restricted(3)
     def cmd_commit(self, sender, chan, cmd, msg, *args, **kwargs):
         self.dbCommit (sender, chan, cmd, msg)
 
-    @restricted
+    @restricted(3)
     def cmd_updatecsv(self, sender, chan, cmd, msg, *args, **kwargs):
         self.dbCommit (sender, chan, cmd, msg)
         self.updateCsv(sender, chan, cmd, msg)
@@ -503,7 +543,7 @@ class MCPBotCmds(object):
         ffmetho.close()
         fffield.close()   
     
-    @restricted
+    @restricted(5)
     @database
     def cmd_altcsv(self, sender, chan, cmd, msg, *args, **kwargs):
         c         = kwargs['cursor']
@@ -556,31 +596,65 @@ class MCPBotCmds(object):
     #===================================================================
 
     #====================== Whitelist Handling =========================
-    @restricted
+    @restricted(0)
     def cmd_addwhite(self, sender, chan, cmd, msg, *args, **kwargs):
-        self.addWhitelist(msg)
+        msg = msg.strip().split()
+        if len(msg) == 1:
+            nick  = msg[0]
+            level = 4
+            if level > self.whitelist[sender]:
+                self.say(sender, "You don't have the rights to do that.")                 
+                return
+            self.addWhitelist(nick)
+        elif len(msg) == 2:
+            try:
+                nick  = msg[0]
+                level = int(msg[1])
+                if level > 4:
+                    self.say(sender, "Max level is 4.")
+                    return
+                if level > self.whitelist[sender]:
+                    self.say(sender, "You don't have the rights to do that.")                 
+                    return                    
+                self.addWhitelist(nick, level)
+            except:
+                self.say(sender, "Syntax error : $Baddwhite <nick> [level]")
+                return
+        else:
+            self.say(sender, "Syntax error : $Baddwhite <nick> [level]")
+        self.say(sender, "Added %s with level %d to whitelist"%(nick, level))
         
-    @restricted
+    @restricted(0)
     def cmd_rmwhite(self, sender, chan, cmd, msg, *args, **kwargs):
-        self.rmWhitelist(msg)
+        nick = msg.strip()
+        
+        if nick in self.whitelist and self.whitelist[nick] > self.whitelist[sender]:
+            self.say(sender, "You don't have the rights to do that.")         
+            return
+        
+        try:
+            self.rmWhitelist(nick)
+        except KeyError:
+            self.say(sender, "User %s not found in the whitelist"%nick)
+            return   
+        self.say(sender, "User %s removed from the whitelist"%nick)         
     
-    @restricted    
+    @restricted(0)   
     def cmd_getwhite(self, sender, chan, cmd, msg, *args, **kwargs):
         self.say(sender, "Whitelist : %s"%self.whitelist)
         
-    @restricted    
+    @restricted(4)
     def cmd_savewhite(self, sender, chan, cmd, msg, *args, **kwargs):
         self.saveWhitelist()
         
-    @restricted    
+    @restricted(4)
     def cmd_loadwhite(self, sender, chan, cmd, msg, *args, **kwargs):
         self.loadWhitelist()        
     #===================================================================
 
     #====================== Misc commands ==============================
-    @restricted
+    @restricted(5)
     def cmd_exec(self, sender, chan, cmd, msg, *args, **kwargs):
-        if sender != 'ProfMobius': return
         try:
             print msg
             exec(msg) in self.globaldic, self.localdic
@@ -592,14 +666,14 @@ class MCPBotCmds(object):
         """$Bdcc$N : Starts a dcc session. Faster and not under the flood protection."""        
         self.dcc.dcc(sender)        
     
-    @restricted
+    @restricted(4)
     def cmd_kick(self, sender, chan, cmd, msg, *args, **kwargs):
         if not msg.strip.split() == 2:return
         msg = msg.strip()
         msg = msg.split()
         self.irc.kick(msg[0], msg[1])
 
-    @restricted
+    @restricted(5)
     def cmd_rawcmd(self, sender, chan, cmd, msg, *args, **kwargs):
         self.irc.rawcmd(msg.strip())
 
@@ -639,7 +713,7 @@ class MCPBotCmds(object):
         else:
             self.say(sender, " Found only $R%d$N threads ! $BThere is a problem !"%(nthreads-1))
 
-    @restricted
+    @restricted(4)
     def cmd_listthreads(self, sender, chan, cmd, msg, *args, **kwargs):
         threads = threading.enumerate()
         threads.pop(0)

@@ -15,9 +15,9 @@ class IRCBotBase(IRCBotAdvMtd, IRCBotIO):
     Provides a threadpool to handle bot commands, a user list updated as information become available,
     and access to all the procotols through self.<protocol> (irc, ctcp, dcc, and nickserv)"""
     
-    whitelist = Set()
-    
     def __init__(self, _nick='IRCBotLib', _char=':', _flood=1000):
+        
+        self.whitelist   = {}
         
         self.log         = None
         

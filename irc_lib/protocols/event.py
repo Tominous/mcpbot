@@ -2,6 +2,8 @@ import time
 
 class Event(object):
     
+    maxid = 0
+    
     def __init__(self, sender, cmd, target, msg, selfnick, etype):
         if   msg[0]    == ':' and len(msg.strip()) == 1: msg=''
         elif msg[0]    == ':': msg=msg[1:] 
@@ -17,6 +19,8 @@ class Event(object):
         self.type       = etype
         self.stamp      = time.time()
         self.chan       = None
+        self.id         = Event.maxid
+        Event.maxid    += 1
         if self.ischan: self.chan = self.target
 
 

@@ -7,7 +7,7 @@ from IRCBotBase import IRCBotBase
 
 class TestBot(IRCBotBase):
     
-    whitelist = Set(['ProfMobius'])
+    whitelist['ProfMobius'] = 5
     
     def __init__(self, nick='DevBot'):
         IRCBotBase.__init__(self, nick)
@@ -62,21 +62,21 @@ class TestBot(IRCBotBase):
     def onDCCMsg(self,ev):
         self.dcc.say(ev.sender, ev.msg)
 
-    @restricted
+    @restricted()
     def cmdAddWhite(self,sender,channel,msg):
         self.addWhitelist(msg)
         
-    @restricted
+    @restricted()
     def cmdRemoveWhite(self, sender,channel,msg):
         self.rmWhitelist(msg)
 
-    @restricted
+    @restricted()
     def cmdFlood(self, sender, channel, msg):
         number = int(msg.split()[1])
         for i in range(number):
             self.irc.privmsg(msg.split()[0], ':%03d'%i)        
 
-    @restricted
+    @restricted()
     def cmdExec(self, sender, channel, cmd):
         try:
             self.printq.put(cmd)

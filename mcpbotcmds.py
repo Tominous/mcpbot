@@ -573,7 +573,13 @@ class MCPBotCmds(object):
         classeswriter.writerow(('name', 'notch', 'supername', 'package', 'side'))
         for row in c:
             classeswriter.writerow(row)
-        
+
+        classeswriter = csv.writer(open('fullclasses.csv', 'wb'), delimiter=',',quotechar='"', quoting=csv.QUOTE_ALL)
+        c.execute("""SELECT name, notch, supername, package, side FROM vclasses 
+                      WHERE versionid = ?""",(idversion,))
+        classeswriter.writerow(('name', 'notch', 'supername', 'package', 'side'))
+        for row in c:
+            classeswriter.writerow(row)
 
     @database   
     def dbCommit(self, sender, chan, cmd, msg, *args, **kwargs):
@@ -613,7 +619,7 @@ class MCPBotCmds(object):
         if len(msg) == 1:
             nick  = msg[0]
             level = 4
-            if level > self.whitelist[sender]:
+            if level >= self.whitelist[sender]:
                 self.say(sender, "You don't have the rights to do that.")                 
                 return
             self.addWhitelist(nick)
@@ -624,7 +630,7 @@ class MCPBotCmds(object):
                 if level > 4:
                     self.say(sender, "Max level is 4.")
                     return
-                if level > self.whitelist[sender]:
+                if level >= self.whitelist[sender]:
                     self.say(sender, "You don't have the rights to do that.")                 
                     return                    
                 self.addWhitelist(nick, level)
@@ -639,7 +645,7 @@ class MCPBotCmds(object):
     def cmd_rmwhite(self, sender, chan, cmd, msg, *args, **kwargs):
         nick = msg.strip()
         
-        if nick in self.whitelist and self.whitelist[nick] > self.whitelist[sender]:
+        if nick in self.whitelist and self.whitelist[nick] >= self.whitelist[sender]:
             self.say(sender, "You don't have the rights to do that.")         
             return
         
@@ -679,10 +685,13 @@ class MCPBotCmds(object):
     
     @restricted(4)
     def cmd_kick(self, sender, chan, cmd, msg, *args, **kwargs):
-        if not msg.strip.split() == 2:return
         msg = msg.strip()
         msg = msg.split()
-        self.irc.kick(msg[0], msg[1])
+        if not len(msg) >= 2:return
+        if len(msg) == 2:
+            self.irc.kick(msg[0], msg[1])
+        if len(msg) > 2:
+            self.irc.kick(msg[0], msg[1], ' '.join(msg[2:]))
 
     @restricted(5)
     def cmd_rawcmd(self, sender, chan, cmd, msg, *args, **kwargs):

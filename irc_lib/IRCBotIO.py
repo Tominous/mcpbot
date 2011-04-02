@@ -2,6 +2,7 @@ import time
 import socket
 import os
 import select
+import pprint
 from Queue import Queue,Empty
 
 class IRCBotIO(object):
@@ -48,14 +49,14 @@ class IRCBotIO(object):
                 buffer  += self.irc_socket.recv(512)
             except socket.timeout:
                 continue
-            msg_list = buffer.split('\r\n')
+            msg_list = buffer.splitlines()
 
             #We push all the msg beside the last one (in case it is truncated)
             for msg in msg_list[:-1]:
-                self.in_msg.put(msg.replace('\r\n',''))
+                self.in_msg.put(msg)
             
             #If the last message is truncated, we push it back in the buffer. Else, we push it on the queue and clear the buffer.
-            if msg_list[-1][-2:] != '\r\n':
+            if buffer[-2:] != '\r\n':
                 buffer = msg_list[-1]
             else:
                 self.in_msg.put(msg_list[-1])

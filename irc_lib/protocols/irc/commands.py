@@ -43,8 +43,8 @@ class IRCCommands(object):
     def names(self, channels=''):
         self.rawcmd('NAMES %s'%(channels))
 
-    def kick(self, chan, nick, comment=''):
-        self.rawcmd('KICK %s %s %s'%(chan, nick, comment))
+    def kick(self, chan, nick, comment='because...'):
+        self.rawcmd('KICK %s %s :%s'%(chan, nick, comment))
 
     def whois(self, nick):
         self.rawcmd('WHOIS %s'%nick)

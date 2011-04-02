@@ -754,6 +754,10 @@ class MCPBotCmds(object):
             i = threads[-1]
             self.say(sender, '%2d %s %4d %4d %4d'%(len(threads)-1, i.name.ljust(maxthreadname), i.ncalls, i.nscalls, i.nfcalls))
 
+    @restricted(4)
+    def cmd_listdcc(self, sender, chan, cmd, msg, *args, **kwargs):
+        self.say(sender, str(self.dcc.sockets.keys()))
+
     @database
     def cmd_todo(self, sender, chan, cmd, msg, *args, **kwargs):
         c         = kwargs['cursor']

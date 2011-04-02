@@ -78,7 +78,8 @@ class IRCBotIO(object):
             try:
                 ev = self.loggingq.get(True, 1)
             except Empty:
-                continue            
+                continue
+            
             if self.log:            
                 self.log.write('%s; %s; %s; %s; %s; %s\n'%(time.ctime(), ev.type.ljust(5), ev.cmd.ljust(15), ev.sender.ljust(20), ev.target.ljust(20), ev.msg))
                 self.log.flush()        

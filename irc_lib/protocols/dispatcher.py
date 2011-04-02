@@ -36,7 +36,6 @@ class Dispatcher(object):
 
             self.in_msg.task_done()
 
-
             msg = msg.strip()
             if not msg:
                 continue

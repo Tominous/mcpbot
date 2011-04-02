@@ -23,5 +23,7 @@ class Event(object):
         Event.maxid    += 1
         if self.ischan: self.chan = self.target
 
+    def __repr__(self):
+        return '< Event : [%s][%s][%s] S: %s T: %s M: %s >'%(time.ctime(), self.type.ljust(5), self.cmd.ljust(7), self.sender.ljust(20), self.target.ljust(20), self.msg)
 
     

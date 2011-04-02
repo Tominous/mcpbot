@@ -22,7 +22,7 @@ class IRCRawEvents(object):
 
     def onRawPRIVMSG(self, ev):
         if not ev.msg:return
-        
+
         if self.bot.log:
             self.bot.loggingq.put(ev)
         

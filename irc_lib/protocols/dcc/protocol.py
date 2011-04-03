@@ -163,7 +163,11 @@ class DCCProtocol(DCCCommands, DCCRawEvents):
                         s.buffer = ''                    
                                 
                     else:
-                        self.bot.printq.put('> Connection closed with : %s'%s.nick) 
-                        del self.sockets[s.nick]
-                        s.socket.close()
-                        input.remove(s)
+                        try:
+                            self.bot.printq.put('> Connection closed with : %s'%s.nick) 
+                            del self.sockets[s.nick]
+                            s.socket.close()
+                            input.remove(s)
+                        except:
+                            print '> Error while closing the socket. Ignoring.'
+                            

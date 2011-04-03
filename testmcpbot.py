@@ -1,6 +1,7 @@
 from sets               import Set
 from irc_lib.IRCBotBase import IRCBotBase
 from mcpbotcmds         import MCPBotCmds
+import pickle
 import sys
 
 class MCPBot(IRCBotBase, MCPBotCmds):
@@ -32,4 +33,5 @@ if __name__ == "__main__":
     bot.irc.join('#test')
     bot.startLogging()
     bot.loadWhitelist()
+  
     bot.start()    

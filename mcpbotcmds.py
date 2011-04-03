@@ -2,6 +2,7 @@ import sqlite3
 import time
 import string
 import csv
+import re
 import threading
 from irc_lib.utils.restricted import restricted
 from database import database
@@ -349,32 +350,17 @@ class MCPBotCmds(object):
         self.say(sender, "$B[ SET %s %s ]"%(side.upper(),etype.upper()))
         if forced: self.say(sender, "$RCAREFULL, YOU ARE FORCING AN UPDATE !")
 
-        result = c.execute("""SELECT m.name FROM vclasses m WHERE m.name = ? AND m.side = ? AND m.versionid = ?""", (newname, side_lookup[side], idversion)).fetchone()
+        ## WE CHECK IF WE ARE NOT CONFLICTING WITH A CLASS NAME ##
+        result = c.execute("""SELECT m.name FROM vclasses m 
+                              WHERE m.name = ? 
+                                AND m.side = ? 
+                                AND m.versionid = ?""", (newname, side_lookup[side], idversion)).fetchone()
         if result: 
             self.say(sender, "$RIt is illegal to use class names for fields or methods !")
             return
-        
-        if not forced:
-            result = c.execute("""SELECT m.searge, m.name FROM vmethods m WHERE m.name = ? AND m.side = ? AND m.versionid = ?""", (newname, side_lookup[side], idversion)).fetchone()
-            if result: 
-                self.say(sender, "$RYou are conflicting with at least one other method: %s. Please use forced update only if you are certain !"%result[0])
-                return
+        ##
 
-            result = c.execute("""SELECT m.searge, m.name FROM vmethods m WHERE m.side = ? AND m.versionid = ?""", (side_lookup[side], idversion)).fetchone()
-            if result and result[0] != result[1]:
-                self.say(sender, "$RYou are trying to rename an already named member. Please use forced update only if you are certain !")
-                return
-
-            result = c.execute("""SELECT m.searge, m.name FROM vfields m WHERE m.name = ? AND m.side = ? AND m.versionid = ?""", (newname, side_lookup[side], idversion)).fetchone()
-            if result: 
-                self.say(sender, "$RYou are conflicting with at least one other field: %s. Please use forced update only if you are certain !"%result[0])
-                return
-
-            result = c.execute("""SELECT m.searge, m.name FROM vfields m WHERE m.side = ? AND m.versionid = ?""", (side_lookup[side], idversion)).fetchone()
-            if result and result[0] != result[1]:
-                self.say(sender, "$RYou are trying to rename an already named member. Please use forced update only if you are certain !")
-                return
-
+        ## WE CHECK WE ONLY HAVE ONE RESULT ##
         c.execute("""SELECT m.name, m.notch, m.searge, m.sig, m.notchsig, m.desc, m.classname, m.classnotch, m.id FROM v%s m
                     WHERE ((m.searge LIKE ? ESCAPE '!') OR m.searge = ?) AND m.side = ? AND m.versionid = ?"""%etype, 
                     ('%s!_%s!_%%'%(type_lookup[etype],oldname),oldname,side_lookup[side], idversion))            
@@ -392,27 +378,63 @@ class MCPBotCmds(object):
                 fullcsv   = '%s.%s'%(classname, name)
                 fullnotch = '[%s.%s]'%(classnotch, notch)
                 self.say(sender, " %s %s %s"%(fullcsv.ljust(maxlencsv+2), fullnotch.ljust(maxlennotch+2), sig))
+            return
                 
         elif len(results) == 0:
             self.say(sender, " No result for %s"%oldname)
-        else:
+            return
+        ##
+
+        ## WE CHECK THAT WE HAVE A UNIQUE NAME
+        if not forced:
+            result = c.execute("""SELECT m.searge, m.name FROM vmethods m 
+                                  WHERE m.name = ? 
+                                  AND m.side = ? 
+                                  AND m.versionid = ?""", (newname, side_lookup[side], idversion)).fetchone()
+            if result: 
+                self.say(sender, "$RYou are conflicting with at least one other method: %s. Please use forced update only if you are certain !"%result[0])
+                return
+
+            result = c.execute("""SELECT m.searge, m.name FROM vmethods m 
+                                  WHERE ((m.searge LIKE ? ESCAPE '!') OR m.searge = ?)
+                                  AND m.side = ? 
+                                  AND m.versionid = ?""", ('%s!_%s!_%%'%(type_lookup[etype],oldname),oldname,side_lookup[side], idversion)).fetchone()
+            if result and result[0] != result[1]:
+                self.say(sender, "$RYou are trying to rename an already named member. Please use forced update only if you are certain !")
+                return
+
+            result = c.execute("""SELECT m.searge, m.name FROM vfields m 
+                                  WHERE m.name = ? 
+                                  AND m.side = ? 
+                                  AND m.versionid = ?""", (newname, side_lookup[side], idversion)).fetchone()
+            if result: 
+                self.say(sender, "$RYou are conflicting with at least one other field: %s. Please use forced update only if you are certain !"%result[0])
+                return
+
+            result = c.execute("""SELECT m.searge, m.name FROM vfields m 
+                                  WHERE ((m.searge LIKE ? ESCAPE '!') OR m.searge = ?)
+                                  AND m.side = ? 
+                                  AND m.versionid = ?""", ('%s!_%s!_%%'%(type_lookup[etype],oldname),oldname,side_lookup[side], idversion)).fetchone()
+            if result and result[0] != result[1]:
+                self.say(sender, "$RYou are trying to rename an already named member. Please use forced update only if you are certain !")
+                return
+
+
+        if len(results) == 1:
             name, notch, searge, sig, notchsig, desc, classname, classnotch, id = results[0]
             self.say(sender, "Name     : $B%s => %s"%(name, newname))
             self.say(sender, "$BOld desc$N : %s"%(desc))
 
-            if not newdesc:
-                self.say(sender, "$BNew desc$N : %s"%(desc))
-                c.execute("""INSERT INTO %shist VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"""%etype,
-                    (None, int(id), name, desc, newname, desc.replace('"',"'"), int(time.time()), sender, forced, cmd))
-            elif newdesc == 'None':
-                self.say(sender, "$BNew desc$N : None")
-                c.execute("""INSERT INTO %shist VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"""%etype,
-                    (None, int(id), name, desc, newname, None, int(time.time()), sender, forced, cmd))                
-            else:
-                self.say(sender, "$BNew desc$N : %s"%(newdesc))
-                c.execute("""INSERT INTO %shist VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"""%etype,
-                    (None, int(id), name, desc, newname, newdesc.replace('"',"'"), int(time.time()), sender, forced, cmd))
 
+            if   not newdesc and not desc: newdesc = None
+            elif not newdesc             : newdesc = desc.replace('"',"'")
+            elif newdesc == 'None'       : newdesc = None
+            else: newdesc = newdesc.replace('"',"'")
+
+            c.execute("""INSERT INTO %shist VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"""%etype,
+                    (None, int(id), name, desc, newname, newdesc, int(time.time()), sender, forced, cmd))
+            self.say(sender, "$BNew desc$N : %s"%(newdesc))
+                
     #===================================================================
 
     #====================== Revert changes =============================
@@ -472,7 +494,7 @@ class MCPBotCmds(object):
         self.say(sender, "$B[ LOGS ]")
         for side  in ['server', 'client']:
             for etype in ['methods', 'fields']:
-                c.execute("""SELECT m.name, m.searge, m.desc, h.newname, h.newdesc, strftime('%s',h.timestamp, 'unixepoch') as htimestamp, h.nick, h.cmd
+                c.execute("""SELECT m.name, m.searge, m.desc, h.newname, h.newdesc, strftime('%s',h.timestamp, 'unixepoch') as htimestamp, h.nick, h.cmd, h.forced
                             FROM  %s m 
                             INNER JOIN %shist h ON m.dirtyid = h.id
                             WHERE m.side = ?  AND m.versionid = ? ORDER BY h.timestamp"""%('%m-%d %H:%M',etype,etype), (side_lookup[side], idversion))
@@ -484,30 +506,43 @@ class MCPBotCmds(object):
                     maxlensearge = max(map(len, [result[1] for result in results]))
                     maxlenmname  = max(map(len, [result[0] for result in results]))
 
-                for result in results:
-                    mname, msearge, mdesc, hname, hdesc, htimestamp, hnick, hcmd = result
-                    
-                    if fulllog:
-                        self.say(sender, "+ %s, %s, %s"%(htimestamp, hnick, hcmd))
-                        self.say(sender, "  [%s%s][%s] %s => %s"%(side[0].upper(), etype[0].upper(), msearge.ljust(maxlensearge), mname.ljust(maxlenmname), hname))
-                        self.say(sender, "  [%s%s][%s] %s => %s"%(side[0].upper(), etype[0].upper(), msearge.ljust(maxlensearge), mdesc, hdesc))
-                    else:
-                        self.say(sender, "+ %s, %s [%s%s][%4s] %s => %s"%(htimestamp, hnick.ljust(maxlennick), side[0].upper(), etype[0].upper(), hcmd, msearge.ljust(maxlensearge), hname))
+                for forcedstatus in [0,1]:
+                    for result in results:
+                        mname, msearge, mdesc, hname, hdesc, htimestamp, hnick, hcmd, hforced = result
+                        
+                        if hforced == forcedstatus:
+                            if fulllog:
+                                self.say(sender, "+ %s, %s, %s"%(htimestamp, hnick, hcmd))
+                                self.say(sender, "  [%s%s][%s] %s => %s"%(side[0].upper(), etype[0].upper(), msearge.ljust(maxlensearge), mname.ljust(maxlenmname), hname))
+                                self.say(sender, "  [%s%s][%s] %s => %s"%(side[0].upper(), etype[0].upper(), msearge.ljust(maxlensearge), mdesc, hdesc))
+                            else:
+                                indexmember = re.search('[0-9]+', msearge).group()
+                                self.say(sender, "+ %s, %s [%s%s][%5s][%4s] %s => %s"%(htimestamp, hnick.ljust(maxlennick), side[0].upper(), etype[0].upper(), indexmember, hcmd, mname.ljust(maxlensearge), hname))
 
     @restricted(3)
     def cmd_commit(self, sender, chan, cmd, msg, *args, **kwargs):
-        self.dbCommit (sender, chan, cmd, msg)
+        self.dbCommit (sender, chan, cmd, msg, pushforced = False)
+
+    @restricted(4)
+    def cmd_fcommit(self, sender, chan, cmd, msg, *args, **kwargs):
+        self.dbCommit (sender, chan, cmd, msg, pushforced = True)
 
     @restricted(3)
     def cmd_updatecsv(self, sender, chan, cmd, msg, *args, **kwargs):
-        self.dbCommit (sender, chan, cmd, msg)
-        self.updateCsv(sender, chan, cmd, msg)
+        self.dbCommit (sender, chan, cmd, msg, pushforced = False)
+        self.updateCsv(sender, chan, cmd, msg, pushforced = False)
+
+    @restricted(4)
+    def cmd_fupdatecsv(self, sender, chan, cmd, msg, *args, **kwargs):
+        self.dbCommit (sender, chan, cmd, msg, pushforced = True)
+        self.updateCsv(sender, chan, cmd, msg, pushforced = True)
     
     @database
     def updateCsv(self, sender, chan, cmd, msg, *args, **kwargs):
 
-        c         = kwargs['cursor']
-        idversion = kwargs['idvers']  
+        c          = kwargs['cursor']
+        idversion  = kwargs['idvers']  
+        pushforced = kwargs['pushforced']  
         
         if self.cnick == 'MCPBot_NG':
             directory='.'
@@ -528,27 +563,51 @@ class MCPBotCmds(object):
         ffmetho.write('NULL,NULL,NULL,NULL,NULL,NULL\n')
         ffmetho.write('class (for reference only),Reference,class (for reference only),Reference,Name,Notes\n')
         
-        c.execute("""SELECT classname, searge, name, desc FROM vfields WHERE side = 0  AND versionid = ? ORDER BY searge""", (idversion,))
-        for row in c.fetchall():
-            classname, searge, name, desc = row
-            if not desc:desc = ''
-            fffield.write('%s,*,%s,*,*,*,%s,"%s"\n'%(classname, searge, name, desc.replace('"', "'")))
-        c.execute("""SELECT classname, searge, name, desc FROM vfields WHERE side = 1  AND versionid = ? ORDER BY searge""", (idversion,))
-        for row in c.fetchall():
-            classname, searge, name, desc = row
-            if not desc:desc = ''
-            fffield.write('*,*,*,%s,*,%s,%s,"%s"\n'%(classname, searge, name, desc.replace('"', "'")))
+        if pushforced :
+            c.execute("""SELECT classname, searge, name, desc FROM vfields WHERE side = 0  AND versionid = ? ORDER BY searge""", (idversion,))
+            for row in c.fetchall():
+                classname, searge, name, desc = row
+                if not desc:desc = ''
+                fffield.write('%s,*,%s,*,*,*,%s,"%s"\n'%(classname, searge, name, desc.replace('"', "'")))
+            c.execute("""SELECT classname, searge, name, desc FROM vfields WHERE side = 1  AND versionid = ? ORDER BY searge""", (idversion,))
+            for row in c.fetchall():
+                classname, searge, name, desc = row
+                if not desc:desc = ''
+                fffield.write('*,*,*,%s,*,%s,%s,"%s"\n'%(classname, searge, name, desc.replace('"', "'")))
 
-        c.execute("""SELECT classname, searge, name, desc FROM vmethods WHERE side = 0  AND versionid = ? ORDER BY searge""", (idversion,))
-        for row in c.fetchall():
-            classname, searge, name, desc = row
-            if not desc:desc = ''
-            ffmetho.write('%s,%s,*,*,%s,"%s"\n'%(classname, searge, name, desc.replace('"', "'")))
-        c.execute("""SELECT classname, searge, name, desc FROM vmethods WHERE side = 1  AND versionid = ? ORDER BY searge""", (idversion,))
-        for row in c.fetchall():
-            classname, searge, name, desc = row
-            if not desc:desc = ''
-            ffmetho.write('*,*,%s,%s,%s,"%s"\n'%(classname, searge, name, desc.replace('"', "'")))
+            c.execute("""SELECT classname, searge, name, desc FROM vmethods WHERE side = 0  AND versionid = ? ORDER BY searge""", (idversion,))
+            for row in c.fetchall():
+                classname, searge, name, desc = row
+                if not desc:desc = ''
+                ffmetho.write('%s,%s,*,*,%s,"%s"\n'%(classname, searge, name, desc.replace('"', "'")))
+            c.execute("""SELECT classname, searge, name, desc FROM vmethods WHERE side = 1  AND versionid = ? ORDER BY searge""", (idversion,))
+            for row in c.fetchall():
+                classname, searge, name, desc = row
+                if not desc:desc = ''
+                ffmetho.write('*,*,%s,%s,%s,"%s"\n'%(classname, searge, name, desc.replace('"', "'")))
+
+        else:
+            c.execute("""SELECT classname, searge, name, desc FROM vfields WHERE side = 0  AND versionid = ? AND NOT forced = 1 ORDER BY searge""", (idversion,))
+            for row in c.fetchall():
+                classname, searge, name, desc = row
+                if not desc:desc = ''
+                fffield.write('%s,*,%s,*,*,*,%s,"%s"\n'%(classname, searge, name, desc.replace('"', "'")))
+            c.execute("""SELECT classname, searge, name, desc FROM vfields WHERE side = 1  AND versionid = ? AND NOT forced = 1 ORDER BY searge""", (idversion,))
+            for row in c.fetchall():
+                classname, searge, name, desc = row
+                if not desc:desc = ''
+                fffield.write('*,*,*,%s,*,%s,%s,"%s"\n'%(classname, searge, name, desc.replace('"', "'")))
+
+            c.execute("""SELECT classname, searge, name, desc FROM vmethods WHERE side = 0  AND versionid = ? AND NOT forced = 1 ORDER BY searge""", (idversion,))
+            for row in c.fetchall():
+                classname, searge, name, desc = row
+                if not desc:desc = ''
+                ffmetho.write('%s,%s,*,*,%s,"%s"\n'%(classname, searge, name, desc.replace('"', "'")))
+            c.execute("""SELECT classname, searge, name, desc FROM vmethods WHERE side = 1  AND versionid = ? AND NOT forced = 1 ORDER BY searge""", (idversion,))
+            for row in c.fetchall():
+                classname, searge, name, desc = row
+                if not desc:desc = ''
+                ffmetho.write('*,*,%s,%s,%s,"%s"\n'%(classname, searge, name, desc.replace('"', "'")))
 
         ffmetho.close()
         fffield.close()   
@@ -603,16 +662,23 @@ class MCPBotCmds(object):
     @database   
     def dbCommit(self, sender, chan, cmd, msg, *args, **kwargs):
 
-        c         = kwargs['cursor']
-        idversion = kwargs['idvers']
+        c          = kwargs['cursor']
+        idversion  = kwargs['idvers']
+        pushforced = kwargs['pushforced']
 
         nentries = 0
         for etype in ['methods', 'fields']:
 
-            c.execute("""SELECT m.id, h.id, h.newname, h.newdesc FROM %s m
-                        INNER JOIN %shist h ON m.dirtyid = h.id
-                        WHERE m.versionid = ?
-                        """%(etype, etype), (idversion,))
+            if pushforced:
+                c.execute("""SELECT m.id, h.id, h.newname, h.newdesc FROM %s m
+                            INNER JOIN %shist h ON m.dirtyid = h.id
+                            WHERE m.versionid = ?
+                            """%(etype, etype), (idversion,))
+            else:
+                c.execute("""SELECT m.id, h.id, h.newname, h.newdesc FROM %s m
+                            INNER JOIN %shist h ON m.dirtyid = h.id
+                            WHERE m.versionid = ? AND NOT h.forced = 1
+                            """%(etype, etype), (idversion,))
         
             results = c.fetchall()
             nentries += len(results)

@@ -24,8 +24,9 @@ def database(f):
             c.close()
             dbase.close()
             DBLock.release()
-        except:
+        except Exception, msg:
             DBLock.release()
+            print msg
             raise
         
         return rows

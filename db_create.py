@@ -211,11 +211,11 @@ def main(options, args):
             SELECT m.id, m.side, m.searge, m.notch, 
             CASE WHEN m.dirtyid > 0 THEN h.newname
                                 ELSE m.name
-            END AS name,  
+            END AS name, m.name AS oldname,
             CASE WHEN m.dirtyid > 0 THEN h.newdesc
                                 ELSE m.desc
-            END AS desc,
-                m.sig, m.notchsig, c.name AS classname, c.notch AS classnotch, c1.name AS topname, c1.notch AS topnotch, p.name AS package, c.versionid
+            END AS desc, m.desc AS olddesc,
+                m.sig, m.notchsig, c.name AS classname, c.notch AS classnotch, c1.name AS topname, c1.notch AS topnotch, p.name AS package, c.versionid, h.forced, h.cmd, h.nick
         FROM %s m
         INNER JOIN %slk mlk
             ON mlk.memberid = m.id

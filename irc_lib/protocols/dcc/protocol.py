@@ -129,7 +129,15 @@ class DCCProtocol(DCCCommands, DCCRawEvents):
                         
                 else:
                     # handle all other sockets
-                    data = s.socket.recv(512)
+                    try:
+                        data = s.socket.recv(512)
+                    except socket.error, msg:
+                        if 'Connection reset by peer' in msg:
+                            self.bot.printq.put('> Connection closed with : %s'%s.nick) 
+                            del self.sockets[s.nick]
+                            s.socket.close()
+                            input.remove(s)
+                            continue
                     if data:
                         s.buffer += data
 

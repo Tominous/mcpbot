@@ -360,9 +360,19 @@ class MCPBotCmds(object):
                 self.say(sender, "$RYou are conflicting with at least one other method: %s. Please use forced update only if you are certain !"%result[0])
                 return
 
+            result = c.execute("""SELECT m.searge, m.name FROM vmethods m WHERE m.side = ? AND m.versionid = ?""", (side_lookup[side], idversion)).fetchone()
+            if result and result[0] != result[1]:
+                self.say(sender, "$RYou are trying to rename an already named member. Please use forced update only if you are certain !")
+                return
+
             result = c.execute("""SELECT m.searge, m.name FROM vfields m WHERE m.name = ? AND m.side = ? AND m.versionid = ?""", (newname, side_lookup[side], idversion)).fetchone()
             if result: 
                 self.say(sender, "$RYou are conflicting with at least one other field: %s. Please use forced update only if you are certain !"%result[0])
+                return
+
+            result = c.execute("""SELECT m.searge, m.name FROM vfields m WHERE m.side = ? AND m.versionid = ?""", (side_lookup[side], idversion)).fetchone()
+            if result and result[0] != result[1]:
+                self.say(sender, "$RYou are trying to rename an already named member. Please use forced update only if you are certain !")
                 return
 
         c.execute("""SELECT m.name, m.notch, m.searge, m.sig, m.notchsig, m.desc, m.classname, m.classnotch, m.id FROM v%s m
@@ -462,7 +472,7 @@ class MCPBotCmds(object):
         self.say(sender, "$B[ LOGS ]")
         for side  in ['server', 'client']:
             for etype in ['methods', 'fields']:
-                c.execute("""SELECT m.name, m.searge, m.desc, h.newname, h.newdesc, strftime('%s',h.timestamp, 'unixepoch') as htimestamp, h.nick
+                c.execute("""SELECT m.name, m.searge, m.desc, h.newname, h.newdesc, strftime('%s',h.timestamp, 'unixepoch') as htimestamp, h.nick, h.cmd
                             FROM  %s m 
                             INNER JOIN %shist h ON m.dirtyid = h.id
                             WHERE m.side = ?  AND m.versionid = ? ORDER BY h.timestamp"""%('%m-%d %H:%M',etype,etype), (side_lookup[side], idversion))
@@ -475,14 +485,14 @@ class MCPBotCmds(object):
                     maxlenmname  = max(map(len, [result[0] for result in results]))
 
                 for result in results:
-                    mname, msearge, mdesc, hname, hdesc, htimestamp, hnick = result
+                    mname, msearge, mdesc, hname, hdesc, htimestamp, hnick, hcmd = result
                     
                     if fulllog:
-                        self.say(sender, "+ %s, %s"%(htimestamp, hnick))
+                        self.say(sender, "+ %s, %s, %s"%(htimestamp, hnick, hcmd))
                         self.say(sender, "  [%s%s][%s] %s => %s"%(side[0].upper(), etype[0].upper(), msearge.ljust(maxlensearge), mname.ljust(maxlenmname), hname))
                         self.say(sender, "  [%s%s][%s] %s => %s"%(side[0].upper(), etype[0].upper(), msearge.ljust(maxlensearge), mdesc, hdesc))
                     else:
-                        self.say(sender, "+ %s, %s [%s%s] %s => %s"%(htimestamp, hnick.ljust(maxlennick), side[0].upper(), etype[0].upper(), msearge.ljust(maxlensearge), hname))
+                        self.say(sender, "+ %s, %s [%s%s][%4s] %s => %s"%(htimestamp, hnick.ljust(maxlennick), side[0].upper(), etype[0].upper(), hcmd, msearge.ljust(maxlensearge), hname))
 
     @restricted(3)
     def cmd_commit(self, sender, chan, cmd, msg, *args, **kwargs):
@@ -549,37 +559,46 @@ class MCPBotCmds(object):
         c         = kwargs['cursor']
         idversion = kwargs['idvers']  
 
-        methodswriter = csv.writer(open('methods.csv', 'wb'), delimiter=',',quotechar='"', quoting=csv.QUOTE_ALL)
+        if len(msg.split()) == 1:
+            idversion = c.execute("""SELECT id FROM versions WHERE mcpversion = ?""", (msg.split()[0],)).fetchone()
+            if not idversion:
+                self.say(sender, "Version not recognised.")  
+                return
+            else:
+                (idversion,) = idversion
+
+        (mcpversion,) = c.execute("""SELECT mcpversion FROM versions WHERE id = ?""", (idversion,)).fetchone()
+
+        methodswriter = csv.writer(open('methods_%s.csv'%mcpversion, 'wb'), delimiter=',',quotechar='"', quoting=csv.QUOTE_ALL)
         c.execute("""SELECT searge, name, notch, sig, notchsig, classname, classnotch, package, side FROM vmethods 
                       WHERE NOT name   = classname 
-                            AND NOT searge = notch 
+                            /*AND NOT searge = notch*/
                             AND versionid = ?""",(idversion,))
         methodswriter.writerow(('searge', 'name', 'notch', 'sig', 'notchsig', 'classname', 'classnotch', 'package', 'side'))
         for row in c:
+            if len(row[0]) <= 2:continue
             methodswriter.writerow(row)
 
-        fieldswriter = csv.writer(open('fields.csv', 'wb'), delimiter=',',quotechar='"', quoting=csv.QUOTE_ALL)
+        fieldswriter = csv.writer(open('fields_%s.csv'%mcpversion, 'wb'), delimiter=',',quotechar='"', quoting=csv.QUOTE_ALL)
         c.execute("""SELECT searge, name, notch, sig, notchsig, classname, classnotch, package, side FROM vfields 
                       WHERE NOT name   = classname 
-                            AND NOT searge = notch 
+                            /*AND NOT searge = notch*/
                             AND versionid = ?""",(idversion,))
         fieldswriter.writerow(('searge', 'name', 'notch', 'sig', 'notchsig', 'classname', 'classnotch', 'package', 'side'))
         for row in c:
+            if len(row[0]) <= 2:continue
             fieldswriter.writerow(row)
 
-        classeswriter = csv.writer(open('classes.csv', 'wb'), delimiter=',',quotechar='"', quoting=csv.QUOTE_ALL)
+        classeswriter = csv.writer(open('classes_%s.csv'%mcpversion, 'wb'), delimiter=',',quotechar='"', quoting=csv.QUOTE_ALL)
         c.execute("""SELECT name, notch, supername, package, side FROM vclasses 
-                      WHERE NOT name = notch AND versionid = ?""",(idversion,))
+                      WHERE /*NOT name = notch AND*/ versionid = ?""",(idversion,))
         classeswriter.writerow(('name', 'notch', 'supername', 'package', 'side'))
         for row in c:
+            if len(row[0]) <= 2:continue
             classeswriter.writerow(row)
 
-        classeswriter = csv.writer(open('fullclasses.csv', 'wb'), delimiter=',',quotechar='"', quoting=csv.QUOTE_ALL)
-        c.execute("""SELECT name, notch, supername, package, side FROM vclasses 
-                      WHERE versionid = ?""",(idversion,))
-        classeswriter.writerow(('name', 'notch', 'supername', 'package', 'side'))
-        for row in c:
-            classeswriter.writerow(row)
+
+        self.say(sender, "New CSVs exported")  
 
     @database   
     def dbCommit(self, sender, chan, cmd, msg, *args, **kwargs):

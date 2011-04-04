@@ -886,6 +886,49 @@ class MCPBotCmds(object):
         
         print '== All done =='    
 
+#########################
+# NOTICE BOARD COMMANDS #
+#########################
+
+    @restricted(3)
+    def cmd_idea(self, sender, chan, cmd, msg, *args, **kwargs):
+        if msg == 'idea': msg = ''
+
+        if len(msg.split()) == 0:
+            c = self.acquiredb()
+            results = c.execute("""SELECT tag FROM notices GROUP BY tag""").fetchall()
+            self.releasedb(c)
+            
+            self.say(sender, '[ IDEAS ]')
+            for result in results:
+                self.say(sender, '+ %s'%result[0])
+            
+        elif len(msg.split()) == 1:
+            c = self.acquiredb()
+            results = c.execute("""SELECT n.id, strftime('%s',n.timestamp, 'unixepoch') as htimestamp, u.nick, n.content 
+                                   FROM notices n 
+                                   INNER JOIN nicks u ON n.nickid = u.id 
+                                   WHERE n.tag = ?"""%'%m-%d %H:%M', (msg.strip().upper(),)).fetchall()
+            self.releasedb(c)
+            
+            self.say(sender, '[ IDEAS FOR %s ]'%msg.upper())
+            if not results:
+                self.say(sender, "None")
+                return
+            for result in results:
+                nid, htimestamp, unick, ncontent = result
+                self.say(sender,'+ [%3d][%s, %s] %s'%(nid, htimestamp, unick, ncontent))
+            
+        else:
+            c = self.acquiredb()
+            (userid,) = c.execute("""SELECT id FROM nicks WHERE nick = ?""", (sender,)).fetchone()
+            try:
+                c.execute("""INSERT INTO notices VALUES (?, ?, ?, ?, ?, ?)""",(None, 'IDEA', msg.split()[0].strip().upper(), ' '.join(msg.split()[1:]), int(time.time()), userid))
+            except Exception, errormsg:
+                print errormsg
+            self.releasedb(c)
+
+            self.say(sender, 'Idea added with tag %s'%msg.split()[0].upper())
 
 #==END OF CLASS==
 

@@ -869,6 +869,24 @@ class MCPBotCmds(object):
             else: percent = float(membersr)/float(memberst)*100.0
             self.say(sender, " %s : $B%2d$N [ T $B%3d$N | R $B%3d$N | $B%5.2f%%$N ] "%(name.ljust(20), membersu, memberst, membersr, percent))
 
+    @restricted(5)
+    def cmd_whois(self, sender, chan, cmd, msg, *args, **kwargs):
+        dbase = sqlite3.connect(self.dbconf)
+        c = dbase.cursor()  
+        results = c.execute("""SELECT nick FROM nicks WHERE host ISNULL""").fetchall()
+        c.close()
+        dbase.close()        
+        
+        print 'Found %d names to check'%len(results)
+        
+        for result in results:
+            print 'Checking %s'%result[0]
+            self.irc.whois(result[0])
+            time.sleep(5)
+        
+        print '== All done =='    
+
+
 #==END OF CLASS==
 
 

@@ -154,6 +154,10 @@ class DCCProtocol(DCCCommands, DCCRawEvents):
                         #We push all the msg beside the last one (in case it is truncated)
                         for msg in msg_list:
                             ev = Event(s.nick, 'DCCMSG', self.cnick, msg.strip(), self.cnick, 'DCCMSG')
+                            
+                            if self.bot.log:
+                                self.bot.loggingq.put(ev)
+
                             self.bot.threadpool.add_task(self.onRawDCCMsg,ev)
                             if hasattr(self.bot, 'onDCCMsg'): 
                                 self.bot.threadpool.add_task(self.bot.onDCCMsg,ev)

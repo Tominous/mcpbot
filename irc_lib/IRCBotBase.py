@@ -1,8 +1,9 @@
 import socket
 import thread
+import sqlite3
 import time, os
 from sets import Set
-from threading import Condition
+from threading import Condition, Lock
 from protocols.dispatcher import Dispatcher
 from Queue import Queue,Empty
 from IRCBotError import IRCBotError
@@ -32,6 +33,7 @@ class IRCBotBase(IRCBotAdvMtd, IRCBotIO):
             'WhoIs'    :Condition(),
             'ServReg'  :Condition(),
             'NSStatus' :Condition(),
+            'BotDB'    :Lock()
         }
 
 
@@ -108,3 +110,16 @@ class IRCBotBase(IRCBotAdvMtd, IRCBotIO):
                 self.threadpool.wait_completion()
                 if self.log: self.stopLogging()
                 raise            
+
+    def acquiredb(self):
+        self.locks['BotDB'].acquire()   
+        self.botdbase = sqlite3.connect(self.dbconf)
+        c = self.botdbase.cursor()  
+        return c
+
+    def releasedb(self,c):
+        self.botdbase.commit()
+        c.close()
+        self.botdbase.close()        
+        self.botdbase = None
+        self.locks['BotDB'].release()         

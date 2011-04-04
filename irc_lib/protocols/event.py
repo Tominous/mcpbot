@@ -10,6 +10,15 @@ class Event(object):
         if sender and sender[0] == ':': sender=sender[1:]
         if target and target[0] == ':': target=target[1:]
         self.sender     = sender.split('!')[0].strip()
+        self.senderuser = None
+        self.senderhost = None
+        if len(sender.split('!')) == 2:
+            backpart = sender.split('!')[1]
+            self.senderuser = backpart.split('@')[0]
+            try:
+                self.senderhost = backpart.split('@')[1]
+            except:
+                pass
         self.senderfull = sender.strip()
         self.cmd        = cmd.strip()
         self.target     = target.strip()

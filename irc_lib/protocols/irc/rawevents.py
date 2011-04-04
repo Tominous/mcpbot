@@ -3,6 +3,7 @@ from irc_lib.protocols.event import Event
 from irc_lib.protocols.user import User
 from binascii import hexlify
 import time,os
+import sqlite3
 
 class IRCRawEvents(object):
     
@@ -11,8 +12,6 @@ class IRCRawEvents(object):
     
     def onRawNOTICE(self, ev):
         if not ev.msg:return
-        if self.bot.log:
-            self.bot.loggingq.put(ev)
         
         if ev.target in ['AUTH', '*']:
             self.bot.printq.put('> Connected to server %s'%ev.sender)
@@ -22,9 +21,6 @@ class IRCRawEvents(object):
 
     def onRawPRIVMSG(self, ev):
         if not ev.msg:return
-
-        if self.bot.log:
-            self.bot.loggingq.put(ev)
         
         outcmd = None
         
@@ -44,13 +40,19 @@ class IRCRawEvents(object):
         if ev.sender == self.cnick:
             self.bot.irc_status['Channels'].add(ev.chan)
         else:
-           self.add_user(ev.sender, ev.chan) 
+            c = self.bot.acquiredb()           
+            self.add_user(ev.sender, ev.chan, ev.senderuser, ev.senderhost, c) 
+            self.bot.releasedb(c)
     
     def onRawPART(self, ev):
         self.rm_user(ev.sender, ev.chan)
 
     def onRawQUIT(self, ev):
         self.rm_user(ev.sender)
+
+        c = self.bot.acquiredb()         
+        c.execute("""UPDATE nicks SET timestamp = ?, online = ? WHERE nick = ?""",(int(time.time()), 0, ev.sender))
+        self.bot.releasedb(c)       
 
     def onRawRPL_MOTDSTART(self, ev):
         if ev.sender == self.bot.irc_status['Server']:
@@ -66,8 +68,10 @@ class IRCRawEvents(object):
         channel     = ev.msg.split()[1]
         nicks       = ev.msg.split()[2:]
 
+        c = self.bot.acquiredb()
         for nick in nicks:
-            self.add_user(nick, channel)
+            self.add_user(nick, channel, c=c)
+        self.bot.releasedb(c) 
     
     def onRawRPL_WHOISUSER(self, ev):
         if not ev.msg: return
@@ -82,7 +86,11 @@ class IRCRawEvents(object):
             self.bot.users[nick].ip   = get_ip(host)
         self.locks['WhoIs'].notifyAll()
         self.locks['WhoIs'].release()
-    
+
+        c = self.bot.acquiredb()
+        c.execute("""UPDATE nicks SET user=?, host=? WHERE nick = ?""",(user, host, nick))
+        self.bot.releasedb(c)
+            
     
     def onRawNICK(self, ev):
         if ev.sender == self.cnick:return
@@ -95,3 +103,4 @@ class IRCRawEvents(object):
     
     def onRawDefault(self, ev):
         pass
+

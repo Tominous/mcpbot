@@ -2,6 +2,8 @@ from commands  import IRCCommands
 from rawevents import IRCRawEvents
 from constants import IRC_REPLIES
 import thread
+import sqlite3
+import time
 from threading import Condition
 from irc_lib.protocols.event import Event
 from irc_lib.protocols.user import User
@@ -59,6 +61,9 @@ class IRCProtocol(IRCCommands, IRCRawEvents):
             else:
                 ev = Event(msg[0], msg[1], msg[2], ' '.join(msg[3:]), self.cnick, 'IRC')
 
+            if self.bot.log:
+                self.bot.loggingq.put(ev)
+
             # We call the corresponding raw event if it exist, or the rawDefault if not.
             if hasattr(self, 'onRaw%s'%ev.cmd):
                 self.bot.threadpool.add_task(getattr(self, 'onRaw%s'%ev.cmd),ev)
@@ -72,8 +77,9 @@ class IRCProtocol(IRCCommands, IRCRawEvents):
                 self.bot.threadpool.add_task(getattr(self.bot, 'onDefault'),ev)
 
                 
-    def add_user(self, nick, chan=None):
+    def add_user(self, nick, chan=None, user=None, host=None, c=None):
         nick_status = '-'
+        if nick[0] == ':': nick = nick[1:]
         snick = nick
         if nick[0] in ['@', '+']:
             snick = nick[1:]
@@ -83,7 +89,16 @@ class IRCProtocol(IRCCommands, IRCRawEvents):
         if not chan: return
         self.bot.users[snick].chans[chan] = nick_status
     
+        
+        c.execute("""INSERT OR IGNORE  INTO nicks VALUES (?,?,?,?,?,?)""",(None, snick, user, host, int(time.time()), 1))
+        if user:
+            c.execute("""UPDATE nicks SET user=?, host=?, timestamp=?, online=? WHERE nick = ?""",(user, host, int(time.time()), 1, nick))
+        else:
+            c.execute("""UPDATE nicks SET timestamp = ?, online = ? WHERE nick = ?""",(int(time.time()), 1, nick))
+    
     def rm_user(self, nick, chan=None):
+        if nick[0] == ':': nick = nick[1:]        
+        
         if not nick in self.bot.users:
             print 'WARNING : Tried to remove an inexisting user : %s.'%nick
             return
@@ -95,6 +110,5 @@ class IRCProtocol(IRCCommands, IRCRawEvents):
         del self.bot.users[nick].chans[chan]
         if len(self.bot.users[nick].chans) == 0:
             del self.bot.users[nick]
-
 
 #DEAD CODE ZONE

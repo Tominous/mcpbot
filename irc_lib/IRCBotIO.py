@@ -80,7 +80,10 @@ class IRCBotIO(object):
             except Empty:
                 continue
             
-            if self.log:            
-                self.log.write('%s; %s; %s; %s; %s; %s\n'%(time.ctime(), ev.type.ljust(5), ev.cmd.ljust(15), ev.sender.ljust(20), ev.target.ljust(20), ev.msg))
-                self.log.flush()        
-                os.fsync(self.log.fileno()) 
+
+            c = self.acquiredb()
+            try:
+                c.execute("""INSERT INTO logs VALUES (?, ?, ?, ?, ?, ?, ?)""", (None, ev.type, ev.cmd, ev.sender, ev.target, ev.msg, int(time.time())))
+            except:
+                pass
+            self.releasedb(c)

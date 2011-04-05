@@ -64,7 +64,9 @@ def main(options, args):
 
     #TABLE packages : Contains the list of possible packages.
     c.execute("""CREATE TABLE packages(id INTEGER PRIMARY KEY AUTOINCREMENT,
-                                       name TEXT)""")
+                                       name TEXT,
+                                       UNIQUE(name)
+                                       )""")
 
     #TABLE methods : table containing methods information
     #side          : 0 client, 1 server

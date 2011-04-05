@@ -563,51 +563,28 @@ class MCPBotCmds(object):
         ffmetho.write('NULL,NULL,NULL,NULL,NULL,NULL\n')
         ffmetho.write('class (for reference only),Reference,class (for reference only),Reference,Name,Notes\n')
         
-        if pushforced :
-            c.execute("""SELECT classname, searge, name, desc FROM vfields WHERE side = 0  AND versionid = ? ORDER BY searge""", (idversion,))
-            for row in c.fetchall():
-                classname, searge, name, desc = row
-                if not desc:desc = ''
-                fffield.write('%s,*,%s,*,*,*,%s,"%s"\n'%(classname, searge, name, desc.replace('"', "'")))
-            c.execute("""SELECT classname, searge, name, desc FROM vfields WHERE side = 1  AND versionid = ? ORDER BY searge""", (idversion,))
-            for row in c.fetchall():
-                classname, searge, name, desc = row
-                if not desc:desc = ''
-                fffield.write('*,*,*,%s,*,%s,%s,"%s"\n'%(classname, searge, name, desc.replace('"', "'")))
 
-            c.execute("""SELECT classname, searge, name, desc FROM vmethods WHERE side = 0  AND versionid = ? ORDER BY searge""", (idversion,))
-            for row in c.fetchall():
-                classname, searge, name, desc = row
-                if not desc:desc = ''
-                ffmetho.write('%s,%s,*,*,%s,"%s"\n'%(classname, searge, name, desc.replace('"', "'")))
-            c.execute("""SELECT classname, searge, name, desc FROM vmethods WHERE side = 1  AND versionid = ? ORDER BY searge""", (idversion,))
-            for row in c.fetchall():
-                classname, searge, name, desc = row
-                if not desc:desc = ''
-                ffmetho.write('*,*,%s,%s,%s,"%s"\n'%(classname, searge, name, desc.replace('"', "'")))
+        c.execute("""SELECT classname, searge, name, desc FROM vfields WHERE side = 0  AND versionid = ? ORDER BY searge""", (idversion,))
+        for row in c.fetchall():
+            classname, searge, name, desc = row
+            if not desc:desc = ''
+            fffield.write('%s,*,%s,*,*,*,%s,"%s"\n'%(classname, searge, name, desc.replace('"', "'")))
+        c.execute("""SELECT classname, searge, name, desc FROM vfields WHERE side = 1  AND versionid = ? ORDER BY searge""", (idversion,))
+        for row in c.fetchall():
+            classname, searge, name, desc = row
+            if not desc:desc = ''
+            fffield.write('*,*,*,%s,*,%s,%s,"%s"\n'%(classname, searge, name, desc.replace('"', "'")))
 
-        else:
-            c.execute("""SELECT classname, searge, name, desc FROM vfields WHERE side = 0  AND versionid = ? AND NOT forced = 1 ORDER BY searge""", (idversion,))
-            for row in c.fetchall():
-                classname, searge, name, desc = row
-                if not desc:desc = ''
-                fffield.write('%s,*,%s,*,*,*,%s,"%s"\n'%(classname, searge, name, desc.replace('"', "'")))
-            c.execute("""SELECT classname, searge, name, desc FROM vfields WHERE side = 1  AND versionid = ? AND NOT forced = 1 ORDER BY searge""", (idversion,))
-            for row in c.fetchall():
-                classname, searge, name, desc = row
-                if not desc:desc = ''
-                fffield.write('*,*,*,%s,*,%s,%s,"%s"\n'%(classname, searge, name, desc.replace('"', "'")))
-
-            c.execute("""SELECT classname, searge, name, desc FROM vmethods WHERE side = 0  AND versionid = ? AND NOT forced = 1 ORDER BY searge""", (idversion,))
-            for row in c.fetchall():
-                classname, searge, name, desc = row
-                if not desc:desc = ''
-                ffmetho.write('%s,%s,*,*,%s,"%s"\n'%(classname, searge, name, desc.replace('"', "'")))
-            c.execute("""SELECT classname, searge, name, desc FROM vmethods WHERE side = 1  AND versionid = ? AND NOT forced = 1 ORDER BY searge""", (idversion,))
-            for row in c.fetchall():
-                classname, searge, name, desc = row
-                if not desc:desc = ''
-                ffmetho.write('*,*,%s,%s,%s,"%s"\n'%(classname, searge, name, desc.replace('"', "'")))
+        c.execute("""SELECT classname, searge, name, desc FROM vmethods WHERE side = 0  AND versionid = ? ORDER BY searge""", (idversion,))
+        for row in c.fetchall():
+            classname, searge, name, desc = row
+            if not desc:desc = ''
+            ffmetho.write('%s,%s,*,*,%s,"%s"\n'%(classname, searge, name, desc.replace('"', "'")))
+        c.execute("""SELECT classname, searge, name, desc FROM vmethods WHERE side = 1  AND versionid = ? ORDER BY searge""", (idversion,))
+        for row in c.fetchall():
+            classname, searge, name, desc = row
+            if not desc:desc = ''
+            ffmetho.write('*,*,%s,%s,%s,"%s"\n'%(classname, searge, name, desc.replace('"', "'")))
 
         ffmetho.close()
         fffield.close()   
@@ -917,7 +894,7 @@ class MCPBotCmds(object):
                 return
             for result in results:
                 nid, htimestamp, unick, ncontent = result
-                self.say(sender,'+ [%3d][%s, %s] %s'%(nid, htimestamp, unick, ncontent))
+                self.say(sender,'+ [%3d][$R%s, %s$N] %s'%(nid, htimestamp, unick, ncontent))
             
         else:
             c = self.acquiredb()

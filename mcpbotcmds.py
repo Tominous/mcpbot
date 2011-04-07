@@ -32,23 +32,23 @@ class MCPBotCmds(object):
         if not len(msg.split()) > 1: return
         self.ctcp.action(msg.split()[0], ' '.join(msg.split()[1:]))
 
-    @restricted(4)      
+    @restricted(4)
     def cmd_pub(self, sender, chan, cmd, msg, *args, **kwargs):
         cmd = msg.split()[0]
         if len(msg.split()) > 1:
             msg = ' '.join(msg.split()[1:])
 
         cmd = cmd.lower()
-        
+
         if cmd in ['ssf, ssm, scf, scm']:
             self.say(sender, 'No public setters !')
             return
-        
+
         try:
             getattr(self, 'cmd_%s'%cmd )(chan, chan, cmd, msg)
         except AttributeError:
             getattr(self, 'cmdDefault')(chan, chan, cmd, msg)
-        
+
     #===================================================================
 
     #================== Getters classes ================================
@@ -61,7 +61,7 @@ class MCPBotCmds(object):
         self.getClass(sender, chan, cmd, msg, 'server')
 
     def cmd_gc(self, sender, chan, cmd, msg, *args, **kwargs):
-        self.getClass(sender, chan, cmd, msg, 'client')        
+        self.getClass(sender, chan, cmd, msg, 'client')
         self.getClass(sender, chan, cmd, msg, 'server')
 
     @database
@@ -71,13 +71,13 @@ class MCPBotCmds(object):
         side_lookup = {'client':0, 'server':1}
         msg = msg.strip()
         c.execute("""SELECT name, notch, supername FROM vclasses WHERE (name = ? OR notch = ?) AND side = ? AND versionid = ?""", (msg, msg, side_lookup[side], idversion))
-        
+
         classresults = c.fetchall()
-        
+
         if not classresults:
             self.say(sender, "$B[ GET %s CLASS ]"%side.upper())
             self.say(sender, " No results found for $B%s"%msg)
-        
+
         for classresult in classresults:
             name, notch, supername = classresult
 
@@ -105,7 +105,7 @@ class MCPBotCmds(object):
         self.outputMembers(sender, chan, cmd, msg, 'server', 'methods')
 
     def cmd_gm(self, sender, chan, cmd, msg, *args, **kwargs):
-        self.outputMembers(sender, chan, cmd, msg, 'client', 'methods')        
+        self.outputMembers(sender, chan, cmd, msg, 'client', 'methods')
         self.outputMembers(sender, chan, cmd, msg, 'server', 'methods')
 
     def cmd_gcf(self, sender, chan, cmd, msg, *args, **kwargs):
@@ -117,7 +117,7 @@ class MCPBotCmds(object):
         self.outputMembers(sender, chan, cmd, msg, 'server', 'fields')
 
     def cmd_gf(self, sender, chan, cmd, msg, *args, **kwargs):
-        self.outputMembers(sender, chan, cmd, msg, 'client', 'fields')        
+        self.outputMembers(sender, chan, cmd, msg, 'client', 'fields')
         self.outputMembers(sender, chan, cmd, msg, 'server', 'fields')
 
     @database
@@ -140,7 +140,7 @@ class MCPBotCmds(object):
             self.say(sender, " Syntax error. Use $B%s <membername>$N or $B%s <classname>.<membername>$N"%(cmd,cmd))
             return
 
-    
+
         if len(tmpmsg.split()) == 2:   #Do we have a signature to search for
             sname    = tmpmsg.split()[1]
             tmpmsg   = tmpmsg.split()[0]
@@ -154,36 +154,36 @@ class MCPBotCmds(object):
 
         if cname and sname:
             c.execute("""SELECT m.name, m.notch, m.searge, m.sig, m.notchsig, m.desc, m.classname, m.classnotch FROM v%s m
-                         WHERE ((m.searge LIKE ? ESCAPE '!') OR m.searge = ? OR m.notch = ? OR m.name = ?) 
+                         WHERE ((m.searge LIKE ? ESCAPE '!') OR m.searge = ? OR m.notch = ? OR m.name = ?)
                          AND m.side = ? AND m.versionid = ?
                          AND (m.classname = ? OR m.classnotch = ?)
                          AND (m.sig = ? OR m.notchsig = ?)
-                         """%etype, 
+                         """%etype,
                          ('%s!_%s!_%%'%(type_lookup[etype],mname),mname,mname,mname,side_lookup[side], idversion, cname, cname, sname, sname))
-                         
+
         elif cname and not sname:
             c.execute("""SELECT m.name, m.notch, m.searge, m.sig, m.notchsig, m.desc, m.classname, m.classnotch FROM v%s m
-                         WHERE ((m.searge LIKE ? ESCAPE '!') OR m.searge = ? OR m.notch = ? OR m.name = ?) 
+                         WHERE ((m.searge LIKE ? ESCAPE '!') OR m.searge = ? OR m.notch = ? OR m.name = ?)
                          AND m.side = ? AND m.versionid = ?
                          AND (m.classname = ? OR m.classnotch = ?)
-                         """%etype, 
+                         """%etype,
                          ('%s!_%s!_%%'%(type_lookup[etype],mname),mname,mname,mname,side_lookup[side], idversion, cname, cname))
 
         elif not cname and sname:
             c.execute("""SELECT m.name, m.notch, m.searge, m.sig, m.notchsig, m.desc, m.classname, m.classnotch FROM v%s m
-                         WHERE ((m.searge LIKE ? ESCAPE '!') OR m.searge = ? OR m.notch = ? OR m.name = ?) 
+                         WHERE ((m.searge LIKE ? ESCAPE '!') OR m.searge = ? OR m.notch = ? OR m.name = ?)
                          AND m.side = ? AND m.versionid = ?
                          AND (m.sig = ? OR m.notchsig = ?)
-                         """%etype, 
+                         """%etype,
                          ('%s!_%s!_%%'%(type_lookup[etype],mname),mname,mname,mname,side_lookup[side], idversion, sname, sname))
 
         else:
             c.execute("""SELECT m.name, m.notch, m.searge, m.sig, m.notchsig, m.desc, m.classname, m.classnotch FROM v%s m
-                         WHERE ((m.searge LIKE ? ESCAPE '!') OR m.searge = ? OR m.notch = ? OR m.name = ?) 
+                         WHERE ((m.searge LIKE ? ESCAPE '!') OR m.searge = ? OR m.notch = ? OR m.name = ?)
                          AND m.side = ? AND m.versionid = ?
-                         """%etype, 
+                         """%etype,
                          ('%s!_%s!_%%'%(type_lookup[etype],mname),mname,mname,mname,side_lookup[side], idversion))
-                         
+
         results = c.fetchall()
 
         if sender in self.dcc.sockets and self.dcc.sockets[sender]:
@@ -196,8 +196,8 @@ class MCPBotCmds(object):
         if len(results) > highlimit:
             self.say(sender, "$B[ GET %s %s ]"%(side.upper(),etype.upper()))
             self.say(sender, " $BVERY$N ambiguous request $R'%s'$N"%msg)
-            self.say(sender, " Found %s possible answers"%len(results))        
-            self.say(sender, " Not displaying any !")        
+            self.say(sender, " Found %s possible answers"%len(results))
+            self.say(sender, " Not displaying any !")
         elif highlimit >= len(results) > lowlimit:
             self.say(sender, "$B[ GET %s %s ]"%(side.upper(),etype.upper()))
             self.say(sender, " Ambiguous request $R'%s'$N"%msg)
@@ -218,20 +218,20 @@ class MCPBotCmds(object):
                 self.say(sender, " Notch       : $B%s.%s"%(classnotch, notch,))
                 self.say(sender, " Searge      : $B%s"%searge)
                 self.say(sender, " Type/Sig    : $B%s$N | $B%s$N"%(sig,notchsig))
-                if desc:      
+                if desc:
                     self.say(sender, " Description : %s"%desc)
         else:
             self.say(sender, "$B[ GET %s %s ]"%(side.upper(),etype.upper()))
             self.say(sender, " No result for %s"%msg)
             c.close()
             return
-        
+
     #===================================================================
 
     #====================== Search commands ============================
     @database
     def cmd_search(self, sender, chan, cmd, msg, *args, **kwargs):
-        """$Bsearch <pattern>$N  : Search for a pattern."""        
+        """$Bsearch <pattern>$N  : Search for a pattern."""
 
         c         = kwargs['cursor']
         idversion = kwargs['idvers']
@@ -249,20 +249,20 @@ class MCPBotCmds(object):
             lowlimit  = 1
             highlimit = 10
 
-        self.say(sender, "$B[ SEARCH RESULTS ]")    
+        self.say(sender, "$B[ SEARCH RESULTS ]")
         for side in ['client', 'server']:
-            c.execute("""SELECT c.name, c.notch FROM vclasses c WHERE (c.name LIKE ?) AND c.side = ? AND c.versionid = ?""",('%%%s%%'%(msg), side_lookup[side], idversion))                   
+            c.execute("""SELECT c.name, c.notch FROM vclasses c WHERE (c.name LIKE ?) AND c.side = ? AND c.versionid = ?""",('%%%s%%'%(msg), side_lookup[side], idversion))
             results['classes'] = c.fetchall()
 
             for etype in ['fields', 'methods']:
                 c.execute("""SELECT m.name, m.notch, m.searge, m.sig, m.notchsig, m.desc, m.classname, m.classnotch FROM v%s m
-                            WHERE (m.name LIKE ? ESCAPE '!') AND m.side = ? AND m.versionid = ?"""%etype, 
+                            WHERE (m.name LIKE ? ESCAPE '!') AND m.side = ? AND m.versionid = ?"""%etype,
                             ('%%%s%%'%(msg), side_lookup[side], idversion))
                 results[etype] = c.fetchall()
 
             if not results['classes']:
                 self.say(sender, " [%s][  CLASS] No results"%side.upper())
-            else:                
+            else:
                 maxlenname  = max(map(len, [result[0] for result in results['classes']]))
                 maxlennotch = max(map(len, [result[1] for result in results['classes']]))
                 if len(results['classes']) > highlimit:
@@ -270,7 +270,7 @@ class MCPBotCmds(object):
                 else:
                     for result in results['classes']:
                         name, notch = result
-                        self.say(sender, " [%s][  CLASS] %s %s"%(side.upper(), name.ljust(maxlenname+2), notch.ljust(maxlennotch+2)))            
+                        self.say(sender, " [%s][  CLASS] %s %s"%(side.upper(), name.ljust(maxlenname+2), notch.ljust(maxlennotch+2)))
 
 
             for etype in ['fields', 'methods']:
@@ -286,20 +286,20 @@ class MCPBotCmds(object):
                             name, notch, searge, sig, notchsig, desc, classname, classnotch = result
                             fullname   = '%s.%s'%(classname, name)
                             fullnotch = '[%s.%s]'%(classnotch, notch)
-                            self.say(sender, " [%s][%7s] %s %s %s %s"%(side.upper(),etype.upper(), fullname.ljust(maxlenname+2), fullnotch.ljust(maxlennotch+2), sig, notchsig))                
-                
+                            self.say(sender, " [%s][%7s] %s %s %s %s"%(side.upper(),etype.upper(), fullname.ljust(maxlenname+2), fullnotch.ljust(maxlennotch+2), sig, notchsig))
+
     #===================================================================
 
     #====================== Setters for members ========================
-    
+
     def cmd_scm(self, sender, chan, cmd, msg, *args, **kwargs):
         """$Bscm [<id>|<searge>] <newname> [description]$N : Set Client Method."""
         self.setMember(sender, chan, cmd, msg, 'client', 'methods', forced=False)
-        
+
     def cmd_scf(self, sender, chan, cmd, msg, *args, **kwargs):
         """$Bscf [<id>|<searge>] <newname> [description]$N : Set Server Method."""
         self.setMember(sender, chan, cmd, msg, 'client', 'fields', forced=False)
-        
+
     def cmd_ssm(self, sender, chan, cmd, msg, *args, **kwargs):
         """$Bssm [<id>|<searge>] <newname> [description]$N : Set Client Field."""
         self.setMember(sender, chan, cmd, msg, 'server', 'methods', forced=False)
@@ -311,11 +311,11 @@ class MCPBotCmds(object):
     def cmd_fscm(self, sender, chan, cmd, msg, *args, **kwargs):
         """$Bscm [<id>|<searge>] <newname> [description]$N : Set Client Method."""
         self.setMember(sender, chan, cmd, msg, 'client', 'methods', forced=True)
-        
+
     def cmd_fscf(self, sender, chan, cmd, msg, *args, **kwargs):
         """$Bscf [<id>|<searge>] <newname> [description]$N : Set Server Method."""
         self.setMember(sender, chan, cmd, msg, 'client', 'fields', forced=True)
-        
+
     def cmd_fssm(self, sender, chan, cmd, msg, *args, **kwargs):
         """$Bssm [<id>|<searge>] <newname> [description]$N : Set Client Field."""
         self.setMember(sender, chan, cmd, msg, 'server', 'methods', forced=True)
@@ -326,51 +326,51 @@ class MCPBotCmds(object):
 
     @database
     def setMember(self, sender, chan, cmd, msg, side, etype, *args, **kwargs):
-        
+
         c         = kwargs['cursor']
-        idversion = kwargs['idvers']      
+        idversion = kwargs['idvers']
         forced    = kwargs['forced']
-        
+
         msg = msg.strip()
         type_lookup = {'methods':'func','fields':'field'}
         side_lookup = {'client':0, 'server':1}
-        
+
         if not msg or msg.split() < 2:
             self.say(sender, "$B[ SET %s %s ]"%(side.upper(),etype.upper()))
             self.say(sender, " Syntax error. Use $B%s <membername> <newname> [newdescription]$N"%(cmd))
-            return        
-        
+            return
+
         msg     = map(string.strip, msg.split())
         oldname = msg[0]
         newname = msg[1]
         newdesc = None
         if len(msg) > 2:
-            newdesc = ' '.join(msg[2:])        
+            newdesc = ' '.join(msg[2:])
 
         self.say(sender, "$B[ SET %s %s ]"%(side.upper(),etype.upper()))
         if forced: self.say(sender, "$RCAREFULL, YOU ARE FORCING AN UPDATE !")
 
         ## WE CHECK IF WE ARE NOT CONFLICTING WITH A CLASS NAME ##
-        result = c.execute("""SELECT m.name FROM vclasses m 
-                              WHERE m.name = ? 
-                                AND m.side = ? 
+        result = c.execute("""SELECT m.name FROM vclasses m
+                              WHERE m.name = ?
+                                AND m.side = ?
                                 AND m.versionid = ?""", (newname, side_lookup[side], idversion)).fetchone()
-        if result: 
+        if result:
             self.say(sender, "$RIt is illegal to use class names for fields or methods !")
             return
         ##
 
         ## WE CHECK WE ONLY HAVE ONE RESULT ##
         c.execute("""SELECT m.name, m.notch, m.searge, m.sig, m.notchsig, m.desc, m.classname, m.classnotch, m.id FROM v%s m
-                    WHERE ((m.searge LIKE ? ESCAPE '!') OR m.searge = ?) AND m.side = ? AND m.versionid = ?"""%etype, 
-                    ('%s!_%s!_%%'%(type_lookup[etype],oldname),oldname,side_lookup[side], idversion))            
-        
+                    WHERE ((m.searge LIKE ? ESCAPE '!') OR m.searge = ?) AND m.side = ? AND m.versionid = ?"""%etype,
+                    ('%s!_%s!_%%'%(type_lookup[etype],oldname),oldname,side_lookup[side], idversion))
+
         results = c.fetchall()
 
         if len(results) > 1:
             self.say(sender, " Ambiguous request $R'%s'$N"%oldname)
-            self.say(sender, " Found %s possible answers"%len(rows))
-            
+            self.say(sender, " Found %s possible answers"%len(results))
+
             maxlencsv   = max(map(len, ['%s.%s'%(result[5], result[2])   for result in results]))
             maxlennotch = max(map(len, ['[%s.%s]'%(result[6], result[1]) for result in results]))
             for result in results:
@@ -379,7 +379,7 @@ class MCPBotCmds(object):
                 fullnotch = '[%s.%s]'%(classnotch, notch)
                 self.say(sender, " %s %s %s"%(fullcsv.ljust(maxlencsv+2), fullnotch.ljust(maxlennotch+2), sig))
             return
-                
+
         elif len(results) == 0:
             self.say(sender, " No result for %s"%oldname)
             return
@@ -387,33 +387,33 @@ class MCPBotCmds(object):
 
         ## WE CHECK THAT WE HAVE A UNIQUE NAME
         if not forced:
-            result = c.execute("""SELECT m.searge, m.name FROM vmethods m 
-                                  WHERE m.name = ? 
-                                  AND m.side = ? 
+            result = c.execute("""SELECT m.searge, m.name FROM vmethods m
+                                  WHERE m.name = ?
+                                  AND m.side = ?
                                   AND m.versionid = ?""", (newname, side_lookup[side], idversion)).fetchone()
-            if result: 
+            if result:
                 self.say(sender, "$RYou are conflicting with at least one other method: %s. Please use forced update only if you are certain !"%result[0])
                 return
 
-            result = c.execute("""SELECT m.searge, m.name FROM vmethods m 
+            result = c.execute("""SELECT m.searge, m.name FROM vmethods m
                                   WHERE ((m.searge LIKE ? ESCAPE '!') OR m.searge = ?)
-                                  AND m.side = ? 
+                                  AND m.side = ?
                                   AND m.versionid = ?""", ('%s!_%s!_%%'%(type_lookup[etype],oldname),oldname,side_lookup[side], idversion)).fetchone()
             if result and result[0] != result[1]:
                 self.say(sender, "$RYou are trying to rename an already named member. Please use forced update only if you are certain !")
                 return
 
-            result = c.execute("""SELECT m.searge, m.name FROM vfields m 
-                                  WHERE m.name = ? 
-                                  AND m.side = ? 
+            result = c.execute("""SELECT m.searge, m.name FROM vfields m
+                                  WHERE m.name = ?
+                                  AND m.side = ?
                                   AND m.versionid = ?""", (newname, side_lookup[side], idversion)).fetchone()
-            if result: 
+            if result:
                 self.say(sender, "$RYou are conflicting with at least one other field: %s. Please use forced update only if you are certain !"%result[0])
                 return
 
-            result = c.execute("""SELECT m.searge, m.name FROM vfields m 
+            result = c.execute("""SELECT m.searge, m.name FROM vfields m
                                   WHERE ((m.searge LIKE ? ESCAPE '!') OR m.searge = ?)
-                                  AND m.side = ? 
+                                  AND m.side = ?
                                   AND m.versionid = ?""", ('%s!_%s!_%%'%(type_lookup[etype],oldname),oldname,side_lookup[side], idversion)).fetchone()
             if result and result[0] != result[1]:
                 self.say(sender, "$RYou are trying to rename an already named member. Please use forced update only if you are certain !")
@@ -434,47 +434,47 @@ class MCPBotCmds(object):
             c.execute("""INSERT INTO %shist VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"""%etype,
                     (None, int(id), name, desc, newname, newdesc, int(time.time()), sender, forced, cmd))
             self.say(sender, "$BNew desc$N : %s"%(newdesc))
-                
+
     #===================================================================
 
     #====================== Revert changes =============================
-    
+
     @restricted(2)
     def cmd_rcm(self, sender, chan, cmd, msg, *args, **kwargs):
-        self.revertChanges(sender, chan, cmd, msg, 'client', 'methods')    
+        self.revertChanges(sender, chan, cmd, msg, 'client', 'methods')
 
-    @restricted(2)   
+    @restricted(2)
     def cmd_rcf(self, sender, chan, cmd, msg, *args, **kwargs):
-        self.revertChanges(sender, chan, cmd, msg, 'client', 'fields')    
-    
+        self.revertChanges(sender, chan, cmd, msg, 'client', 'fields')
+
     @restricted(2)
     def cmd_rsm(self, sender, chan, cmd, msg, *args, **kwargs):
         self.revertChanges(sender, chan, cmd, msg, 'server', 'methods')
-    
+
     @restricted(2)
     def cmd_rsf(self, sender, chan, cmd, msg, *args, **kwargs):
         self.revertChanges(sender, chan, cmd, msg, 'server', 'fields')
-    
+
     @database
     def revertChanges(self, sender, chan, cmd, msg, side, etype, *args, **kwargs):
         c         = kwargs['cursor']
-        idversion = kwargs['idvers']    
+        idversion = kwargs['idvers']
 
         type_lookup = {'methods':'func','fields':'field'}
         side_lookup = {'client':0, 'server':1}
-        
+
         self.say(sender, "$B[ REVERT %s %s ]"%(side.upper(), etype.upper()))
-        
+
         msg = msg.strip()
         if len(msg.split()) > 1:
             self.say(sender, "Syntax error : $B%s <searge|index>"%cmd)
             return
-            
-    
+
+
         c.execute("""UPDATE %s SET dirtyid=0 WHERE ((searge LIKE ? ESCAPE '!') OR searge = ?) AND side = ? AND versionid = ?"""%etype,
          ('%s!_%s!_%%'%(type_lookup[etype],msg),msg,side_lookup[side], idversion))
         self.say(sender, " Reverting changes on $B%s$N is done."%msg)
-    
+
     #===================================================================
 
     #====================== Log Methods ================================
@@ -482,12 +482,12 @@ class MCPBotCmds(object):
     def cmd_getlog(self, sender, chan, cmd, msg, *args, **kwargs):
 
         c         = kwargs['cursor']
-        idversion = kwargs['idvers']    
-        
+        idversion = kwargs['idvers']
+
         msg = msg.strip()
         if msg == 'full':fulllog=True
         else: fulllog = False
-        
+
         type_lookup = {'methods':'func','fields':'field'}
         side_lookup = {'client':0, 'server':1}
 
@@ -495,12 +495,12 @@ class MCPBotCmds(object):
         for side  in ['server', 'client']:
             for etype in ['methods', 'fields']:
                 c.execute("""SELECT m.name, m.searge, m.desc, h.newname, h.newdesc, strftime('%s',h.timestamp, 'unixepoch') as htimestamp, h.nick, h.cmd, h.forced
-                            FROM  %s m 
+                            FROM  %s m
                             INNER JOIN %shist h ON m.dirtyid = h.id
                             WHERE m.side = ?  AND m.versionid = ? ORDER BY h.timestamp"""%('%m-%d %H:%M',etype,etype), (side_lookup[side], idversion))
-                    
+
                 results = c.fetchall()
-        
+
                 if results:
                     maxlennick   = max(map(len, [result[6] for result in results]))
                     maxlensearge = max(map(len, [result[1] for result in results]))
@@ -509,7 +509,7 @@ class MCPBotCmds(object):
                 for forcedstatus in [0,1]:
                     for result in results:
                         mname, msearge, mdesc, hname, hdesc, htimestamp, hnick, hcmd, hforced = result
-                        
+
                         if hforced == forcedstatus:
                             if fulllog:
                                 self.say(sender, "+ %s, %s, %s"%(htimestamp, hnick, hcmd))
@@ -536,14 +536,14 @@ class MCPBotCmds(object):
     def cmd_fupdatecsv(self, sender, chan, cmd, msg, *args, **kwargs):
         self.dbCommit (sender, chan, cmd, msg, pushforced = True)
         self.updateCsv(sender, chan, cmd, msg, pushforced = True)
-    
+
     @database
     def updateCsv(self, sender, chan, cmd, msg, *args, **kwargs):
 
         c          = kwargs['cursor']
-        idversion  = kwargs['idvers']  
-        pushforced = kwargs['pushforced']  
-        
+        idversion  = kwargs['idvers']
+        pushforced = kwargs['pushforced']
+
         if self.cnick == 'MCPBot_NG':
             directory='.'
         else:
@@ -551,18 +551,18 @@ class MCPBotCmds(object):
         #directory = "."
 
         outfieldcsv  = 'fields.csv'
-        outmethodcsv = 'methods.csv'        
-    
+        outmethodcsv = 'methods.csv'
+
         ffmetho = open('%s/%s'%(directory, outmethodcsv), 'w')
         fffield = open('%s/%s'%(directory, outfieldcsv),  'w')
-        
+
         for i in range(2):
             ffmetho.write('NULL,NULL,NULL,NULL,NULL,NULL\n')
             fffield.write('NULL,NULL,NULL,NULL,NULL,NULL\n')
         fffield.write('Class,Field,Name,Class,Field,Name,Name,Notes\n')
         ffmetho.write('NULL,NULL,NULL,NULL,NULL,NULL\n')
         ffmetho.write('class (for reference only),Reference,class (for reference only),Reference,Name,Notes\n')
-        
+
 
         c.execute("""SELECT classname, searge, name, desc FROM vfields WHERE side = 0  AND versionid = ? ORDER BY searge""", (idversion,))
         for row in c.fetchall():
@@ -587,18 +587,18 @@ class MCPBotCmds(object):
             ffmetho.write('*,*,%s,%s,%s,"%s"\n'%(classname, searge, name, desc.replace('"', "'")))
 
         ffmetho.close()
-        fffield.close()   
-    
+        fffield.close()
+
     @restricted(5)
     @database
     def cmd_altcsv(self, sender, chan, cmd, msg, *args, **kwargs):
         c         = kwargs['cursor']
-        idversion = kwargs['idvers']  
+        idversion = kwargs['idvers']
 
         if len(msg.split()) == 1:
             idversion = c.execute("""SELECT id FROM versions WHERE mcpversion = ?""", (msg.split()[0],)).fetchone()
             if not idversion:
-                self.say(sender, "Version not recognised.")  
+                self.say(sender, "Version not recognised.")
                 return
             else:
                 (idversion,) = idversion
@@ -606,8 +606,8 @@ class MCPBotCmds(object):
         (mcpversion,) = c.execute("""SELECT mcpversion FROM versions WHERE id = ?""", (idversion,)).fetchone()
 
         methodswriter = csv.writer(open('methods_%s.csv'%mcpversion, 'wb'), delimiter=',',quotechar='"', quoting=csv.QUOTE_ALL)
-        c.execute("""SELECT searge, name, notch, sig, notchsig, classname, classnotch, package, side FROM vmethods 
-                      WHERE NOT name   = classname 
+        c.execute("""SELECT searge, name, notch, sig, notchsig, classname, classnotch, package, side FROM vmethods
+                      WHERE NOT name   = classname
                             /*AND NOT searge = notch*/
                             AND versionid = ?""",(idversion,))
         methodswriter.writerow(('searge', 'name', 'notch', 'sig', 'notchsig', 'classname', 'classnotch', 'package', 'side'))
@@ -616,8 +616,8 @@ class MCPBotCmds(object):
             methodswriter.writerow(row)
 
         fieldswriter = csv.writer(open('fields_%s.csv'%mcpversion, 'wb'), delimiter=',',quotechar='"', quoting=csv.QUOTE_ALL)
-        c.execute("""SELECT searge, name, notch, sig, notchsig, classname, classnotch, package, side FROM vfields 
-                      WHERE NOT name   = classname 
+        c.execute("""SELECT searge, name, notch, sig, notchsig, classname, classnotch, package, side FROM vfields
+                      WHERE NOT name   = classname
                             /*AND NOT searge = notch*/
                             AND versionid = ?""",(idversion,))
         fieldswriter.writerow(('searge', 'name', 'notch', 'sig', 'notchsig', 'classname', 'classnotch', 'package', 'side'))
@@ -626,7 +626,7 @@ class MCPBotCmds(object):
             fieldswriter.writerow(row)
 
         classeswriter = csv.writer(open('classes_%s.csv'%mcpversion, 'wb'), delimiter=',',quotechar='"', quoting=csv.QUOTE_ALL)
-        c.execute("""SELECT name, notch, supername, package, side FROM vclasses 
+        c.execute("""SELECT name, notch, supername, package, side FROM vclasses
                       WHERE /*NOT name = notch AND*/ versionid = ?""",(idversion,))
         classeswriter.writerow(('name', 'notch', 'supername', 'package', 'side'))
         for row in c:
@@ -634,9 +634,9 @@ class MCPBotCmds(object):
             classeswriter.writerow(row)
 
 
-        self.say(sender, "New CSVs exported")  
+        self.say(sender, "New CSVs exported")
 
-    @database   
+    @database
     def dbCommit(self, sender, chan, cmd, msg, *args, **kwargs):
 
         c          = kwargs['cursor']
@@ -656,13 +656,13 @@ class MCPBotCmds(object):
                             INNER JOIN %shist h ON m.dirtyid = h.id
                             WHERE m.versionid = ? AND NOT h.forced = 1
                             """%(etype, etype), (idversion,))
-        
+
             results = c.fetchall()
             nentries += len(results)
-            
+
             for result in results:
                 mid, hid, hnewname, hnewdesc = result
-                c.execute("""UPDATE %s SET name = ?, desc = ?, dirtyid = 0 WHERE id = ?"""%etype, (hnewname, hnewdesc, mid))  
+                c.execute("""UPDATE %s SET name = ?, desc = ?, dirtyid = 0 WHERE id = ?"""%etype, (hnewname, hnewdesc, mid))
 
         if nentries:
             c.execute("""INSERT INTO commits VALUES (?, ?, ?)""",(None, int(time.time()), sender))
@@ -670,8 +670,8 @@ class MCPBotCmds(object):
             self.say(sender, " Committed %d new updates"%nentries)
         else:
             self.say(sender, "$B[ COMMIT ]")
-            self.say(sender, " No new entries to commit")    
-    
+            self.say(sender, " No new entries to commit")
+
     #===================================================================
 
     #====================== Whitelist Handling =========================
@@ -682,7 +682,7 @@ class MCPBotCmds(object):
             nick  = msg[0]
             level = 4
             if level >= self.whitelist[sender]:
-                self.say(sender, "You don't have the rights to do that.")                 
+                self.say(sender, "You don't have the rights to do that.")
                 return
             self.addWhitelist(nick)
         elif len(msg) == 2:
@@ -693,8 +693,8 @@ class MCPBotCmds(object):
                     self.say(sender, "Max level is 4.")
                     return
                 if level >= self.whitelist[sender]:
-                    self.say(sender, "You don't have the rights to do that.")                 
-                    return                    
+                    self.say(sender, "You don't have the rights to do that.")
+                    return
                 self.addWhitelist(nick, level)
             except:
                 self.say(sender, "Syntax error : $Baddwhite <nick> [level]")
@@ -702,33 +702,33 @@ class MCPBotCmds(object):
         else:
             self.say(sender, "Syntax error : $Baddwhite <nick> [level]")
         self.say(sender, "Added %s with level %d to whitelist"%(nick, level))
-        
+
     @restricted(0)
     def cmd_rmwhite(self, sender, chan, cmd, msg, *args, **kwargs):
         nick = msg.strip()
-        
+
         if nick in self.whitelist and self.whitelist[nick] >= self.whitelist[sender]:
-            self.say(sender, "You don't have the rights to do that.")         
+            self.say(sender, "You don't have the rights to do that.")
             return
-        
+
         try:
             self.rmWhitelist(nick)
         except KeyError:
             self.say(sender, "User %s not found in the whitelist"%nick)
-            return   
-        self.say(sender, "User %s removed from the whitelist"%nick)         
-    
-    @restricted(0)   
+            return
+        self.say(sender, "User %s removed from the whitelist"%nick)
+
+    @restricted(0)
     def cmd_getwhite(self, sender, chan, cmd, msg, *args, **kwargs):
         self.say(sender, "Whitelist : %s"%self.whitelist)
-        
+
     @restricted(4)
     def cmd_savewhite(self, sender, chan, cmd, msg, *args, **kwargs):
         self.saveWhitelist()
-        
+
     @restricted(4)
     def cmd_loadwhite(self, sender, chan, cmd, msg, *args, **kwargs):
-        self.loadWhitelist()        
+        self.loadWhitelist()
     #===================================================================
 
     #====================== Misc commands ==============================
@@ -742,9 +742,9 @@ class MCPBotCmds(object):
             self.say(sender, 'ERROR : %s'%errormsg)
 
     def cmd_dcc(self, sender, chan, cmd, msg, *args, **kwargs):
-        """$Bdcc$N : Starts a dcc session. Faster and not under the flood protection."""        
-        self.dcc.dcc(sender)        
-    
+        """$Bdcc$N : Starts a dcc session. Faster and not under the flood protection."""
+        self.dcc.dcc(sender)
+
     @restricted(4)
     def cmd_kick(self, sender, chan, cmd, msg, *args, **kwargs):
         msg = msg.strip()
@@ -771,10 +771,10 @@ class MCPBotCmds(object):
         type_lookup = {'methods':'func','fields':'field'}
         side_lookup = {'client':0, 'server':1}
 
-        
+
         mcpversion, botversion, dbversion, clientversion, serverversion = \
             c.execute ("""SELECT mcpversion, botversion, dbversion, clientversion, serverversion FROM versions WHERE id = ?""", (idversion,)).fetchone()
-            
+
         self.say(sender, "$B[ STATUS ]")
         self.say(sender, " MCP    : $B%s"%mcpversion)
         self.say(sender, " Bot    : $B%s"%botversion)
@@ -783,12 +783,12 @@ class MCPBotCmds(object):
 
         for side  in ['client', 'server']:
             for etype in ['methods', 'fields']:
-                total, ren, urn = c.execute("""SELECT total(%st), total(%sr), total(%su) 
-                                      FROM vclassesstats WHERE side = ? AND versionid = ?"""%(etype,etype,etype), 
+                total, ren, urn = c.execute("""SELECT total(%st), total(%sr), total(%su)
+                                      FROM vclassesstats WHERE side = ? AND versionid = ?"""%(etype,etype,etype),
                                       (side_lookup[side], idversion)).fetchone()
-                                      
+
                 self.say(sender, " [%s][%7s] : T $B%4d$N | R $B%4d$N | U $B%4d$N | $B%5.2f%%$N" %(side[0].upper(), etype.upper(), total, ren, urn, float(ren)/float(total)*100))
-                
+
         nthreads = len(threading.enumerate())
         if nthreads == self.nthreads + 1:
             self.say(sender, " All threads up and running !")
@@ -802,16 +802,16 @@ class MCPBotCmds(object):
         self.say(sender, "$B[ THREADS ]")
         threads = sorted(threads, cmp=lambda a,b:cmp(a.ncalls,b.ncalls))
         maxthreadname = max([len(i.name) for i in threads])
-        
+
         displayorder = zip(range(0,len(threads),2), range(1,len(threads),2))
-        
+
         for i,j in displayorder:
             it = threads[i]
             jt = threads[j]
             self.say(sender, '%2d %s %4d %4d %4d | %2d %s %4d %4d %4d'%
             (i, it.name.ljust(maxthreadname), it.ncalls, it.nscalls, it.nfcalls,
              j, jt.name.ljust(maxthreadname), jt.ncalls, jt.nscalls, jt.nfcalls))
-        
+
         if len(threads)%2 == 1:
             i = threads[-1]
             self.say(sender, '%2d %s %4d %4d %4d'%(len(threads)-1, i.name.ljust(maxthreadname), i.ncalls, i.nscalls, i.nfcalls))
@@ -827,7 +827,7 @@ class MCPBotCmds(object):
 
         type_lookup = {'methods':'func','fields':'field'}
         side_lookup = {'client':0, 'server':1}
-        
+
         if not msg in ['client', 'server']:
             self.say(sender, "$Btodo <client|server>")
             return
@@ -849,19 +849,19 @@ class MCPBotCmds(object):
     @restricted(5)
     def cmd_whois(self, sender, chan, cmd, msg, *args, **kwargs):
         dbase = sqlite3.connect(self.dbconf)
-        c = dbase.cursor()  
+        c = dbase.cursor()
         results = c.execute("""SELECT nick FROM nicks WHERE host ISNULL""").fetchall()
         c.close()
-        dbase.close()        
-        
+        dbase.close()
+
         print 'Found %d names to check'%len(results)
-        
+
         for result in results:
             print 'Checking %s'%result[0]
             self.irc.whois(result[0])
             time.sleep(5)
-        
-        print '== All done =='    
+
+        print '== All done =='
 
 #########################
 # NOTICE BOARD COMMANDS #
@@ -875,19 +875,19 @@ class MCPBotCmds(object):
             c = self.acquiredb()
             results = c.execute("""SELECT tag FROM notices GROUP BY tag""").fetchall()
             self.releasedb(c)
-            
+
             self.say(sender, '[ IDEAS ]')
             for result in results:
                 self.say(sender, '+ %s'%result[0])
-            
+
         elif len(msg.split()) == 1:
             c = self.acquiredb()
-            results = c.execute("""SELECT n.id, strftime('%s',n.timestamp, 'unixepoch') as htimestamp, u.nick, n.content 
-                                   FROM notices n 
-                                   INNER JOIN nicks u ON n.nickid = u.id 
+            results = c.execute("""SELECT n.id, strftime('%s',n.timestamp, 'unixepoch') as htimestamp, u.nick, n.content
+                                   FROM notices n
+                                   INNER JOIN nicks u ON n.nickid = u.id
                                    WHERE n.tag = ?"""%'%m-%d %H:%M', (msg.strip().upper(),)).fetchall()
             self.releasedb(c)
-            
+
             self.say(sender, '[ IDEAS FOR %s ]'%msg.upper())
             if not results:
                 self.say(sender, "None")
@@ -895,7 +895,7 @@ class MCPBotCmds(object):
             for result in results:
                 nid, htimestamp, unick, ncontent = result
                 self.say(sender,'+ [%3d][$R%s, %s$N] %s'%(nid, htimestamp, unick, ncontent))
-            
+
         else:
             c = self.acquiredb()
             (userid,) = c.execute("""SELECT id FROM nicks WHERE nick = ?""", (sender,)).fetchone()

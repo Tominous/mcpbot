@@ -589,11 +589,16 @@ class MCPBotCmds(object):
         ffmetho.close()
         fffield.close()
 
-    @restricted(5)
+    @restricted(3)
     @database
     def cmd_altcsv(self, sender, chan, cmd, msg, *args, **kwargs):
         c         = kwargs['cursor']
         idversion = kwargs['idvers']
+
+        if self.cnick == 'MCPBot':
+            trgdir = '/home/mcpfiles/mcprolling/mcp/conf'
+        else:
+            trgdir = '.'
 
         if len(msg.split()) == 1:
             idversion = c.execute("""SELECT id FROM versions WHERE mcpversion = ?""", (msg.split()[0],)).fetchone()
@@ -605,7 +610,7 @@ class MCPBotCmds(object):
 
         (mcpversion,) = c.execute("""SELECT mcpversion FROM versions WHERE id = ?""", (idversion,)).fetchone()
 
-        methodswriter = csv.writer(open('methods_%s.csv'%mcpversion, 'wb'), delimiter=',',quotechar='"', quoting=csv.QUOTE_ALL)
+        methodswriter = csv.writer(open('%s/methods.csv'%trgdir, 'wb'), delimiter=',',quotechar='"', quoting=csv.QUOTE_ALL)
         c.execute("""SELECT searge, name, notch, sig, notchsig, classname, classnotch, package, side FROM vmethods
                       WHERE NOT name   = classname
                             /*AND NOT searge = notch*/
@@ -615,7 +620,7 @@ class MCPBotCmds(object):
             if len(row[0]) <= 2:continue
             methodswriter.writerow(row)
 
-        fieldswriter = csv.writer(open('fields_%s.csv'%mcpversion, 'wb'), delimiter=',',quotechar='"', quoting=csv.QUOTE_ALL)
+        fieldswriter = csv.writer(open('%s/fields.csv'%trgdir, 'wb'), delimiter=',',quotechar='"', quoting=csv.QUOTE_ALL)
         c.execute("""SELECT searge, name, notch, sig, notchsig, classname, classnotch, package, side FROM vfields
                       WHERE NOT name   = classname
                             /*AND NOT searge = notch*/
@@ -625,7 +630,7 @@ class MCPBotCmds(object):
             if len(row[0]) <= 2:continue
             fieldswriter.writerow(row)
 
-        classeswriter = csv.writer(open('classes_%s.csv'%mcpversion, 'wb'), delimiter=',',quotechar='"', quoting=csv.QUOTE_ALL)
+        classeswriter = csv.writer(open('%s/classes.csv'%trgdir, 'wb'), delimiter=',',quotechar='"', quoting=csv.QUOTE_ALL)
         c.execute("""SELECT name, notch, supername, package, side FROM vclasses
                       WHERE /*NOT name = notch AND*/ versionid = ?""",(idversion,))
         classeswriter.writerow(('name', 'notch', 'supername', 'package', 'side'))

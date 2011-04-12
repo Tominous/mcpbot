@@ -617,7 +617,6 @@ class MCPBotCmds(object):
                             AND versionid = ?""",(idversion,))
         methodswriter.writerow(('searge', 'name', 'notch', 'sig', 'notchsig', 'classname', 'classnotch', 'package', 'side'))
         for row in c:
-            if len(row[0]) <= 2:continue
             methodswriter.writerow(row)
 
         fieldswriter = csv.writer(open('%s/fields.csv'%trgdir, 'wb'), delimiter=',',quotechar='"', quoting=csv.QUOTE_ALL)
@@ -627,7 +626,7 @@ class MCPBotCmds(object):
                             AND versionid = ?""",(idversion,))
         fieldswriter.writerow(('searge', 'name', 'notch', 'sig', 'notchsig', 'classname', 'classnotch', 'package', 'side'))
         for row in c:
-            if len(row[0]) <= 2:continue
+            if row[0] == '$VALUE':continue
             fieldswriter.writerow(row)
 
         classeswriter = csv.writer(open('%s/classes.csv'%trgdir, 'wb'), delimiter=',',quotechar='"', quoting=csv.QUOTE_ALL)
@@ -635,7 +634,6 @@ class MCPBotCmds(object):
                       WHERE /*NOT name = notch AND*/ versionid = ?""",(idversion,))
         classeswriter.writerow(('name', 'notch', 'supername', 'package', 'side'))
         for row in c:
-            if len(row[0]) <= 2:continue
             classeswriter.writerow(row)
 
 

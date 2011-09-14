@@ -850,6 +850,7 @@ class MCPBotCmds(object):
             if not membersr: membersr = 0
             if not membersu: membersu = 0
             if membersr == 0: percent = 0.
+            if (float(memberst) == 0): percent = 0
             else: percent = float(membersr)/float(memberst)*100.0
             self.say(sender, " %s : $B%2d$N [ T $B%3d$N | R $B%3d$N | $B%5.2f%%$N ] "%(name.ljust(20), membersu, memberst, membersr, percent))
 

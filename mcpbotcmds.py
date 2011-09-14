@@ -767,6 +767,7 @@ class MCPBotCmds(object):
         self.say(sender, "For help, please check : http://mcp.ocean-labs.de/index.php/MCPBot")
 
     @database
+    @restricted(2)
     def cmd_status(self, sender, chan, cmd, msg, *args, **kwargs):
         c         = kwargs['cursor']
         idversion = kwargs['idvers']
@@ -790,7 +791,10 @@ class MCPBotCmds(object):
                                       FROM vclassesstats WHERE side = ? AND versionid = ?"""%(etype,etype,etype),
                                       (side_lookup[side], idversion)).fetchone()
 
-                self.say(sender, " [%s][%7s] : T $B%4d$N | R $B%4d$N | U $B%4d$N | $B%5.2f%%$N" %(side[0].upper(), etype.upper(), total, ren, urn, float(ren)/float(total)*100))
+                percent = 0
+                if (float(total) != 0)
+                    percent = float(ren)/float(total)*100
+                self.say(sender, " [%s][%7s] : T $B%4d$N | R $B%4d$N | U $B%4d$N | $B%5.2f%%$N" %(side[0].upper(), etype.upper(), total, ren, urn, percent))
 
         nthreads = len(threading.enumerate())
         if nthreads == self.nthreads + 1:

@@ -792,15 +792,9 @@ class MCPBotCmds(object):
                                       (side_lookup[side], idversion)).fetchone()
 
                 percent = 0
-                if (float(total) != 0)
+                if (float(total) != 0):
                     percent = float(ren)/float(total)*100
                 self.say(sender, " [%s][%7s] : T $B%4d$N | R $B%4d$N | U $B%4d$N | $B%5.2f%%$N" %(side[0].upper(), etype.upper(), total, ren, urn, percent))
-
-        nthreads = len(threading.enumerate())
-        if nthreads == self.nthreads + 1:
-            self.say(sender, " All threads up and running !")
-        else:
-            self.say(sender, " Found only $R%d$N threads ! $BThere is a problem !"%(nthreads-1))
 
     @restricted(4)
     def cmd_listthreads(self, sender, chan, cmd, msg, *args, **kwargs):

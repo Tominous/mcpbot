@@ -38,7 +38,7 @@ class DCCProtocol(DCCCommands, DCCRawEvents):
             self.insocket.listen(10)
             #self.insocket.setblocking(0)
             self.inip, self.inport = self.insocket.getsockname()
-            self.inip = self.conv_ip_std_long(urllib.urlopen('http://www.whatismyip.com/automation/n09230945.asp').readlines()[0])
+            self.inip = self.conv_ip_std_long(urllib.urlopen('http://automation.whatismyip.com/n09230945.asp').readlines()[0])
         except socket.error:
             self.bot.printq.put("If you see this, it means you can't create listening sockets. This is a bug from Iron Python. Desactivating dcc.")
 
@@ -122,11 +122,13 @@ class DCCProtocol(DCCCommands, DCCRawEvents):
                     self.bot.printq.put('> Received connection request') 
                     # handle the server socket
                     buffsocket, buffip = self.insocket.accept()
-                    self.bot.printq.put('> User identified as : %s %s'%(self.ip2nick[buffip[0]], buffip[0]))
-                    self.sockets[self.ip2nick[buffip[0]]] = DCCSocket(buffsocket, self.ip2nick[buffip[0]])
-                    self.say(self.ip2nick[buffip[0]], 'Connection with user %s established.\r\n'%self.ip2nick[buffip[0]])
-                    input.append(self.sockets[self.ip2nick[buffip[0]]])
-                        
+                    if buffip[0] in self.ip2nick:
+                        self.bot.printq.put('> User identified as : %s %s'%(self.ip2nick[buffip[0]], buffip[0]))
+                        self.sockets[self.ip2nick[buffip[0]]] = DCCSocket(buffsocket, self.ip2nick[buffip[0]])
+                        self.say(self.ip2nick[buffip[0]], 'Connection with user %s established.\r\n'%self.ip2nick[buffip[0]])
+                        input.append(self.sockets[self.ip2nick[buffip[0]]])
+                    else:
+                        #do something                        
                 else:
                     # handle all other sockets
                     try:

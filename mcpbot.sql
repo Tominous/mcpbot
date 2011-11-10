@@ -3,14 +3,14 @@ BEGIN;
 
 CREATE TABLE classes (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
-  side INT,
-  name TEXT,
+  side INT NOT NULL,
+  name TEXT NOT NULL,
   notch TEXT,
   superid INT,
   topsuperid INT,
-  isinterf INT,
-  packageid INT,
-  versionid INT,
+  isinterf INT NOT NULL,
+  packageid INT NOT NULL,
+  versionid INT NOT NULL,
   FOREIGN KEY(superid) REFERENCES classes(id),
   FOREIGN KEY(topsuperid) REFERENCES classes(id),
   FOREIGN KEY(packageid) REFERENCES packages(id),
@@ -37,16 +37,16 @@ INSERT INTO config VALUES(1, 'currentversion', -1);
 
 CREATE TABLE fields (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
-  side INT,
-  searge TEXT,
+  side INT NOT NULL,
+  searge TEXT NOT NULL,
   notch TEXT,
   name TEXT,
-  sig TEXT,
+  sig TEXT NOT NULL,
   notchsig TEXT,
   desc TEXT,
   topid INT,
-  dirtyid INT,
-  versionid INT,
+  dirtyid INT NOT NULL DEFAULT 0,
+  versionid INT NOT NULL,
   FOREIGN KEY(topid) REFERENCES classes(id),
   FOREIGN KEY(versionid) REFERENCES versions(id)
 );
@@ -56,13 +56,13 @@ CREATE TABLE fieldshist (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   memberid INT NOT NULL,
   oldname TEXT NOT NULL,
-  olddesc TEXT,
+  olddesc TEXT NOT NULL,
   newname TEXT NOT NULL,
-  newdesc TEXT,
+  newdesc TEXT NOT NULL,
   timestamp INTEGER NOT NULL,
   nick TEXT NOT NULL,
-  forced INT NOT NULL DEFAULT 0,
-  cmd TEXT NOT NULL DEFAULT 'scf',
+  forced INT NOT NULL,
+  cmd TEXT NOT NULL,
   FOREIGN KEY(memberid) REFERENCES fields(id)
 );
 
@@ -87,16 +87,16 @@ CREATE TABLE interfaceslk (
 
 CREATE TABLE methods (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
-  side INT,
-  searge TEXT,
+  side INT NOT NULL,
+  searge TEXT NOT NULL,
   notch TEXT,
   name TEXT,
-  sig TEXT,
+  sig TEXT NOT NULL,
   notchsig TEXT,
   desc TEXT,
   topid INT,
-  dirtyid INT,
-  versionid INT,
+  dirtyid INT NOT NULL DEFAULT 0,
+  versionid INT NOT NULL,
   FOREIGN KEY(topid) REFERENCES classes(id),
   FOREIGN KEY(versionid) REFERENCES versions(id)
 );
@@ -106,13 +106,13 @@ CREATE TABLE methodshist (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   memberid INT NOT NULL,
   oldname TEXT NOT NULL,
-  olddesc TEXT,
+  olddesc TEXT NOT NULL,
   newname TEXT NOT NULL,
-  newdesc TEXT,
+  newdesc TEXT NOT NULL,
   timestamp INTEGER NOT NULL,
   nick TEXT NOT NULL,
-  forced INT NOT NULL DEFAULT 0,
-  cmd TEXT NOT NULL DEFAULT 'scm',
+  forced INT NOT NULL,
+  cmd TEXT NOT NULL,
   FOREIGN KEY(memberid) REFERENCES methods(id)
 );
 
@@ -128,7 +128,7 @@ CREATE TABLE methodslk (
 
 CREATE TABLE packages (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
-  name TEXT,
+  name TEXT NOT NULL,
   UNIQUE(name)
 );
 

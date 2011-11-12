@@ -171,12 +171,12 @@ CREATE VIEW vclassesstats AS
     COUNT(DISTINCT mu.id) AS methodsu,
     COUNT(DISTINCT fu.id) AS fieldsu
   FROM classes c
-    LEFT JOIN methods mt ON mt.topid=c.id AND mt.name != c.name
-    LEFT JOIN methods mr ON mr.id=mt.id AND mr.name != mr.searge
-    LEFT JOIN methods mu ON mu.id=mt.id AND mu.name = mu.searge
-    LEFT JOIN fields ft ON ft.topid=c.id AND ft.name != c.name
-    LEFT JOIN fields fr ON fr.id=ft.id AND fr.name != fr.searge
-    LEFT JOIN fields fu ON fu.id=ft.id AND fu.name = fu.searge
+    LEFT JOIN methods mt ON mt.topid=c.id AND mt.searge LIKE "func_%"
+    LEFT JOIN methods mr ON mr.id=mt.id AND mr.searge LIKE "func_%" AND mr.name != mr.searge
+    LEFT JOIN methods mu ON mu.id=mt.id AND mu.searge LIKE "func_%" AND mu.name = mu.searge
+    LEFT JOIN fields ft ON ft.topid=c.id AND ft.searge LIKE "field_%"
+    LEFT JOIN fields fr ON fr.id=ft.id AND fr.searge LIKE "field_%" AND fr.name != fr.searge
+    LEFT JOIN fields fu ON fu.id=ft.id AND fu.searge LIKE "field_%" AND fu.name = fu.searge
   GROUP BY c.id;
 
 

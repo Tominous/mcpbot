@@ -26,10 +26,13 @@ class DCCRawEvents(object):
         #dccip   = '192.168.178.40'
         dccport = int(dccport)
         
-        self.sockets[nick] = socket.socket()
-        self.sockets[nick].connect((dccip, dccport))
-        self.sockets[nick].setblocking(0)
-        self.buffers[nick] = ''
+        try:
+            self.sockets[nick] = socket.socket()
+            self.sockets[nick].connect((dccip, dccport))
+            self.sockets[nick].setblocking(0)
+            self.buffers[nick] = ''
+        except KeyError, msg:
+            print '[DCCRawEvents.onRawDCCChat] Nick not found in socket table : %s'%nick
         
        
         #print '%s %s | IP:%s Port:%s'%(dcccmd, dccarg, dccip, dccport)

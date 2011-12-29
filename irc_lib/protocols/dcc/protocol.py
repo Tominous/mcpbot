@@ -128,7 +128,8 @@ class DCCProtocol(DCCCommands, DCCRawEvents):
                         self.say(self.ip2nick[buffip[0]], 'Connection with user %s established.\r\n'%self.ip2nick[buffip[0]])
                         input.append(self.sockets[self.ip2nick[buffip[0]]])
                     else:
-                        #do something                        
+                        #TODO : Check if something should be done here
+                        pass
                 else:
                     # handle all other sockets
                     try:

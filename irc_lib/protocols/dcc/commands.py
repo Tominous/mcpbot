@@ -21,10 +21,20 @@ class DCCCommands(object):
             except socket.error:
                 print 'Socket error !'
                 raise socket.error
+            except KeyError, msg:
+                print '[DCCCommands.say] Nick not found in socket table : %s'%nick
 
     def dcc(self, nick):
         target_ip = self.bot.getIP(nick)
-        self.sockets[nick]      = None
+
+        try:
+            if (nick in self.sockets) and (self.sockets[nick] != None):
+                self.sockets[nick].close()
+                del self.sockets[nick]
+            self.sockets[nick]      = None
+        except KeyError, msg:
+            print '[DCCCommands.dcc] Nick not found in socket table : %s'%nick
+            
         self.ip2nick[target_ip] = nick
         print target_ip, nick
         self.rawcmd(nick, 'CHAT chat %s %s'%(self.inip,self.inport))

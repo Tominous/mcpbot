@@ -177,8 +177,10 @@ class DCCProtocol(DCCCommands, DCCRawEvents):
                             s.socket.close()
                             input.remove(s)
                         except:
+                            #TODO : Specialized error handling. General except is BAD !
                             print "========="
                             print "> Unexpected error while closing the socket :", sys.exc_info()[0]
                             print "========="
+                            raise
 
                             

@@ -340,9 +340,15 @@ class MCPBotCmds(object):
             self.say(sender, " Syntax error. Use $B%s <membername> <newname> [newdescription]$N"%(cmd))
             return
 
-        msg     = map(string.strip, msg.split())
-        oldname = msg[0]
-        newname = msg[1]
+        try:
+            msg     = map(string.strip, msg.split())
+            oldname = msg[0]
+            newname = msg[1]
+        except IndexError:
+            self.say(sender, "$B[ SET %s %s ]"%(side.upper(),etype.upper()))
+            self.say(sender, " Syntax error. Use $B%s <membername> <newname> [newdescription]$N"%(cmd))
+            return            
+            
         newdesc = None
         if len(msg) > 2:
             newdesc = ' '.join(msg[2:])

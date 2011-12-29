@@ -11,6 +11,7 @@ import time
 import urllib
 import select
 import traceback
+import sys
 
 class DCCSocket(object):
     def __init__(self, socket, nick):
@@ -176,5 +177,8 @@ class DCCProtocol(DCCCommands, DCCRawEvents):
                             s.socket.close()
                             input.remove(s)
                         except:
-                            print '> Error while closing the socket. Ignoring.'
+                            print "========="
+                            print "> Unexpected error while closing the socket :", sys.exc_info()[0]
+                            print "========="
+
                             

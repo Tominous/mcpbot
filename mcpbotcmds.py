@@ -350,6 +350,11 @@ class MCPBotCmds(object):
         self.say(sender, "$B[ SET %s %s ]"%(side.upper(),etype.upper()))
         if forced: self.say(sender, "$RCAREFULL, YOU ARE FORCING AN UPDATE !")
 
+        # DON'T ALLOW STRANGE CHARACTERS IN NAMES
+        if re.search(r'[^A-Za-z0-9$_]', newname):
+            self.say(sender, "$RIllegal character in name")
+            return
+
         ## WE CHECK IF WE ARE NOT CONFLICTING WITH A CLASS NAME ##
         result = c.execute("""SELECT m.name FROM vclasses m
                               WHERE m.name = ?

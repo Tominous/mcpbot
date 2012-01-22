@@ -340,15 +340,9 @@ class MCPBotCmds(object):
             self.say(sender, " Syntax error. Use $B%s <membername> <newname> [newdescription]$N"%(cmd))
             return
 
-        try:
-            msg     = map(string.strip, msg.split())
-            oldname = msg[0]
-            newname = msg[1]
-        except IndexError:
-            self.say(sender, "$B[ SET %s %s ]"%(side.upper(),etype.upper()))
-            self.say(sender, " Syntax error. Use $B%s <membername> <newname> [newdescription]$N"%(cmd))
-            return            
-            
+        msg     = map(string.strip, msg.split())
+        oldname = msg[0]
+        newname = msg[1]
         newdesc = None
         if len(msg) > 2:
             newdesc = ' '.join(msg[2:])
@@ -602,9 +596,9 @@ class MCPBotCmds(object):
         idversion = kwargs['idvers']
 
         if self.cnick == 'MCPBot':
-            trgdir = '/home/mcpfiles/mcprolling/mcp/conf'
+            trgdir = '/home/mcpfiles/mcprolling_5.6/mcp/conf'
         else:
-            trgdir = '.'
+            trgdir = 'devconf'
 
         if len(msg.split()) == 1:
             idversion = c.execute("""SELECT id FROM versions WHERE mcpversion = ?""", (msg.split()[0],)).fetchone()
@@ -773,7 +767,6 @@ class MCPBotCmds(object):
         self.say(sender, "For help, please check : http://mcp.ocean-labs.de/index.php/MCPBot")
 
     @database
-    @restricted(2)
     def cmd_status(self, sender, chan, cmd, msg, *args, **kwargs):
         c         = kwargs['cursor']
         idversion = kwargs['idvers']
@@ -797,10 +790,13 @@ class MCPBotCmds(object):
                                       FROM vclassesstats WHERE side = ? AND versionid = ?"""%(etype,etype,etype),
                                       (side_lookup[side], idversion)).fetchone()
 
-                percent = 0
-                if (float(total) != 0):
-                    percent = float(ren)/float(total)*100
-                self.say(sender, " [%s][%7s] : T $B%4d$N | R $B%4d$N | U $B%4d$N | $B%5.2f%%$N" %(side[0].upper(), etype.upper(), total, ren, urn, percent))
+                self.say(sender, " [%s][%7s] : T $B%4d$N | R $B%4d$N | U $B%4d$N | $B%5.2f%%$N" %(side[0].upper(), etype.upper(), total, ren, urn, float(ren)/float(total)*100))
+
+        nthreads = len(threading.enumerate())
+        if nthreads == self.nthreads + 1:
+            self.say(sender, " All threads up and running !")
+        else:
+            self.say(sender, " Found only $R%d$N threads ! $BThere is a problem !"%(nthreads-1))
 
     @restricted(4)
     def cmd_listthreads(self, sender, chan, cmd, msg, *args, **kwargs):
@@ -850,7 +846,6 @@ class MCPBotCmds(object):
             if not membersr: membersr = 0
             if not membersu: membersu = 0
             if membersr == 0: percent = 0.
-            if (float(memberst) == 0): percent = 0
             else: percent = float(membersr)/float(memberst)*100.0
             self.say(sender, " %s : $B%2d$N [ T $B%3d$N | R $B%3d$N | $B%5.2f%%$N ] "%(name.ljust(20), membersu, memberst, membersr, percent))
 

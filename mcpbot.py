@@ -2,6 +2,7 @@ from sets               import Set
 from irc_lib.IRCBotBase import IRCBotBase
 from mcpbotcmds         import MCPBotCmds
 import sys
+import time
 
 class MCPBot(IRCBotBase, MCPBotCmds):
     
@@ -34,6 +35,9 @@ if __name__ == "__main__":
     bot = MCPBot('MCPBot', '!')
     bot.connect('irc.esper.net')
     bot.nickserv.identify(sys.argv[1])
+    print 'plz wait'
+    time.sleep(15)
+    print 'joining channels'
     bot.irc.join('#test')
     bot.startLogging()
     bot.loadWhitelist()

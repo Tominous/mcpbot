@@ -480,6 +480,9 @@ class MCPBotCmds(object):
     #====================== Log Methods ================================
     @database
     def cmd_getlog(self, sender, chan, cmd, msg, *args, **kwargs):
+        if sender not in self.dcc.sockets or not self.dcc.sockets[sender]:
+            self.say(sender, "$BPlease use DCC for getlog")
+            return
 
         c         = kwargs['cursor']
         idversion = kwargs['idvers']

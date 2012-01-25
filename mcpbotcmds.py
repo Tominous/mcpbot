@@ -357,7 +357,7 @@ class MCPBotCmds(object):
 
         ## WE CHECK IF WE ARE NOT CONFLICTING WITH A CLASS NAME ##
         result = c.execute("""SELECT m.name FROM vclasses m
-                              WHERE m.name = ?
+                              WHERE lower(m.name) = lower(?)
                                 AND m.side = ?
                                 AND m.versionid = ?""", (newname, side_lookup[side], idversion)).fetchone()
         if result:
@@ -393,19 +393,28 @@ class MCPBotCmds(object):
         ## WE CHECK THAT WE HAVE A UNIQUE NAME
         if not forced:
             result = c.execute("""SELECT m.searge, m.name FROM vmethods m
-                                  WHERE m.name = ?
-                                  AND m.side = ?
-                                  AND m.versionid = ?""", (newname, side_lookup[side], idversion)).fetchone()
-            if result:
-                self.say(sender, "$RYou are conflicting with at least one other method: %s. Please use forced update only if you are certain !"%result[0])
-                return
-
-            result = c.execute("""SELECT m.searge, m.name FROM vmethods m
                                   WHERE ((m.searge LIKE ? ESCAPE '!') OR m.searge = ?)
                                   AND m.side = ?
                                   AND m.versionid = ?""", ('%s!_%s!_%%'%(type_lookup[etype],oldname),oldname,side_lookup[side], idversion)).fetchone()
             if result and result[0] != result[1]:
                 self.say(sender, "$RYou are trying to rename an already named member. Please use forced update only if you are certain !")
+                return
+
+            result = c.execute("""SELECT m.searge, m.name FROM vfields m
+                                  WHERE ((m.searge LIKE ? ESCAPE '!') OR m.searge = ?)
+                                  AND m.side = ?
+                                  AND m.versionid = ?""", ('%s!_%s!_%%'%(type_lookup[etype],oldname),oldname,side_lookup[side], idversion)).fetchone()
+            if result and result[0] != result[1]:
+                self.say(sender, "$RYou are trying to rename an already named member. Please use forced update only if you are certain !")
+                return
+
+        if True:
+            result = c.execute("""SELECT m.searge, m.name FROM vmethods m
+                                  WHERE m.name = ?
+                                  AND m.side = ?
+                                  AND m.versionid = ?""", (newname, side_lookup[side], idversion)).fetchone()
+            if result:
+                self.say(sender, "$RYou are conflicting with at least one other method: %s. Please use forced update only if you are certain !"%result[0])
                 return
 
             result = c.execute("""SELECT m.searge, m.name FROM vfields m
@@ -415,15 +424,6 @@ class MCPBotCmds(object):
             if result:
                 self.say(sender, "$RYou are conflicting with at least one other field: %s. Please use forced update only if you are certain !"%result[0])
                 return
-
-            result = c.execute("""SELECT m.searge, m.name FROM vfields m
-                                  WHERE ((m.searge LIKE ? ESCAPE '!') OR m.searge = ?)
-                                  AND m.side = ?
-                                  AND m.versionid = ?""", ('%s!_%s!_%%'%(type_lookup[etype],oldname),oldname,side_lookup[side], idversion)).fetchone()
-            if result and result[0] != result[1]:
-                self.say(sender, "$RYou are trying to rename an already named member. Please use forced update only if you are certain !")
-                return
-
 
         if len(results) == 1:
             name, notch, searge, sig, notchsig, desc, classname, classnotch, id = results[0]

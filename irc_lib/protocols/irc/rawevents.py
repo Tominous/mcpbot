@@ -12,7 +12,8 @@ class IRCRawEvents(object):
         self.pong(msg[1])
 
     def onRawNOTICE(self, ev):
-        if not ev.msg:return
+        if not ev.msg:
+            return
 
         if ev.target in ['AUTH', '*']:
             self.bot.printq.put('> Connected to server %s'%ev.sender)
@@ -21,7 +22,8 @@ class IRCRawEvents(object):
 
 
     def onRawPRIVMSG(self, ev):
-        if not ev.msg:return
+        if not ev.msg:
+            return
 
         outcmd = None
 
@@ -32,8 +34,10 @@ class IRCRawEvents(object):
             outcmd = ev.msg.split()[0]
 
         if outcmd:
-            if len(ev.msg.split()) < 2 : outmsg = ' '
-            else: outmsg = ' '.join(ev.msg.split()[1:])
+            if len(ev.msg.split()) < 2 :
+                outmsg = ' '
+            else:
+                outmsg = ' '.join(ev.msg.split()[1:])
             evcmd = Event(ev.sender, outcmd, ev.target, outmsg, self.cnick, 'CMD')
             self.bot.commandq.put(evcmd)
 
@@ -64,7 +68,8 @@ class IRCRawEvents(object):
             self.bot.printq.put('> MOTD found. Registered with server.')
 
     def onRawRPL_NAMREPLY(self, ev):
-        if not ev.msg: return
+        if not ev.msg:
+            return
         weirdsymbol = ev.msg.split()[0]     #Used for channel status, "@" is used for secret channels, "*" for private channels, and "=" for others (public channels).
         channel     = ev.msg.split()[1]
         nicks       = ev.msg.split()[2:]
@@ -75,7 +80,8 @@ class IRCRawEvents(object):
         self.bot.releasedb(c)
 
     def onRawRPL_WHOISUSER(self, ev):
-        if not ev.msg: return
+        if not ev.msg:
+            return
         nick = ev.msg.split()[0]
         user = ev.msg.split()[1]
         host = ev.msg.split()[2]
@@ -94,12 +100,14 @@ class IRCRawEvents(object):
 
 
     def onRawNICK(self, ev):
-        if ev.sender == self.cnick:return
+        if ev.sender == self.cnick:
+            return
         self.bot.users[ev.target] = self.bot.users[ev.sender]
         del self.bot.users[ev.sender]
 
     def onRawINVITE(self, ev):
-        if not ev.msg: return
+        if not ev.msg:
+            return
         self.join(ev.msg)
 
     def onRawDefault(self, ev):

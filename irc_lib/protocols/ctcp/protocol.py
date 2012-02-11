@@ -37,8 +37,10 @@ class CTCPProtocol(CTCPCommands, CTCPRawEvents):
             msg    = msg[:4]
             msg[3] = msg[3].replace('\x01','') #We remove the leading/tailing \x01
 
-            if len(msg[3].split()) < 2: outmsg = ' '
-            else: outmsg = ' '.join(msg[3].split()[1:])
+            if len(msg[3].split()) < 2:
+                outmsg = ' '
+            else:
+                outmsg = ' '.join(msg[3].split()[1:])
 
             ev = Event(msg[0], msg[3].split()[0][1:], msg[2], outmsg, self.cnick, 'CTCP')
 

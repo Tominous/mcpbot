@@ -53,7 +53,8 @@ class IRCProtocol(IRCCommands, IRCRawEvents):
                 continue
 
             # We add an space to the msg if the msg is less than 3 elements (we create an actual msg field for the event object)
-            if len(msg) < 4 : msg.append(' ')
+            if len(msg) < 4 :
+                msg.append(' ')
 
             # We treat the special case of QUIT.
             #If we don't have a QUIT, we create a normal event
@@ -79,14 +80,17 @@ class IRCProtocol(IRCCommands, IRCRawEvents):
 
     def add_user(self, nick, chan=None, user=None, host=None, c=None):
         nick_status = '-'
-        if nick[0] == ':': nick = nick[1:]
+        if nick[0] == ':':
+            nick = nick[1:]
         snick = nick
         if nick[0] in ['@', '+']:
             snick = nick[1:]
             nick_status = nick[0]
 
-        if not snick in self.bot.users: self.bot.users[snick] = User(snick)
-        if not chan: return
+        if not snick in self.bot.users:
+            self.bot.users[snick] = User(snick)
+        if not chan:
+            return
         self.bot.users[snick].chans[chan] = nick_status
 
         c.execute("""INSERT OR IGNORE  INTO nicks VALUES (?,?,?,?,?,?)""",(None, snick, user, host, int(time.time()), 1))
@@ -96,7 +100,8 @@ class IRCProtocol(IRCCommands, IRCRawEvents):
             c.execute("""UPDATE nicks SET timestamp = ?, online = ? WHERE nick = ?""",(int(time.time()), 1, nick))
 
     def rm_user(self, nick, chan=None):
-        if nick[0] == ':': nick = nick[1:]
+        if nick[0] == ':':
+            nick = nick[1:]
 
         if not nick in self.bot.users:
             print 'WARNING : Tried to remove an inexisting user : %s.'%nick

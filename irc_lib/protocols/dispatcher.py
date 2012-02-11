@@ -57,6 +57,9 @@ class Dispatcher(object):
                 self.irc_queue.put(msg)
 
     def isCTCP(self, cmd, msg):
-        if len(' '.join(msg.split()[3:])) < 2 : return False
-        if cmd in ['PRIVMSG', 'NOTICE'] and ' '.join(msg.split()[3:])[1] == '\x01' and ' '.join(msg.split()[3:])[-1] == '\x01': return True
-        else: return False
+        if len(' '.join(msg.split()[3:])) < 2 :
+            return False
+        if cmd in ['PRIVMSG', 'NOTICE'] and ' '.join(msg.split()[3:])[1] == '\x01' and ' '.join(msg.split()[3:])[-1] == '\x01':
+            return True
+        else:
+            return False

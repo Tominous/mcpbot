@@ -34,7 +34,8 @@ class NickServProtocol(NickServCommands, NickServRawEvents):
 
             msg = msg.split()
 
-            if len(msg) < 5 : msg.append(' ')
+            if len(msg) < 5 :
+                msg.append(' ')
             ev = Event(msg[0], msg[4], msg[2], ' '.join([msg[3], msg[5]]), self.cnick, 'NSERV')
 
     #def __init__(self, sender, cmd, target, msg, selfnick, etype):

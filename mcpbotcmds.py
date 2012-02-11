@@ -15,22 +15,26 @@ class MCPBotCmds(object):
     #================== Base chatting commands =========================
     @restricted(4)
     def cmd_say(self, sender, chan, cmd, msg, *args, **kwargs):
-        if not len(msg.split()) > 1: return
+        if not len(msg.split()) > 1:
+            return
         self.say(msg.split()[0], ' '.join(msg.split()[1:]))
 
     @restricted(4)
     def cmd_msg(self, sender, chan, cmd, msg, *args, **kwargs):
-        if not len(msg.split()) > 1: return
+        if not len(msg.split()) > 1:
+            return
         self.irc.privmsg(msg.split()[0], ' '.join(msg.split()[1:]))
 
     @restricted(4)
     def cmd_notice(self, sender, chan, cmd, msg, *args, **kwargs):
-        if not len(msg.split()) > 1: return
+        if not len(msg.split()) > 1:
+            return
         self.irc.notice(msg.split()[0], ' '.join(msg.split()[1:]))
 
     @restricted(4)
     def cmd_action(self, sender, chan, cmd, msg, *args, **kwargs):
-        if not len(msg.split()) > 1: return
+        if not len(msg.split()) > 1:
+            return
         self.ctcp.action(msg.split()[0], ' '.join(msg.split()[1:]))
 
     @restricted(4)
@@ -347,7 +351,8 @@ class MCPBotCmds(object):
             newdesc = ' '.join(msg[2:])
 
         self.say(sender, "$B[ SET %s %s ]"%(side.upper(),etype.upper()))
-        if forced: self.say(sender, "$RCAREFULL, YOU ARE FORCING AN UPDATE !")
+        if forced:
+            self.say(sender, "$RCAREFULL, YOU ARE FORCING AN UPDATE !")
 
         # DON'T ALLOW STRANGE CHARACTERS IN NAMES
         if re.search(r'[^A-Za-z0-9$_]', newname):
@@ -428,10 +433,14 @@ class MCPBotCmds(object):
             self.say(sender, "Name     : $B%s => %s"%(name, newname))
             self.say(sender, "$BOld desc$N : %s"%(desc))
 
-            if   not newdesc and not desc: newdesc = None
-            elif not newdesc             : newdesc = desc.replace('"',"'")
-            elif newdesc == 'None'       : newdesc = None
-            else: newdesc = newdesc.replace('"',"'")
+            if   not newdesc and not desc:
+                newdesc = None
+            elif not newdesc             :
+                newdesc = desc.replace('"',"'")
+            elif newdesc == 'None'       :
+                newdesc = None
+            else:
+                newdesc = newdesc.replace('"',"'")
 
             c.execute("""INSERT INTO %shist VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"""%etype,
                     (None, int(id), name, desc, newname, newdesc, int(time.time()), sender, forced, cmd))
@@ -489,8 +498,10 @@ class MCPBotCmds(object):
         idversion = kwargs['idvers']
 
         msg = msg.strip()
-        if msg == 'full':fulllog=True
-        else: fulllog = False
+        if msg == 'full':
+            fulllog=True
+        else:
+            fulllog = False
 
         type_lookup = {'methods':'func','fields':'field'}
         side_lookup = {'client':0, 'server':1}
@@ -570,23 +581,27 @@ class MCPBotCmds(object):
         c.execute("""SELECT classname, searge, name, desc FROM vfields WHERE side = 0  AND versionid = ? ORDER BY searge""", (idversion,))
         for row in c.fetchall():
             classname, searge, name, desc = row
-            if not desc:desc = ''
+            if not desc:
+                desc = ''
             fffield.write('%s,*,%s,*,*,*,%s,"%s"\n'%(classname, searge, name, desc.replace('"', "'")))
         c.execute("""SELECT classname, searge, name, desc FROM vfields WHERE side = 1  AND versionid = ? ORDER BY searge""", (idversion,))
         for row in c.fetchall():
             classname, searge, name, desc = row
-            if not desc:desc = ''
+            if not desc:
+                desc = ''
             fffield.write('*,*,*,%s,*,%s,%s,"%s"\n'%(classname, searge, name, desc.replace('"', "'")))
 
         c.execute("""SELECT classname, searge, name, desc FROM vmethods WHERE side = 0  AND versionid = ? ORDER BY searge""", (idversion,))
         for row in c.fetchall():
             classname, searge, name, desc = row
-            if not desc:desc = ''
+            if not desc:
+                desc = ''
             ffmetho.write('%s,%s,*,*,%s,"%s"\n'%(classname, searge, name, desc.replace('"', "'")))
         c.execute("""SELECT classname, searge, name, desc FROM vmethods WHERE side = 1  AND versionid = ? ORDER BY searge""", (idversion,))
         for row in c.fetchall():
             classname, searge, name, desc = row
-            if not desc:desc = ''
+            if not desc:
+                desc = ''
             ffmetho.write('*,*,%s,%s,%s,"%s"\n'%(classname, searge, name, desc.replace('"', "'")))
 
         ffmetho.close()
@@ -629,7 +644,8 @@ class MCPBotCmds(object):
                             AND versionid = ?""",(idversion,))
         fieldswriter.writerow(('searge', 'name', 'notch', 'sig', 'notchsig', 'classname', 'classnotch', 'package', 'side'))
         for row in c:
-            if row[0] == '$VALUE':continue
+            if row[0] == '$VALUE':
+                continue
             fieldswriter.writerow(row)
 
         classeswriter = csv.writer(open('%s/classes.csv'%trgdir, 'wb'), delimiter=',',quotechar='"', quoting=csv.QUOTE_ALL)
@@ -755,7 +771,8 @@ class MCPBotCmds(object):
     def cmd_kick(self, sender, chan, cmd, msg, *args, **kwargs):
         msg = msg.strip()
         msg = msg.split()
-        if not len(msg) >= 2:return
+        if not len(msg) >= 2:
+            return
         if len(msg) == 2:
             self.irc.kick(msg[0], msg[1])
         if len(msg) > 2:
@@ -844,11 +861,16 @@ class MCPBotCmds(object):
         self.say(sender, "$B[ TODO %s ]"%msg.upper())
         for result in results:
             id, name, memberst, membersr, membersu = result
-            if not memberst: memberst = 0
-            if not membersr: membersr = 0
-            if not membersu: membersu = 0
-            if membersr == 0: percent = 0.
-            else: percent = float(membersr)/float(memberst)*100.0
+            if not memberst:
+                memberst = 0
+            if not membersr:
+                membersr = 0
+            if not membersu:
+                membersu = 0
+            if membersr == 0:
+                percent = 0.
+            else:
+                percent = float(membersr)/float(memberst)*100.0
             self.say(sender, " %s : $B%2d$N [ T $B%3d$N | R $B%3d$N | $B%5.2f%%$N ] "%(name.ljust(20), membersu, memberst, membersr, percent))
 
     @restricted(5)
@@ -874,7 +896,8 @@ class MCPBotCmds(object):
 
     @restricted(3)
     def cmd_idea(self, sender, chan, cmd, msg, *args, **kwargs):
-        if msg == 'idea': msg = ''
+        if msg == 'idea':
+            msg = ''
 
         if len(msg.split()) == 0:
             c = self.acquiredb()

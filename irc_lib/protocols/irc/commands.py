@@ -11,7 +11,8 @@ class IRCCommands(object):
         self.rawcmd('PASS %s'%password)
 
     def nick(self, nick=None):
-        if not nick: nick = self.cnick
+        if not nick:
+            nick = self.cnick
         self.rawcmd('NICK %s'%nick)
 
     def user(self, user=None, host=None, server=None, real=None):
@@ -34,11 +35,13 @@ class IRCCommands(object):
         self.rawcmd('JOIN %s %s'%(chan,key))
 
     def privmsg(self, target, msg, color=True):
-        if color: msg = conv_s2i(msg)
+        if color:
+            msg = conv_s2i(msg)
         self.rawcmd('PRIVMSG %s :%s'%(target, msg))
 
     def notice(self, target, msg, color=True):
-        if color: msg = conv_s2i(msg)
+        if color:
+            msg = conv_s2i(msg)
         self.rawcmd('NOTICE %s :%s'%(target, msg))
 
     def names(self, channels=''):

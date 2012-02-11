@@ -23,7 +23,8 @@ class IRCBotIO(object):
             allowed_chars = min(allowed_chars + (self.floodprotec/30.0) * delta_time, self.floodprotec)
             start_time = time.time()
 
-            if not self.irc_socket : continue
+            if not self.irc_socket :
+                continue
             try:
                 msg = self.out_msg.get(True, 1)
             except Empty:
@@ -31,7 +32,8 @@ class IRCBotIO(object):
             self.out_msg.task_done()
             if self.rawmsg:
                 self.printq.put('> ' + msg.strip())
-            if len(msg) > int(allowed_chars) : time.sleep((len(msg)*1.25)/(self.floodprotec/30.0))
+            if len(msg) > int(allowed_chars) :
+                time.sleep((len(msg)*1.25)/(self.floodprotec/30.0))
             try:
                 self.irc_socket.send(msg)
                 allowed_chars -= len(msg)
@@ -44,7 +46,8 @@ class IRCBotIO(object):
         """Incoming message thread. Check for new data on the socket and push the data to the dispatcher queue if any."""
         buffer = ''
         while not self.exit:
-            if not self.irc_socket : continue
+            if not self.irc_socket :
+                continue
 
             try:
                 buffer  += self.irc_socket.recv(512)

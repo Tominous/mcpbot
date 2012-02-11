@@ -84,7 +84,8 @@ class IRCBotBase(IRCBotAdvMtd, IRCBotIO):
 
     def connect(self, server, port=6667):
         """Connect to a server, handle authentification and start the communication threads."""
-        if self.irc_socket : raise IRCBotError('Socket already existing, can not complete the connect command')
+        if self.irc_socket :
+            raise IRCBotError('Socket already existing, can not complete the connect command')
         self.irc_socket = socket.socket()
         self.irc_socket.connect((server, port))
         self.irc_socket.settimeout(1)
@@ -108,7 +109,8 @@ class IRCBotBase(IRCBotAdvMtd, IRCBotIO):
                 print 'EXIT REQUESTED. SHUTTING DOWN THE BOT'
                 self.exit = True
                 self.threadpool.wait_completion()
-                if self.log: self.stopLogging()
+                if self.log:
+                    self.stopLogging()
                 raise
 
     def acquiredb(self):

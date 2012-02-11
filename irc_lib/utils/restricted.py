@@ -27,8 +27,3 @@ def restricted(level=4):
             f(*args)
         return wrap_f
     return wrap
-
-
-
-
-

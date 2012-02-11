@@ -7,7 +7,7 @@ from Queue import Queue,Empty
 import thread
 
 class Dispatcher(object):
-    
+
     def __init__(self, _nick, _out_msg, _in_msg, _locks, _bot):
 
         self.in_msg    = _in_msg
@@ -18,11 +18,11 @@ class Dispatcher(object):
         self.nse_queue  = Queue()
         self.ctcp_queue = Queue()
         self.dcc_queue  = Queue()
-        
+
         self.irc  = IRCProtocol     (_nick, _out_msg, self.irc_queue,  _locks, _bot)
         self.nse  = NickServProtocol(_nick, _out_msg, self.nse_queue,  _locks, _bot)
-        self.ctcp = CTCPProtocol    (_nick, _out_msg, self.ctcp_queue, _locks, _bot)        
-        self.dcc  = DCCProtocol     (_nick, _out_msg, self.dcc_queue,  _locks, _bot)        
+        self.ctcp = CTCPProtocol    (_nick, _out_msg, self.ctcp_queue, _locks, _bot)
+        self.dcc  = DCCProtocol     (_nick, _out_msg, self.dcc_queue,  _locks, _bot)
 
         _bot.threadpool.add_task(self.treat_msg, _threadname='Dispatcher')
         #thread.start_new_thread(self.treat_msg,  ())
@@ -32,7 +32,7 @@ class Dispatcher(object):
             try:
                 msg = self.in_msg.get(True, 1)
             except Empty:
-                continue            
+                continue
 
             self.in_msg.task_done()
 
@@ -45,7 +45,7 @@ class Dispatcher(object):
 
             sender = get_nick(msg.split()[0])
             cmd    = msg.split()[1]
-            
+
 
             if sender.lower() == 'nickserv':
                 self.nse_queue.put(msg)

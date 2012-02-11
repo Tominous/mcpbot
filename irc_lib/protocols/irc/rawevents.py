@@ -6,13 +6,13 @@ import time,os
 import sqlite3
 
 class IRCRawEvents(object):
-    
+
     def onRawPING(self, msg):
         self.pong(msg[1])
-    
+
     def onRawNOTICE(self, ev):
         if not ev.msg:return
-        
+
         if ev.target in ['AUTH', '*']:
             self.bot.printq.put('> Connected to server %s'%ev.sender)
             self.bot.irc_status['Server'] = ev.sender
@@ -21,47 +21,47 @@ class IRCRawEvents(object):
 
     def onRawPRIVMSG(self, ev):
         if not ev.msg:return
-        
+
         outcmd = None
-        
+
         if ev.ischan and ev.msg[0] == self.bot.controlchar:
             outcmd = ev.msg.split()[0][1:]
-         
+
         if ev.target == self.cnick and ev.msg[0] != self.bot.controlchar:
             outcmd = ev.msg.split()[0]
-        
+
         if outcmd:
             if len(ev.msg.split()) < 2 : outmsg = ' '
             else: outmsg = ' '.join(ev.msg.split()[1:])
             evcmd = Event(ev.sender, outcmd, ev.target, outmsg, self.cnick, 'CMD')
-            self.bot.commandq.put(evcmd)            
-            
+            self.bot.commandq.put(evcmd)
+
     def onRawJOIN(self, ev):
         if ev.sender == self.cnick:
             self.bot.irc_status['Channels'].add(ev.chan)
         else:
-            c = self.bot.acquiredb()           
-            self.add_user(ev.sender, ev.chan, ev.senderuser, ev.senderhost, c) 
+            c = self.bot.acquiredb()
+            self.add_user(ev.sender, ev.chan, ev.senderuser, ev.senderhost, c)
             self.bot.releasedb(c)
-    
+
     def onRawPART(self, ev):
         self.rm_user(ev.sender, ev.chan)
 
     def onRawQUIT(self, ev):
         self.rm_user(ev.sender)
 
-        c = self.bot.acquiredb()         
+        c = self.bot.acquiredb()
         c.execute("""UPDATE nicks SET timestamp = ?, online = ? WHERE nick = ?""",(int(time.time()), 0, ev.sender))
-        self.bot.releasedb(c)       
+        self.bot.releasedb(c)
 
     def onRawRPL_MOTDSTART(self, ev):
         if ev.sender == self.bot.irc_status['Server']:
-            self.locks['ServReg'].acquire()            
+            self.locks['ServReg'].acquire()
             self.bot.irc_status['Registered'] = True
             self.locks['ServReg'].notifyAll()
             self.locks['ServReg'].release()
-            self.bot.printq.put('> MOTD found. Registered with server.')   
-    
+            self.bot.printq.put('> MOTD found. Registered with server.')
+
     def onRawRPL_NAMREPLY(self, ev):
         if not ev.msg: return
         weirdsymbol = ev.msg.split()[0]     #Used for channel status, "@" is used for secret channels, "*" for private channels, and "=" for others (public channels).
@@ -71,8 +71,8 @@ class IRCRawEvents(object):
         c = self.bot.acquiredb()
         for nick in nicks:
             self.add_user(nick, channel, c=c)
-        self.bot.releasedb(c) 
-    
+        self.bot.releasedb(c)
+
     def onRawRPL_WHOISUSER(self, ev):
         if not ev.msg: return
         nick = ev.msg.split()[0]
@@ -90,8 +90,8 @@ class IRCRawEvents(object):
         c = self.bot.acquiredb()
         c.execute("""UPDATE nicks SET user=?, host=? WHERE nick = ?""",(user, host, nick))
         self.bot.releasedb(c)
-            
-    
+
+
     def onRawNICK(self, ev):
         if ev.sender == self.cnick:return
         self.bot.users[ev.target] = self.bot.users[ev.sender]
@@ -100,7 +100,6 @@ class IRCRawEvents(object):
     def onRawINVITE(self, ev):
         if not ev.msg: return
         self.join(ev.msg)
-    
+
     def onRawDefault(self, ev):
         pass
-

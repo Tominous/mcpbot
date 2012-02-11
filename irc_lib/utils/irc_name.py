@@ -6,7 +6,7 @@ def get_nick(name):
 
 def get_host(name):
     return name.split('@')[-1]
-    
+
 def get_ip(host):
     try:
         return socket.gethostbyname(host)

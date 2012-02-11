@@ -15,7 +15,7 @@ class CTCPProtocol(CTCPCommands, CTCPRawEvents):
         self.in_msg          = _in_msg
         self.bot             = _bot
         self.locks           = _locks
-        
+
         self.bot.threadpool.add_task(self.treat_msg, _threadname='CTCPHandler')
         #thread.start_new_thread(self.treat_msg,  ())
 
@@ -24,7 +24,7 @@ class CTCPProtocol(CTCPCommands, CTCPRawEvents):
             try:
                 msg = self.in_msg.get(True, 1)
             except Empty:
-                continue  
+                continue
             self.in_msg.task_done()
 
             msg = msg.strip()
@@ -35,12 +35,12 @@ class CTCPProtocol(CTCPCommands, CTCPRawEvents):
             msg[3] = ' '.join(msg[3:])
             msg    = msg[:4]
             msg[3] = msg[3].replace('\x01','') #We remove the leading/tailing \x01
-            
+
             if len(msg[3].split()) < 2: outmsg = ' '
             else: outmsg = ' '.join(msg[3].split()[1:])
-            
+
             ev = Event(msg[0], msg[3].split()[0][1:], msg[2], outmsg, self.cnick, 'CTCP')
-            
+
             if hasattr(self, 'onRawCTCP%s'%ev.cmd):
                 self.bot.threadpool.add_task(getattr(self, 'onRawCTCP%s'%ev.cmd), ev)
             else:

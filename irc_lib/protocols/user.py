@@ -9,4 +9,3 @@ class User(object):
 
     def get_string(self):
         return '< User %s, Status: %s, Host: %s, IP: %s, Chans: %s >'%(self.nick, self.status, self.host, self.ip, self.chans)
-        

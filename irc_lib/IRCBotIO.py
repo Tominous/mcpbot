@@ -14,14 +14,14 @@ class IRCBotIO(object):
         #Every looping, we add chars to this bucket corresponding to the time elapsed in the last loop * number of allowed char / second
         #If when we want to send the message and the number of chars is not enough, we sleep until we have enough chars in the bucket (in fact, a bit more, to replanish the bucket).
         #This way, everything slow down when we reach the flood limit, but after 30 seconds, the bucket is full again.
-        
+
         allowed_chars = self.floodprotec
         start_time    = time.time()
         while not self.exit:
             delta_time = time.time() - start_time
             allowed_chars = min(allowed_chars + (self.floodprotec/30.0) * delta_time, self.floodprotec)
             start_time = time.time()
-                        
+
             if not self.irc_socket : continue
             try:
                 msg = self.out_msg.get(True, 1)
@@ -37,8 +37,8 @@ class IRCBotIO(object):
             except socket.timeout:
                 self.out_msg.put(msg)
                 continue
-                
-            
+
+
     def inbound_loop(self):
         """Incoming message thread. Check for new data on the socket and push the data to the dispatcher queue if any."""
         buffer = ''
@@ -54,13 +54,13 @@ class IRCBotIO(object):
             #We push all the msg beside the last one (in case it is truncated)
             for msg in msg_list[:-1]:
                 self.in_msg.put(msg)
-            
+
             #If the last message is truncated, we push it back in the buffer. Else, we push it on the queue and clear the buffer.
             if buffer[-2:] != '\r\n':
                 buffer = msg_list[-1]
             else:
                 self.in_msg.put(msg_list[-1])
-                buffer = ''        
+                buffer = ''
 
     def print_loop(self):
         """Loop to handle console output. Only way to have coherent output in a threaded environement.
@@ -79,7 +79,7 @@ class IRCBotIO(object):
                 ev = self.loggingq.get(True, 1)
             except Empty:
                 continue
-            
+
 
             c = self.acquiredb()
             try:

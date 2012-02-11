@@ -2,17 +2,17 @@ import constants as cst
 from irc_lib.utils.colors import conv_s2i
 
 class IRCCommands(object):
-    
+
     def rawcmd(self, cmd):
-        self.out_msg.put(':%s %s\r\n'%(self.cnick, cmd))    
+        self.out_msg.put(':%s %s\r\n'%(self.cnick, cmd))
 
     def password(self, password='thisisapassword'):
         self.rawcmd('PASS %s'%password)
-        
+
     def nick(self, nick=None):
         if not nick: nick = self.cnick
         self.rawcmd('NICK %s'%nick)
-        
+
     def user(self, user=None, host=None, server=None, real=None):
         if not user or not host or not server or not real:
             user = self.cnick
@@ -29,7 +29,7 @@ class IRCCommands(object):
         while not self.bot.irc_status['Registered']:
             self.locks['ServReg'].wait()
         self.locks['ServReg'].release()
-        
+
         self.rawcmd('JOIN %s %s'%(chan,key))
 
     def privmsg(self, target, msg, color=True):

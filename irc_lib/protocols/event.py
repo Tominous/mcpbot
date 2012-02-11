@@ -1,12 +1,12 @@
 import time
 
 class Event(object):
-    
+
     maxid = 0
-    
+
     def __init__(self, sender, cmd, target, msg, selfnick, etype):
         if   msg[0]    == ':' and len(msg.strip()) == 1: msg=''
-        elif msg[0]    == ':': msg=msg[1:] 
+        elif msg[0]    == ':': msg=msg[1:]
         if sender and sender[0] == ':': sender=sender[1:]
         if target and target[0] == ':': target=target[1:]
         self.sender     = sender.split('!')[0].strip()
@@ -34,5 +34,3 @@ class Event(object):
 
     def __repr__(self):
         return '< Event : [%s][%s][%s] S: %s T: %s M: %s >'%(time.ctime(), self.type.ljust(5), self.cmd.ljust(7), self.sender.ljust(20), self.target.ljust(20), self.msg)
-
-    

@@ -7,26 +7,26 @@ class IRCBotAdvMtd(object):
 
     def getIP(self, nick):
         if not nick in self.users: self.users[nick] = User(nick)
-        
+
         self.irc.whois(nick)
         self.locks['WhoIs'].acquire()
-        
+
         while self.users[nick].ip < 0:
             self.locks['WhoIs'].wait()
-        
+
         self.locks['WhoIs'].release()
         return self.users[nick].ip
 
     def getStatus(self, nick):
         if not nick in self.users: self.users[nick] = User(nick)
-        
+
         self.nickserv.status(nick)
         self.locks['NSStatus'].acquire()
-                
+
         while self.users[nick].status < 0:
             self.locks['NSStatus'].wait()
-        
-        self.locks['NSStatus'].release()        
+
+        self.locks['NSStatus'].release()
         return self.users[nick].status
 
     def say(self, nick, msg):
@@ -44,13 +44,13 @@ class IRCBotAdvMtd(object):
 
     def rmWhitelist(self, nick):
         del self.whitelist[nick]
-            
+
 
     def saveWhitelist(self, filename = 'whitelist.pck'):
         ff = open(filename, 'w')
         pickle.dump(self.whitelist, ff)
         ff.close()
-        
+
     def loadWhitelist(self, filename = 'whitelist.pck'):
         try:
             ff = open(filename, 'r')
@@ -62,10 +62,9 @@ class IRCBotAdvMtd(object):
     def startLogging(self, filename = 'bot.log'):
         if not self.log:
             self.log = open(filename, 'a')
-        
+
     def stopLogging(self):
         if self.log:
             self.log.close()
             self.log = None
-
 

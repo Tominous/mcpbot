@@ -17,28 +17,28 @@ class NickServProtocol(NickServCommands, NickServRawEvents):
         self.bot             = _bot
         self.locks           = _locks
 
-        self.bot.threadpool.add_task(self.treat_msg, _threadname='NickServHandler')        
+        self.bot.threadpool.add_task(self.treat_msg, _threadname='NickServHandler')
 
     def treat_msg(self):
         while not self.bot.exit:
             try:
                 msg = self.in_msg.get(True, 1)
             except Empty:
-                continue  
+                continue
             self.in_msg.task_done()
-                
+
             msg = msg.strip()
             if not msg:
                 continue
-                
+
             msg = msg.split()
 
             if len(msg) < 5 : msg.append(' ')
             ev = Event(msg[0], msg[4], msg[2], ' '.join([msg[3], msg[5]]), self.cnick, 'NSERV')
 
     #def __init__(self, sender, cmd, target, msg, selfnick, etype):
-                
-                
+
+
             if hasattr(self, 'onRawNickServ%s'%ev.cmd):
                 self.bot.threadpool.add_task(getattr(self, 'onRawNickServ%s'%ev.cmd),ev)
             else:
@@ -48,5 +48,3 @@ class NickServProtocol(NickServCommands, NickServRawEvents):
                 self.bot.threadpool.add_task(getattr(self.bot, 'onNickServ%s'%ev.cmd),ev)
             else:
                 self.bot.threadpool.add_task(getattr(self.bot, 'onDefault'),ev)
-
-

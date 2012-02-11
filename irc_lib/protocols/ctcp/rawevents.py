@@ -8,7 +8,7 @@ class CTCPRawEvents(object):
 
     def onRawCTCPVERSION(self, ev):
         self.rawnotice(ev.sender, 'VERSION PMIrcLib:0.1:Python')
-        
+
     def onRawCTCPSOURCE(self, ev):
         self.rawnotice(ev.sender, 'SOURCE Nowhere:None:None')
         self.rawnotice(ev.sender, 'SOURCE')

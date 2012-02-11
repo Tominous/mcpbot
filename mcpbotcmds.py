@@ -918,5 +918,3 @@ class MCPBotCmds(object):
             self.say(sender, 'Idea added with tag %s'%msg.split()[0].upper())
 
 #==END OF CLASS==
-
-

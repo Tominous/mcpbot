@@ -18,14 +18,14 @@ class DCCRawEvents(object):
             else: outmsg = ' '.join(ev.msg.split()[1:])
             outev = Event(ev.sender, ev.msg.split()[0], self.cnick, outmsg, self.cnick, 'CMD')
 
-            self.bot.commandq.put(outev) 
+            self.bot.commandq.put(outev)
 
     def onRawDCCCHAT(self, sender, dcccmd, dccarg, dccip, dccport):
         nick    = get_nick(sender)
         dccip   = self.conv_ip_long_std(int(dccip))
         #dccip   = '192.168.178.40'
         dccport = int(dccport)
-        
+
         try:
             self.sockets[nick] = socket.socket()
             self.sockets[nick].connect((dccip, dccport))
@@ -33,8 +33,8 @@ class DCCRawEvents(object):
             self.buffers[nick] = ''
         except KeyError, msg:
             print '[DCCRawEvents.onRawDCCChat] Nick not found in socket table : %s'%nick
-        
-       
+
+
         #print '%s %s | IP:%s Port:%s'%(dcccmd, dccarg, dccip, dccport)
 
 

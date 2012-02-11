@@ -28,7 +28,7 @@ class Event(object):
         self.cmd        = cmd.strip()
         self.target     = target.strip()
         if target:
-            self.ischan = target[0] in ['#','&']
+            self.ischan = target[0] in ['#', '&']
         else:
             self.ischan    = False
         self.msg        = msg.strip()

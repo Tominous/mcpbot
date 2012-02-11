@@ -40,4 +40,4 @@ class DCCCommands(object):
 
         self.ip2nick[target_ip] = nick
         print target_ip, nick
-        self.rawcmd(nick, 'CHAT chat %s %s'%(self.inip,self.inport))
+        self.rawcmd(nick, 'CHAT chat %s %s'%(self.inip, self.inport))

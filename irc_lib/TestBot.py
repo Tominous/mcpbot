@@ -43,7 +43,7 @@ class TestBot(IRCBotBase):
 
         if ev.cmd == 'colors':
             out_msg = ''
-            for i in range (16):
+            for i in range(16):
                 out_msg += '$C%dAAA '%i
             self.irc.privmsg(ev.msg.split()[0], out_msg)
 
@@ -60,15 +60,15 @@ class TestBot(IRCBotBase):
             self.cmdRemoveWhite(ev.sender, ev.chan, ev.msg)
 
 
-    def onDCCMsg(self,ev):
+    def onDCCMsg(self, ev):
         self.dcc.say(ev.sender, ev.msg)
 
     @restricted()
-    def cmdAddWhite(self,sender,channel,msg):
+    def cmdAddWhite(self, sender, channel, msg):
         self.addWhitelist(msg)
 
     @restricted()
-    def cmdRemoveWhite(self, sender,channel,msg):
+    def cmdRemoveWhite(self, sender, channel, msg):
         self.rmWhitelist(msg)
 
     @restricted()
@@ -83,7 +83,7 @@ class TestBot(IRCBotBase):
             self.printq.put(cmd)
             exec(cmd) in self.globaldic, self.localdic
         except Exception as errormsg:
-            self.printq.put ('ERROR : %s'%errormsg)
+            self.printq.put('ERROR : %s'%errormsg)
             try:
                 self.say(channel, 'ERROR : %s'%errormsg)
             except:

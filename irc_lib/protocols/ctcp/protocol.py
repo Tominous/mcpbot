@@ -3,7 +3,7 @@ from commands  import CTCPCommands
 from rawevents import CTCPRawEvents
 from irc_lib.IRCBotError import IRCBotError
 from irc_lib.protocols.event import Event
-from Queue import Queue,Empty
+from Queue import Queue, Empty
 import thread
 import time
 
@@ -35,7 +35,7 @@ class CTCPProtocol(CTCPCommands, CTCPRawEvents):
             msg = msg.split()
             msg[3] = ' '.join(msg[3:])
             msg    = msg[:4]
-            msg[3] = msg[3].replace('\x01','') #We remove the leading/tailing \x01
+            msg[3] = msg[3].replace('\x01', '')  # We remove the leading/tailing \x01
 
             if len(msg[3].split()) < 2:
                 outmsg = ' '
@@ -47,9 +47,9 @@ class CTCPProtocol(CTCPCommands, CTCPRawEvents):
             if hasattr(self, 'onRawCTCP%s'%ev.cmd):
                 self.bot.threadpool.add_task(getattr(self, 'onRawCTCP%s'%ev.cmd), ev)
             else:
-                self.bot.threadpool.add_task(getattr(self, 'onRawCTCPDefault'),ev)
+                self.bot.threadpool.add_task(getattr(self, 'onRawCTCPDefault'), ev)
 
             if hasattr(self.bot, 'onCTCP%s'%ev.cmd):
-                self.bot.threadpool.add_task(getattr(self.bot, 'onCTCP%s'%ev.cmd),ev)
+                self.bot.threadpool.add_task(getattr(self.bot, 'onCTCP%s'%ev.cmd), ev)
             else:
-                self.bot.threadpool.add_task(getattr(self.bot, 'onDefault'),ev)
+                self.bot.threadpool.add_task(getattr(self.bot, 'onDefault'), ev)

@@ -2,7 +2,7 @@ from irc_lib.utils.irc_name import get_nick, get_ip
 from irc_lib.protocols.event import Event
 from irc_lib.protocols.user import User
 from binascii import hexlify
-import time,os
+import time, os
 import sqlite3
 
 
@@ -34,7 +34,7 @@ class IRCRawEvents(object):
             outcmd = ev.msg.split()[0]
 
         if outcmd:
-            if len(ev.msg.split()) < 2 :
+            if len(ev.msg.split()) < 2:
                 outmsg = ' '
             else:
                 outmsg = ' '.join(ev.msg.split()[1:])
@@ -56,7 +56,7 @@ class IRCRawEvents(object):
         self.rm_user(ev.sender)
 
         c = self.bot.acquiredb()
-        c.execute("""UPDATE nicks SET timestamp = ?, online = ? WHERE nick = ?""",(int(time.time()), 0, ev.sender))
+        c.execute("""UPDATE nicks SET timestamp = ?, online = ? WHERE nick = ?""", (int(time.time()), 0, ev.sender))
         self.bot.releasedb(c)
 
     def onRawRPL_MOTDSTART(self, ev):
@@ -70,7 +70,7 @@ class IRCRawEvents(object):
     def onRawRPL_NAMREPLY(self, ev):
         if not ev.msg:
             return
-        weirdsymbol = ev.msg.split()[0]     #Used for channel status, "@" is used for secret channels, "*" for private channels, and "=" for others (public channels).
+        weirdsymbol = ev.msg.split()[0]     # Used for channel status, "@" is used for secret channels, "*" for private channels, and "=" for others (public channels).
         channel     = ev.msg.split()[1]
         nicks       = ev.msg.split()[2:]
 
@@ -95,7 +95,7 @@ class IRCRawEvents(object):
         self.locks['WhoIs'].release()
 
         c = self.bot.acquiredb()
-        c.execute("""UPDATE nicks SET user=?, host=? WHERE nick = ?""",(user, host, nick))
+        c.execute("""UPDATE nicks SET user=?, host=? WHERE nick = ?""", (user, host, nick))
         self.bot.releasedb(c)
 
 

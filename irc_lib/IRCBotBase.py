@@ -5,7 +5,7 @@ import time, os
 from sets import Set
 from threading import Condition, Lock
 from protocols.dispatcher import Dispatcher
-from Queue import Queue,Empty
+from Queue import Queue, Empty
 from IRCBotError import IRCBotError
 from IRCBotAdvMtd import IRCBotAdvMtd
 from IRCBotIO import IRCBotIO
@@ -24,45 +24,45 @@ class IRCBotBase(IRCBotAdvMtd, IRCBotIO):
         self.log         = None
 
         self.controlchar = _char
-        self.floodprotec = _flood            #Flood protection. Number of char / 30 secs (It is the way it works on esper.net)
+        self.floodprotec = _flood            # Flood protection. Number of char / 30 secs (It is the way it works on esper.net)
 
         self.cnick       = _nick
 
         self.rawmsg      = False
 
         self.locks           = {
-            'WhoIs'    :Condition(),
-            'ServReg'  :Condition(),
-            'NSStatus' :Condition(),
-            'BotDB'    :Lock()
+            'WhoIs': Condition(),
+            'ServReg': Condition(),
+            'NSStatus': Condition(),
+            'BotDB': Lock()
         }
 
         self.localdic        = {}
-        self.globaldic       = {'self':self}
+        self.globaldic       = {'self': self}
 
         self.exit            = False
 
         self.nthreads        = 15
         self.threadpool      = ThreadPool(self.nthreads)
 
-        self.out_msg         = Queue()                                  #Outbound msgs
-        self.in_msg          = Queue()                                  #Inbound msgs
+        self.out_msg         = Queue()                                  # Outbound msgs
+        self.in_msg          = Queue()                                  # Inbound msgs
         self.printq          = Queue()
         self.loggingq        = Queue()
         self.commandq        = Queue()
 
-        self.dispatcher      = Dispatcher(self.cnick, self.out_msg, self.in_msg, self.locks, self)  #IRC Protocol handler
+        self.dispatcher      = Dispatcher(self.cnick, self.out_msg, self.in_msg, self.locks, self)  # IRC Protocol handler
         self.irc             = self.dispatcher.irc
         self.nickserv        = self.dispatcher.nse
         self.ctcp            = self.dispatcher.ctcp
         self.dcc             = self.dispatcher.dcc
 
-        self.irc_socket      = None                                     #The basic IRC socket. For dcc, we are going to use another set of sockets.
+        self.irc_socket      = None                                     # The basic IRC socket. For dcc, we are going to use another set of sockets.
 
-        self.irc_status      = {'Server':None, 'Registered':False, 'Channels':Set()}
+        self.irc_status      = {'Server': None, 'Registered': False, 'Channels': Set()}
         self.users           = {}
 
-        self.threadpool.add_task(self.print_loop,   _threadname='PrintLoop')
+        self.threadpool.add_task(self.print_loop, _threadname='PrintLoop')
         self.threadpool.add_task(self.logging_loop, _threadname='LoggingLoop')
         self.threadpool.add_task(self.command_loop, _threadname='CommandLoop')
 
@@ -78,13 +78,13 @@ class IRCBotBase(IRCBotAdvMtd, IRCBotIO):
                 self.loggingq.put(msg)
 
             if hasattr(self, 'onCmd'):
-                self.threadpool.add_task(getattr(self, 'onCmd'),msg)
+                self.threadpool.add_task(getattr(self, 'onCmd'), msg)
             else:
-                self.threadpool.add_task(getattr(self, 'onDefault'),msg)
+                self.threadpool.add_task(getattr(self, 'onDefault'), msg)
 
     def connect(self, server, port=6667):
         """Connect to a server, handle authentification and start the communication threads."""
-        if self.irc_socket :
+        if self.irc_socket:
             raise IRCBotError('Socket already existing, can not complete the connect command')
         self.irc_socket = socket.socket()
         self.irc_socket.connect((server, port))
@@ -119,7 +119,7 @@ class IRCBotBase(IRCBotAdvMtd, IRCBotIO):
         c = self.botdbase.cursor()
         return c
 
-    def releasedb(self,c):
+    def releasedb(self, c):
         self.botdbase.commit()
         c.close()
         self.botdbase.close()

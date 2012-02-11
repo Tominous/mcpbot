@@ -3,7 +3,7 @@ import socket
 import os
 import select
 import pprint
-from Queue import Queue,Empty
+from Queue import Queue, Empty
 
 
 class IRCBotIO(object):
@@ -23,7 +23,7 @@ class IRCBotIO(object):
             allowed_chars = min(allowed_chars + (self.floodprotec/30.0) * delta_time, self.floodprotec)
             start_time = time.time()
 
-            if not self.irc_socket :
+            if not self.irc_socket:
                 continue
             try:
                 msg = self.out_msg.get(True, 1)
@@ -32,7 +32,7 @@ class IRCBotIO(object):
             self.out_msg.task_done()
             if self.rawmsg:
                 self.printq.put('> ' + msg.strip())
-            if len(msg) > int(allowed_chars) :
+            if len(msg) > int(allowed_chars):
                 time.sleep((len(msg)*1.25)/(self.floodprotec/30.0))
             try:
                 self.irc_socket.send(msg)
@@ -46,7 +46,7 @@ class IRCBotIO(object):
         """Incoming message thread. Check for new data on the socket and push the data to the dispatcher queue if any."""
         buffer = ''
         while not self.exit:
-            if not self.irc_socket :
+            if not self.irc_socket:
                 continue
 
             try:

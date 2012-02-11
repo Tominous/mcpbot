@@ -37,7 +37,7 @@ class IRCBotAdvMtd(object):
         if not msg:
             return
         #if not nick in self.users: return
-        if nick in self.dcc.sockets and self.dcc.sockets[nick]:     #May have to come back here at some point if the users start holding their own socket
+        if nick in self.dcc.sockets and self.dcc.sockets[nick]:     # May have to come back here at some point if the users start holding their own socket
             self.dcc.say(nick, str(msg))
         elif nick[0] in ['#', '&']:
             self.irc.privmsg(nick, msg)
@@ -50,12 +50,12 @@ class IRCBotAdvMtd(object):
     def rmWhitelist(self, nick):
         del self.whitelist[nick]
 
-    def saveWhitelist(self, filename = 'whitelist.pck'):
+    def saveWhitelist(self, filename='whitelist.pck'):
         ff = open(filename, 'w')
         pickle.dump(self.whitelist, ff)
         ff.close()
 
-    def loadWhitelist(self, filename = 'whitelist.pck'):
+    def loadWhitelist(self, filename='whitelist.pck'):
         try:
             ff = open(filename, 'r')
             self.whitelist = pickle.load(ff)
@@ -63,7 +63,7 @@ class IRCBotAdvMtd(object):
         except:
             pass
 
-    def startLogging(self, filename = 'bot.log'):
+    def startLogging(self, filename='bot.log'):
         if not self.log:
             self.log = open(filename, 'a')
 

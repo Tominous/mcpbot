@@ -7,7 +7,7 @@ import time
 from threading import Condition
 from irc_lib.protocols.event import Event
 from irc_lib.protocols.user import User
-from Queue import Queue,Empty
+from Queue import Queue, Empty
 import time
 
 
@@ -53,7 +53,7 @@ class IRCProtocol(IRCCommands, IRCRawEvents):
                 continue
 
             # We add an space to the msg if the msg is less than 3 elements (we create an actual msg field for the event object)
-            if len(msg) < 4 :
+            if len(msg) < 4:
                 msg.append(' ')
 
             # We treat the special case of QUIT.
@@ -68,15 +68,15 @@ class IRCProtocol(IRCCommands, IRCRawEvents):
 
             # We call the corresponding raw event if it exist, or the rawDefault if not.
             if hasattr(self, 'onRaw%s'%ev.cmd):
-                self.bot.threadpool.add_task(getattr(self, 'onRaw%s'%ev.cmd),ev)
+                self.bot.threadpool.add_task(getattr(self, 'onRaw%s'%ev.cmd), ev)
             else:
-                self.bot.threadpool.add_task(getattr(self, 'onRawDefault'),ev)
+                self.bot.threadpool.add_task(getattr(self, 'onRawDefault'), ev)
 
             # We call the corresponding event if it exist, or the Default if not.
             if hasattr(self.bot, 'on%s'%ev.cmd):
-                self.bot.threadpool.add_task(getattr(self.bot, 'on%s'%ev.cmd),ev)
+                self.bot.threadpool.add_task(getattr(self.bot, 'on%s'%ev.cmd), ev)
             else:
-                self.bot.threadpool.add_task(getattr(self.bot, 'onDefault'),ev)
+                self.bot.threadpool.add_task(getattr(self.bot, 'onDefault'), ev)
 
     def add_user(self, nick, chan=None, user=None, host=None, c=None):
         nick_status = '-'
@@ -93,11 +93,11 @@ class IRCProtocol(IRCCommands, IRCRawEvents):
             return
         self.bot.users[snick].chans[chan] = nick_status
 
-        c.execute("""INSERT OR IGNORE  INTO nicks VALUES (?,?,?,?,?,?)""",(None, snick, user, host, int(time.time()), 1))
+        c.execute("""INSERT OR IGNORE  INTO nicks VALUES (?,?,?,?,?,?)""", (None, snick, user, host, int(time.time()), 1))
         if user:
-            c.execute("""UPDATE nicks SET user=?, host=?, timestamp=?, online=? WHERE nick = ?""",(user, host, int(time.time()), 1, nick))
+            c.execute("""UPDATE nicks SET user=?, host=?, timestamp=?, online=? WHERE nick = ?""", (user, host, int(time.time()), 1, nick))
         else:
-            c.execute("""UPDATE nicks SET timestamp = ?, online = ? WHERE nick = ?""",(int(time.time()), 1, nick))
+            c.execute("""UPDATE nicks SET timestamp = ?, online = ? WHERE nick = ?""", (int(time.time()), 1, nick))
 
     def rm_user(self, nick, chan=None):
         if nick[0] == ':':

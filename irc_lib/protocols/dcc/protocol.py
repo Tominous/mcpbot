@@ -4,7 +4,7 @@ from rawevents import DCCRawEvents
 from irc_lib.IRCBotError import IRCBotError
 from irc_lib.protocols.event import Event
 from irc_lib.protocols.user import User
-from Queue import Queue,Empty
+from Queue import Queue, Empty
 import socket
 import thread
 import time
@@ -80,16 +80,16 @@ class DCCProtocol(DCCCommands, DCCRawEvents):
                 raise IRCBotError('Invalid command from DCC : %s'%msg)
 
             if hasattr(self, 'onRawDCC%s'%dcccmd):
-                self.bot.threadpool.add_task(getattr(self, 'onRawDCC%s'%dcccmd),sender, dcccmd, dccarg, dccip, dccport)
+                self.bot.threadpool.add_task(getattr(self, 'onRawDCC%s'%dcccmd), sender, dcccmd, dccarg, dccip, dccport)
             else:
-                self.bot.threadpool.add_task(getattr(self, 'onRawDCCDefault'),sender, dcccmd, dccarg, dccip, dccport)
+                self.bot.threadpool.add_task(getattr(self, 'onRawDCCDefault'), sender, dcccmd, dccarg, dccip, dccport)
 
             if hasattr(self.bot, 'onDCC%s'%dcccmd):
-                self.bot.threadpool.add_task(getattr(self.bot, 'onDCC%s'%dcccmd),sender, dcccmd, dccarg, dccip, dccport)
+                self.bot.threadpool.add_task(getattr(self.bot, 'onDCC%s'%dcccmd), sender, dcccmd, dccarg, dccip, dccport)
             else:
-                self.bot.threadpool.add_task(getattr(self.bot, 'onDefault'),msg[0], cmd, ' '.join(msg[2:]))
+                self.bot.threadpool.add_task(getattr(self.bot, 'onDefault'), msg[0], cmd, ' '.join(msg[2:]))
 
-    def conv_ip_long_std(self,longip):
+    def conv_ip_long_std(self, longip):
 
         hexip = hex(longip)[2:-1]
         if len(hexip) != 8:
@@ -103,21 +103,21 @@ class DCCProtocol(DCCCommands, DCCRawEvents):
 
         return ip
 
-    def conv_ip_std_long(self,stdip):
+    def conv_ip_std_long(self, stdip):
         ip = stdip.split('.')
         hexip ='%2s%2s%2s%2s'%(hex(int(ip[0]))[2:],
               hex(int(ip[1]))[2:],
               hex(int(ip[2]))[2:],
               hex(int(ip[3]))[2:])
         hexip  = hexip.replace(' ', '0')
-        longip = int(hexip,16)
+        longip = int(hexip, 16)
 
         return longip
 
     def inbound_loop(self):
         input = [self.insocket]
         while not self.bot.exit:
-            inputready,outputready,exceptready = select.select(input,[],[],5)
+            inputready, outputready, exceptready = select.select(input, [], [], 5)
 
             for s in inputready:
 
@@ -164,11 +164,11 @@ class DCCProtocol(DCCCommands, DCCRawEvents):
                             if self.bot.log:
                                 self.bot.loggingq.put(ev)
 
-                            self.bot.threadpool.add_task(self.onRawDCCMsg,ev)
+                            self.bot.threadpool.add_task(self.onRawDCCMsg, ev)
                             if hasattr(self.bot, 'onDCCMsg'):
-                                self.bot.threadpool.add_task(self.bot.onDCCMsg,ev)
+                                self.bot.threadpool.add_task(self.bot.onDCCMsg, ev)
                             else:
-                                self.bot.threadpool.add_task(self.bot.onDefault,ev)
+                                self.bot.threadpool.add_task(self.bot.onDefault, ev)
 
                         s.buffer = ''
 

@@ -4,7 +4,7 @@ from rawevents import NickServRawEvents
 from irc_lib.IRCBotError import IRCBotError
 from irc_lib.protocols.event import Event
 from threading import Condition
-from Queue import Queue,Empty
+from Queue import Queue, Empty
 import thread
 import time
 
@@ -34,7 +34,7 @@ class NickServProtocol(NickServCommands, NickServRawEvents):
 
             msg = msg.split()
 
-            if len(msg) < 5 :
+            if len(msg) < 5:
                 msg.append(' ')
             ev = Event(msg[0], msg[4], msg[2], ' '.join([msg[3], msg[5]]), self.cnick, 'NSERV')
 
@@ -42,11 +42,11 @@ class NickServProtocol(NickServCommands, NickServRawEvents):
 
 
             if hasattr(self, 'onRawNickServ%s'%ev.cmd):
-                self.bot.threadpool.add_task(getattr(self, 'onRawNickServ%s'%ev.cmd),ev)
+                self.bot.threadpool.add_task(getattr(self, 'onRawNickServ%s'%ev.cmd), ev)
             else:
-                self.bot.threadpool.add_task(getattr(self, 'onRawNickServDefault'),ev)
+                self.bot.threadpool.add_task(getattr(self, 'onRawNickServDefault'), ev)
 
             if hasattr(self.bot, 'onNickServ%s'%ev.cmd):
-                self.bot.threadpool.add_task(getattr(self.bot, 'onNickServ%s'%ev.cmd),ev)
+                self.bot.threadpool.add_task(getattr(self.bot, 'onNickServ%s'%ev.cmd), ev)
             else:
-                self.bot.threadpool.add_task(getattr(self.bot, 'onDefault'),ev)
+                self.bot.threadpool.add_task(getattr(self.bot, 'onDefault'), ev)

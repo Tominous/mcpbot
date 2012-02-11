@@ -3,7 +3,7 @@ from irc_lib.protocols.nickserv.protocol import NickServProtocol
 from irc_lib.protocols.ctcp.protocol     import CTCPProtocol
 from irc_lib.protocols.dcc.protocol      import DCCProtocol
 from irc_lib.utils.irc_name import get_nick
-from Queue import Queue,Empty
+from Queue import Queue, Empty
 import thread
 
 
@@ -20,10 +20,10 @@ class Dispatcher(object):
         self.ctcp_queue = Queue()
         self.dcc_queue  = Queue()
 
-        self.irc  = IRCProtocol     (_nick, _out_msg, self.irc_queue,  _locks, _bot)
-        self.nse  = NickServProtocol(_nick, _out_msg, self.nse_queue,  _locks, _bot)
-        self.ctcp = CTCPProtocol    (_nick, _out_msg, self.ctcp_queue, _locks, _bot)
-        self.dcc  = DCCProtocol     (_nick, _out_msg, self.dcc_queue,  _locks, _bot)
+        self.irc  = IRCProtocol(_nick, _out_msg, self.irc_queue, _locks, _bot)
+        self.nse  = NickServProtocol(_nick, _out_msg, self.nse_queue, _locks, _bot)
+        self.ctcp = CTCPProtocol(_nick, _out_msg, self.ctcp_queue, _locks, _bot)
+        self.dcc  = DCCProtocol(_nick, _out_msg, self.dcc_queue, _locks, _bot)
 
         _bot.threadpool.add_task(self.treat_msg, _threadname='Dispatcher')
         #thread.start_new_thread(self.treat_msg,  ())
@@ -57,7 +57,7 @@ class Dispatcher(object):
                 self.irc_queue.put(msg)
 
     def isCTCP(self, cmd, msg):
-        if len(' '.join(msg.split()[3:])) < 2 :
+        if len(' '.join(msg.split()[3:])) < 2:
             return False
         if cmd in ['PRIVMSG', 'NOTICE'] and ' '.join(msg.split()[3:])[1] == '\x01' and ' '.join(msg.split()[3:])[-1] == '\x01':
             return True

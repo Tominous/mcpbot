@@ -21,7 +21,7 @@ class IRCCommands(object):
             host = self.cnick
             server = self.cnick
             real   = ':%s'%self.cnick.upper()
-        self.rawcmd('USER %s %s %s %s'%(user,host,server,real))
+        self.rawcmd('USER %s %s %s %s'%(user, host, server, real))
 
     def pong(self, timestamp):
         self.rawcmd('PONG %s'%timestamp)
@@ -32,7 +32,7 @@ class IRCCommands(object):
             self.locks['ServReg'].wait()
         self.locks['ServReg'].release()
 
-        self.rawcmd('JOIN %s %s'%(chan,key))
+        self.rawcmd('JOIN %s %s'%(chan, key))
 
     def privmsg(self, target, msg, color=True):
         if color:

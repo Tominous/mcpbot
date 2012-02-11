@@ -408,7 +408,6 @@ class MCPBotCmds(object):
                 self.say(sender, "$RYou are trying to rename an already named member. Please use forced update only if you are certain !")
                 return
 
-        if True:
             result = c.execute("""SELECT m.searge, m.name FROM vmethods m
                                   WHERE m.name = ?
                                   AND m.side = ?

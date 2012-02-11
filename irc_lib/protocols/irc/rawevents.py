@@ -16,7 +16,7 @@ class IRCRawEvents(object):
             return
 
         if ev.target in ['AUTH', '*']:
-            self.bot.printq.put('> Connected to server %s'%ev.sender)
+            self.bot.printq.put('> Connected to server %s' % ev.sender)
             self.bot.irc_status['Server'] = ev.sender
             return
 

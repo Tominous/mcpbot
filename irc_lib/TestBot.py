@@ -14,11 +14,11 @@ class TestBot(IRCBotBase):
         IRCBotBase.__init__(self, nick)
 
     def onDefault(self, ev):
-        self.printq.put('%s S: %s C: %s T: %s M: %s'%(ev.type.ljust(5), ev.sender.ljust(25), ev.cmd.ljust(15), ev.target.ljust(10), ev.msg))
+        self.printq.put('%s S: %s C: %s T: %s M: %s' % (ev.type.ljust(5), ev.sender.ljust(25), ev.cmd.ljust(15), ev.target.ljust(10), ev.msg))
         pass
 
     def onCmd(self, ev):
-        self.printq.put('%s S: %s C: %s T: %s M: %s'%(ev.type.ljust(5), ev.sender.ljust(25), ev.cmd.ljust(15), ev.target, ev.msg))
+        self.printq.put('%s S: %s C: %s T: %s M: %s' % (ev.type.ljust(5), ev.sender.ljust(25), ev.cmd.ljust(15), ev.target, ev.msg))
 
         if ev.cmd == 'listusers':
             for key, user in self.users.items():
@@ -27,7 +27,7 @@ class TestBot(IRCBotBase):
         if ev.cmd == 'ip':
             nick = ev.msg.split()[0].strip()
             ip = self.getIP(nick)
-            self.say(ev.sender, 'User %s, %s'%(nick, ip))
+            self.say(ev.sender, 'User %s, %s' % (nick, ip))
 
         if ev.cmd == 'dcc':
             self.dcc.dcc(ev.sender)
@@ -44,7 +44,7 @@ class TestBot(IRCBotBase):
         if ev.cmd == 'colors':
             out_msg = ''
             for i in range(16):
-                out_msg += '$C%dAAA '%i
+                out_msg += '$C%dAAA ' % i
             self.irc.privmsg(ev.msg.split()[0], out_msg)
 
         if ev.cmd == 'flood':
@@ -75,7 +75,7 @@ class TestBot(IRCBotBase):
     def cmdFlood(self, sender, channel, msg):
         number = int(msg.split()[1])
         for i in range(number):
-            self.irc.privmsg(msg.split()[0], ':%03d'%i)
+            self.irc.privmsg(msg.split()[0], ':%03d' % i)
 
     @restricted()
     def cmdExec(self, sender, channel, cmd):
@@ -83,11 +83,11 @@ class TestBot(IRCBotBase):
             self.printq.put(cmd)
             exec(cmd) in self.globaldic, self.localdic
         except Exception as errormsg:
-            self.printq.put('ERROR : %s'%errormsg)
+            self.printq.put('ERROR : %s' % errormsg)
             try:
-                self.say(channel, 'ERROR : %s'%errormsg)
+                self.say(channel, 'ERROR : %s' % errormsg)
             except:
-                self.say(sender, 'ERROR : %s'%errormsg)
+                self.say(sender, 'ERROR : %s' % errormsg)
             #self.say(ev.sender, msg)
 
 

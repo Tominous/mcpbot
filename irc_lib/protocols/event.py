@@ -7,13 +7,13 @@ class Event(object):
 
     def __init__(self, sender, cmd, target, msg, selfnick, etype):
         if   msg[0]    == ':' and len(msg.strip()) == 1:
-            msg=''
+            msg = ''
         elif msg[0]    == ':':
-            msg=msg[1:]
+            msg = msg[1:]
         if sender and sender[0] == ':':
-            sender=sender[1:]
+            sender = sender[1:]
         if target and target[0] == ':':
-            target=target[1:]
+            target = target[1:]
         self.sender     = sender.split('!')[0].strip()
         self.senderuser = None
         self.senderhost = None
@@ -41,4 +41,4 @@ class Event(object):
             self.chan = self.target
 
     def __repr__(self):
-        return '< Event : [%s][%s][%s] S: %s T: %s M: %s >'%(time.ctime(), self.type.ljust(5), self.cmd.ljust(7), self.sender.ljust(20), self.target.ljust(20), self.msg)
+        return '< Event : [%s][%s][%s] S: %s T: %s M: %s >' % (time.ctime(), self.type.ljust(5), self.cmd.ljust(7), self.sender.ljust(20), self.target.ljust(20), self.msg)

@@ -1,7 +1,7 @@
 class NickServCommands(object):
 
     def rawcmd(self, cmd):
-        self.out_msg.put(':%s PRIVMSG NickServ :%s\r\n'%(self.cnick, cmd))
+        self.out_msg.put(':%s PRIVMSG NickServ :%s\r\n' % (self.cnick, cmd))
 
     def register(self):
         pass
@@ -12,7 +12,7 @@ class NickServCommands(object):
             self.locks['ServReg'].wait()
         self.locks['ServReg'].release()
 
-        self.rawcmd('IDENTIFY %s'%password)
+        self.rawcmd('IDENTIFY %s' % password)
 
     def drop(self):
         pass
@@ -63,4 +63,4 @@ class NickServCommands(object):
         pass
 
     def status(self, nick):
-        self.rawcmd('ACC %s'%nick)  # Yeah, I know, this is not the right command, but they changed the nickserv on esper, and status doesn't returns the right value anymore :(
+        self.rawcmd('ACC %s' % nick)  # Yeah, I know, this is not the right command, but they changed the nickserv on esper, and status doesn't returns the right value anymore :(

@@ -60,7 +60,7 @@ if __name__ == '__main__':
 
     for i, d in enumerate(delays):
         # print the percentage of tasks placed in the queue
-        print '%.2f%c' % ((float(i)/float(len(delays)))*100.0, '%')
+        print '%.2f%c' % ((float(i) / float(len(delays))) * 100.0, '%')
 
         # 2) Add the task to the queue
         pool.add_task(wait_delay, d)

@@ -77,15 +77,15 @@ class DCCProtocol(DCCCommands, DCCRawEvents):
                 dccport  = ''
 
             if cmd not in ['PRIVMSG', 'NOTICE']:
-                raise IRCBotError('Invalid command from DCC : %s'%msg)
+                raise IRCBotError('Invalid command from DCC : %s' % msg)
 
-            if hasattr(self, 'onRawDCC%s'%dcccmd):
-                self.bot.threadpool.add_task(getattr(self, 'onRawDCC%s'%dcccmd), sender, dcccmd, dccarg, dccip, dccport)
+            if hasattr(self, 'onRawDCC%s' % dcccmd):
+                self.bot.threadpool.add_task(getattr(self, 'onRawDCC%s' % dcccmd), sender, dcccmd, dccarg, dccip, dccport)
             else:
                 self.bot.threadpool.add_task(getattr(self, 'onRawDCCDefault'), sender, dcccmd, dccarg, dccip, dccport)
 
-            if hasattr(self.bot, 'onDCC%s'%dcccmd):
-                self.bot.threadpool.add_task(getattr(self.bot, 'onDCC%s'%dcccmd), sender, dcccmd, dccarg, dccip, dccport)
+            if hasattr(self.bot, 'onDCC%s' % dcccmd):
+                self.bot.threadpool.add_task(getattr(self.bot, 'onDCC%s' % dcccmd), sender, dcccmd, dccarg, dccip, dccport)
             else:
                 self.bot.threadpool.add_task(getattr(self.bot, 'onDefault'), msg[0], cmd, ' '.join(msg[2:]))
 
@@ -99,13 +99,13 @@ class DCCProtocol(DCCCommands, DCCRawEvents):
         part2 = int(hexip[2:4], 16)
         part3 = int(hexip[4:6], 16)
         part4 = int(hexip[6:8], 16)
-        ip    = '%s.%s.%s.%s'%(part1, part2, part3, part4)
+        ip    = '%s.%s.%s.%s' % (part1, part2, part3, part4)
 
         return ip
 
     def conv_ip_std_long(self, stdip):
         ip = stdip.split('.')
-        hexip ='%2s%2s%2s%2s'%(hex(int(ip[0]))[2:],
+        hexip = '%2s%2s%2s%2s' % (hex(int(ip[0]))[2:],
               hex(int(ip[1]))[2:],
               hex(int(ip[2]))[2:],
               hex(int(ip[3]))[2:])
@@ -126,9 +126,9 @@ class DCCProtocol(DCCCommands, DCCRawEvents):
                     # handle the server socket
                     buffsocket, buffip = self.insocket.accept()
                     if buffip[0] in self.ip2nick:
-                        self.bot.printq.put('> User identified as : %s %s'%(self.ip2nick[buffip[0]], buffip[0]))
+                        self.bot.printq.put('> User identified as : %s %s' % (self.ip2nick[buffip[0]], buffip[0]))
                         self.sockets[self.ip2nick[buffip[0]]] = DCCSocket(buffsocket, self.ip2nick[buffip[0]])
-                        self.say(self.ip2nick[buffip[0]], 'Connection with user %s established.\r\n'%self.ip2nick[buffip[0]])
+                        self.say(self.ip2nick[buffip[0]], 'Connection with user %s established.\r\n' % self.ip2nick[buffip[0]])
                         input.append(self.sockets[self.ip2nick[buffip[0]]])
                     else:
                         #TODO : Check if something should be done here
@@ -139,7 +139,7 @@ class DCCProtocol(DCCCommands, DCCRawEvents):
                         data = s.socket.recv(512)
                     except socket.error, msg:
                         if 'Connection reset by peer' in msg:
-                            self.bot.printq.put('> [Connection reset] Connection closed with : %s'%s.nick)
+                            self.bot.printq.put('> [Connection reset] Connection closed with : %s' % s.nick)
                             del self.sockets[s.nick]
                             s.socket.close()
                             input.remove(s)
@@ -150,7 +150,7 @@ class DCCProtocol(DCCCommands, DCCRawEvents):
                         if self.bot.rawmsg:
                             self.bot.printq.put('< ' + s.buffer)
 
-                        print r'>%s<'%s.buffer
+                        print r'>%s<' % s.buffer
                         if not s.buffer.strip():
                             s.buffer = ''
                             continue
@@ -174,7 +174,7 @@ class DCCProtocol(DCCCommands, DCCRawEvents):
 
                     else:
                         try:
-                            self.bot.printq.put('> [No data] Connection closed with : %s'%s.nick)
+                            self.bot.printq.put('> [No data] Connection closed with : %s' % s.nick)
                             del self.sockets[s.nick]
                             s.socket.close()
                             input.remove(s)

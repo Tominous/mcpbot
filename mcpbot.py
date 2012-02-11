@@ -18,13 +18,13 @@ class MCPBot(IRCBotBase, MCPBotCmds):
 
     def onDefault(self, ev):
         pass
-        #self.printq.put('%s S: %s C: %s T: %s M: %s'%(ev.type.ljust(5), ev.sender.ljust(25), ev.cmd.ljust(15), ev.target, ev.msg))
+        #self.printq.put('%s S: %s C: %s T: %s M: %s' % (ev.type.ljust(5), ev.sender.ljust(25), ev.cmd.ljust(15), ev.target, ev.msg))
 
     def onCmd(self, ev):
-        self.printq.put('> [%.2f][%d] %s S: %s C: %s T: %s M: %s'%(ev.stamp, ev.id, ev.type.ljust(5), ev.sender.ljust(25), ev.cmd.ljust(15), ev.target, ev.msg))
+        self.printq.put('> [%.2f][%d] %s S: %s C: %s T: %s M: %s' % (ev.stamp, ev.id, ev.type.ljust(5), ev.sender.ljust(25), ev.cmd.ljust(15), ev.target, ev.msg))
         cmd = ev.cmd.lower()
         try:
-            getattr(self, 'cmd_%s'%cmd)(ev.sender, ev.chan, ev.cmd, ev.msg)
+            getattr(self, 'cmd_%s' % cmd)(ev.sender, ev.chan, ev.cmd, ev.msg)
         except AttributeError:
             getattr(self, 'cmdDefault')(ev.sender, ev.chan, ev.cmd, ev.msg)
 

@@ -37,9 +37,9 @@ class DCCRawEvents(object):
             self.sockets[nick].setblocking(0)
             self.buffers[nick] = ''
         except KeyError, msg:
-            print '[DCCRawEvents.onRawDCCChat] Nick not found in socket table : %s'%nick
+            print '[DCCRawEvents.onRawDCCChat] Nick not found in socket table : %s' % nick
 
-        #print '%s %s | IP:%s Port:%s'%(dcccmd, dccarg, dccip, dccport)
+        #print '%s %s | IP:%s Port:%s' % (dcccmd, dccarg, dccip, dccport)
 
 
     def onRawDCCDefault(self, sender, dcccmd, dccarg, dccip, dccport):

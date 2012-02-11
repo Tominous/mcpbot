@@ -20,7 +20,7 @@ class IRCBotIO(object):
         start_time    = time.time()
         while not self.exit:
             delta_time = time.time() - start_time
-            allowed_chars = min(allowed_chars + (self.floodprotec/30.0) * delta_time, self.floodprotec)
+            allowed_chars = min(allowed_chars + (self.floodprotec / 30.0) * delta_time, self.floodprotec)
             start_time = time.time()
 
             if not self.irc_socket:
@@ -33,7 +33,7 @@ class IRCBotIO(object):
             if self.rawmsg:
                 self.printq.put('> ' + msg.strip())
             if len(msg) > int(allowed_chars):
-                time.sleep((len(msg)*1.25)/(self.floodprotec/30.0))
+                time.sleep((len(msg) * 1.25) / (self.floodprotec / 30.0))
             try:
                 self.irc_socket.send(msg)
                 allowed_chars -= len(msg)

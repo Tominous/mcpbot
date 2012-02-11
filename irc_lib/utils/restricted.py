@@ -20,7 +20,7 @@ def restricted(level=4):
             #Official auth check
             if not whitelisted or int(status) != 3 or level > usrlevel:
                 if chan:
-                    bot.say(chan, '%s tried to use a restricted command.'%sender)
+                    bot.say(chan, '%s tried to use a restricted command.' % sender)
                 bot.say(sender, 'You do not have the rights to do that')
                 return
 

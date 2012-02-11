@@ -41,7 +41,7 @@ class IRCProtocol(IRCCommands, IRCRawEvents):
 
             # If the reply is numerical, we change the cmd type to the correct type
             try:
-                msg[1] = IRC_REPLIES.get(int(msg[1]), 'UNKNOWN_%d'%int(msg[1]))
+                msg[1] = IRC_REPLIES.get(int(msg[1]), 'UNKNOWN_%d' % int(msg[1]))
             except ValueError:
                 pass
 
@@ -67,14 +67,14 @@ class IRCProtocol(IRCCommands, IRCRawEvents):
                 self.bot.loggingq.put(ev)
 
             # We call the corresponding raw event if it exist, or the rawDefault if not.
-            if hasattr(self, 'onRaw%s'%ev.cmd):
-                self.bot.threadpool.add_task(getattr(self, 'onRaw%s'%ev.cmd), ev)
+            if hasattr(self, 'onRaw%s' % ev.cmd):
+                self.bot.threadpool.add_task(getattr(self, 'onRaw%s' % ev.cmd), ev)
             else:
                 self.bot.threadpool.add_task(getattr(self, 'onRawDefault'), ev)
 
             # We call the corresponding event if it exist, or the Default if not.
-            if hasattr(self.bot, 'on%s'%ev.cmd):
-                self.bot.threadpool.add_task(getattr(self.bot, 'on%s'%ev.cmd), ev)
+            if hasattr(self.bot, 'on%s' % ev.cmd):
+                self.bot.threadpool.add_task(getattr(self.bot, 'on%s' % ev.cmd), ev)
             else:
                 self.bot.threadpool.add_task(getattr(self.bot, 'onDefault'), ev)
 
@@ -104,7 +104,7 @@ class IRCProtocol(IRCCommands, IRCRawEvents):
             nick = nick[1:]
 
         if not nick in self.bot.users:
-            print 'WARNING : Tried to remove an inexisting user : %s.'%nick
+            print 'WARNING : Tried to remove an inexisting user : %s.' % nick
             return
 
         if not chan:

@@ -41,12 +41,12 @@ class NickServProtocol(NickServCommands, NickServRawEvents):
     #def __init__(self, sender, cmd, target, msg, selfnick, etype):
 
 
-            if hasattr(self, 'onRawNickServ%s'%ev.cmd):
-                self.bot.threadpool.add_task(getattr(self, 'onRawNickServ%s'%ev.cmd), ev)
+            if hasattr(self, 'onRawNickServ%s' % ev.cmd):
+                self.bot.threadpool.add_task(getattr(self, 'onRawNickServ%s' % ev.cmd), ev)
             else:
                 self.bot.threadpool.add_task(getattr(self, 'onRawNickServDefault'), ev)
 
-            if hasattr(self.bot, 'onNickServ%s'%ev.cmd):
-                self.bot.threadpool.add_task(getattr(self.bot, 'onNickServ%s'%ev.cmd), ev)
+            if hasattr(self.bot, 'onNickServ%s' % ev.cmd):
+                self.bot.threadpool.add_task(getattr(self.bot, 'onNickServ%s' % ev.cmd), ev)
             else:
                 self.bot.threadpool.add_task(getattr(self.bot, 'onDefault'), ev)

@@ -4,6 +4,7 @@ import time,os
 from irc_lib.protocols.event import Event
 from irc_lib.protocols.user import User
 
+
 class DCCRawEvents(object):
 
     def onRawDCCMsg(self, ev):
@@ -33,7 +34,6 @@ class DCCRawEvents(object):
             self.buffers[nick] = ''
         except KeyError, msg:
             print '[DCCRawEvents.onRawDCCChat] Nick not found in socket table : %s'%nick
-
 
         #print '%s %s | IP:%s Port:%s'%(dcccmd, dccarg, dccip, dccport)
 

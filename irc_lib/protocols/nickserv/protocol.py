@@ -8,6 +8,7 @@ from Queue import Queue,Empty
 import thread
 import time
 
+
 class NickServProtocol(NickServCommands, NickServRawEvents):
 
     def __init__(self, _nick, _out_msg, _in_msg, _locks, _bot):

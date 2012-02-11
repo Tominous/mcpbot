@@ -4,6 +4,7 @@ from mcpbotcmds         import MCPBotCmds
 import sys
 import time
 
+
 class MCPBot(IRCBotBase, MCPBotCmds):
 
     def __init__(self, nick='DevBot', char='!'):

@@ -13,6 +13,7 @@ import select
 import traceback
 import sys
 
+
 class DCCSocket(object):
     def __init__(self, socket, nick):
         self.buffer = ''
@@ -21,6 +22,7 @@ class DCCSocket(object):
 
     def fileno(self):
         return self.socket.fileno()
+
 
 class DCCProtocol(DCCCommands, DCCRawEvents):
 

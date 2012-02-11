@@ -10,6 +10,7 @@ from irc_lib.protocols.user import User
 from Queue import Queue,Empty
 import time
 
+
 class IRCProtocol(IRCCommands, IRCRawEvents):
 
     def __init__(self, _nick, _out_msg, _in_msg, _locks, _bot):
@@ -76,7 +77,6 @@ class IRCProtocol(IRCCommands, IRCRawEvents):
             else:
                 self.bot.threadpool.add_task(getattr(self.bot, 'onDefault'),ev)
 
-
     def add_user(self, nick, chan=None, user=None, host=None, c=None):
         nick_status = '-'
         if nick[0] == ':': nick = nick[1:]
@@ -88,7 +88,6 @@ class IRCProtocol(IRCCommands, IRCRawEvents):
         if not snick in self.bot.users: self.bot.users[snick] = User(snick)
         if not chan: return
         self.bot.users[snick].chans[chan] = nick_status
-
 
         c.execute("""INSERT OR IGNORE  INTO nicks VALUES (?,?,?,?,?,?)""",(None, snick, user, host, int(time.time()), 1))
         if user:

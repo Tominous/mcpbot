@@ -1,6 +1,7 @@
 import sqlite3
 import threading
 
+
 #====================== DB Decorator ===================================
 def database(f):
     def warp_f(*args, **kwargs):

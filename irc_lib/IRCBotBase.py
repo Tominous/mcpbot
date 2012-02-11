@@ -11,6 +11,7 @@ from IRCBotAdvMtd import IRCBotAdvMtd
 from IRCBotIO import IRCBotIO
 from utils.ThreadPool import ThreadPool
 
+
 class IRCBotBase(IRCBotAdvMtd, IRCBotIO):
     """Base clase handling bot internal states and protocols.
     Provides a threadpool to handle bot commands, a user list updated as information become available,
@@ -35,7 +36,6 @@ class IRCBotBase(IRCBotAdvMtd, IRCBotIO):
             'NSStatus' :Condition(),
             'BotDB'    :Lock()
         }
-
 
         self.localdic        = {}
         self.globaldic       = {'self':self}

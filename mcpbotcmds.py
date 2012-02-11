@@ -7,6 +7,7 @@ import threading
 from irc_lib.utils.restricted import restricted
 from database import database
 
+
 class MCPBotCmds(object):
     def cmdDefault(self, sender, chan, cmd, msg):
         pass
@@ -140,7 +141,6 @@ class MCPBotCmds(object):
             self.say(sender, " Syntax error. Use $B%s <membername>$N or $B%s <classname>.<membername>$N"%(cmd,cmd))
             return
 
-
         if len(tmpmsg.split()) == 2:   #Do we have a signature to search for
             sname    = tmpmsg.split()[1]
             tmpmsg   = tmpmsg.split()[0]
@@ -271,7 +271,6 @@ class MCPBotCmds(object):
                     for result in results['classes']:
                         name, notch = result
                         self.say(sender, " [%s][  CLASS] %s %s"%(side.upper(), name.ljust(maxlenname+2), notch.ljust(maxlennotch+2)))
-
 
             for etype in ['fields', 'methods']:
                 if not results[etype]:
@@ -429,7 +428,6 @@ class MCPBotCmds(object):
             self.say(sender, "Name     : $B%s => %s"%(name, newname))
             self.say(sender, "$BOld desc$N : %s"%(desc))
 
-
             if   not newdesc and not desc: newdesc = None
             elif not newdesc             : newdesc = desc.replace('"',"'")
             elif newdesc == 'None'       : newdesc = None
@@ -473,7 +471,6 @@ class MCPBotCmds(object):
         if len(msg.split()) > 1:
             self.say(sender, "Syntax error : $B%s <searge|index>"%cmd)
             return
-
 
         c.execute("""UPDATE %s SET dirtyid=0 WHERE ((searge LIKE ? ESCAPE '!') OR searge = ?) AND side = ? AND versionid = ?"""%etype,
          ('%s!_%s!_%%'%(type_lookup[etype],msg),msg,side_lookup[side], idversion))
@@ -569,7 +566,6 @@ class MCPBotCmds(object):
         fffield.write('Class,Field,Name,Class,Field,Name,Name,Notes\n')
         ffmetho.write('NULL,NULL,NULL,NULL,NULL,NULL\n')
         ffmetho.write('class (for reference only),Reference,class (for reference only),Reference,Name,Notes\n')
-
 
         c.execute("""SELECT classname, searge, name, desc FROM vfields WHERE side = 0  AND versionid = ? ORDER BY searge""", (idversion,))
         for row in c.fetchall():
@@ -780,7 +776,6 @@ class MCPBotCmds(object):
 
         type_lookup = {'methods':'func','fields':'field'}
         side_lookup = {'client':0, 'server':1}
-
 
         mcpversion, botversion, dbversion, clientversion, serverversion = \
             c.execute ("""SELECT mcpversion, botversion, dbversion, clientversion, serverversion FROM versions WHERE id = ?""", (idversion,)).fetchone()

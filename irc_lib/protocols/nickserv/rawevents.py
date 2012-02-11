@@ -1,6 +1,7 @@
 from irc_lib.utils.irc_name import get_nick
 from irc_lib.protocols.user import User
 
+
 class NickServRawEvents(object):
 
 

@@ -5,6 +5,7 @@ import select
 import pprint
 from Queue import Queue,Empty
 
+
 class IRCBotIO(object):
 
     def outbound_loop(self):

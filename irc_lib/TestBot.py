@@ -5,6 +5,7 @@ from utils.restricted import restricted
 from sets import Set
 from IRCBotBase import IRCBotBase
 
+
 class TestBot(IRCBotBase):
 
     whitelist['ProfMobius'] = 5

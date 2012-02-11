@@ -5,6 +5,7 @@ class NickServCommands(object):
 
     def register(self):
         pass
+
     def identify(self, password):
         self.locks['ServReg'].acquire()
         while not self.bot.irc_status['Registered']:
@@ -15,34 +16,49 @@ class NickServCommands(object):
 
     def drop(self):
         pass
+
     def auth(self):
         pass
+
     def sendauth(self):
         pass
+
     def reauth(self):
         pass
+
     def restoremail(self):
         pass
+
     def link(self):
         pass
+
     def unlink(self):
         pass
+
     def listlinks(self):
         pass
+
     def access(self):
         pass
+
     def set(self):
         pass
+
     def unset(self):
         pass
+
     def recover(self):
         pass
+
     def release(self):
         pass
+
     def ghost(self):
         pass
+
     def info(self):
         pass
+
     def listchans(self):
         pass
 

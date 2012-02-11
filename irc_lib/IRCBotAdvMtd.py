@@ -3,6 +3,8 @@ import time
 import os
 import pickle
 from protocols.user import User
+
+
 class IRCBotAdvMtd(object):
 
     def getIP(self, nick):
@@ -44,7 +46,6 @@ class IRCBotAdvMtd(object):
 
     def rmWhitelist(self, nick):
         del self.whitelist[nick]
-
 
     def saveWhitelist(self, filename = 'whitelist.pck'):
         ff = open(filename, 'w')

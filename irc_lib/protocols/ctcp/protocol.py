@@ -7,6 +7,7 @@ from Queue import Queue,Empty
 import thread
 import time
 
+
 class CTCPProtocol(CTCPCommands, CTCPRawEvents):
 
     def __init__(self, _nick, _out_msg, _in_msg, _locks, _bot):

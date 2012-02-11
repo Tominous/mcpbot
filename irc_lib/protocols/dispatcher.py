@@ -6,6 +6,7 @@ from irc_lib.utils.irc_name import get_nick
 from Queue import Queue,Empty
 import thread
 
+
 class Dispatcher(object):
 
     def __init__(self, _nick, _out_msg, _in_msg, _locks, _bot):
@@ -45,7 +46,6 @@ class Dispatcher(object):
 
             sender = get_nick(msg.split()[0])
             cmd    = msg.split()[1]
-
 
             if sender.lower() == 'nickserv':
                 self.nse_queue.put(msg)

@@ -7,6 +7,7 @@ S2I = {
     '$C':'\x03',
 }
 
+
 def conv_s2i(text):
     out_text = text
     for code, char in S2I.items():

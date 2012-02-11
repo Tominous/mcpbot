@@ -5,6 +5,7 @@ from binascii import hexlify
 import time,os
 import sqlite3
 
+
 class IRCRawEvents(object):
 
     def onRawPING(self, msg):

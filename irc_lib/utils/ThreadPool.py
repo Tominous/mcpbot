@@ -3,6 +3,7 @@ from threading import Thread
 import traceback
 import sys
 
+
 class Worker(Thread):
     """Thread executing tasks from a given tasks queue"""
     def __init__(self, tasks):
@@ -28,6 +29,7 @@ class Worker(Thread):
                 traceback.print_exception(sys.exc_info()[0], e, sys.exc_info()[2])
             self.tasks.task_done()
 
+
 class ThreadPool:
     """Pool of threads consuming tasks from a queue"""
     def __init__(self, num_threads):
@@ -47,6 +49,7 @@ if __name__ == '__main__':
     delays = [randrange(1, 10) for i in range(100)]
 
     from time import sleep
+
     def wait_delay(d):
         print 'sleeping for (%d)sec' % d
         sleep(d)

@@ -4,6 +4,7 @@ from mcpbotcmds         import MCPBotCmds
 import pickle
 import sys
 
+
 class MCPBot(IRCBotBase, MCPBotCmds):
 
     def __init__(self, nick='DevBot', char='!'):

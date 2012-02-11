@@ -4,6 +4,7 @@ from irc_lib.protocols.event import Event
 from irc_lib.protocols.user import User
 from irc_lib.utils.colors import conv_s2i
 
+
 class DCCCommands(object):
 
     def rawcmd(self, target, cmd):

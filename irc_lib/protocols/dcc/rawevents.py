@@ -1,6 +1,7 @@
 from irc_lib.utils.irc_name import get_nick
 import socket
-import time, os
+import time
+import os
 from irc_lib.protocols.event import Event
 from irc_lib.protocols.user import User
 

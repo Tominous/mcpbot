@@ -2,7 +2,8 @@ from irc_lib.utils.irc_name import get_nick, get_ip
 from irc_lib.protocols.event import Event
 from irc_lib.protocols.user import User
 from binascii import hexlify
-import time, os
+import time
+import os
 import sqlite3
 
 

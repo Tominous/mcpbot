@@ -2,7 +2,7 @@ from irc_lib.protocols.user import User
 
 
 class NickServRawEvents(object):
-
+#
 
     def onRawNickServACC(self, ev):
         if not ev.msg:

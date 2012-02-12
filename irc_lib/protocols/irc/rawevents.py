@@ -5,7 +5,6 @@ from irc_lib.protocols.event import Event
 
 
 class IRCRawEvents(object):
-
     def onRawPING(self, msg):
         self.pong(msg[1])
 
@@ -17,7 +16,6 @@ class IRCRawEvents(object):
             self.bot.printq.put('> Connected to server %s' % ev.sender)
             self.bot.irc_status['Server'] = ev.sender
             return
-
 
     def onRawPRIVMSG(self, ev):
         if not ev.msg:
@@ -68,7 +66,8 @@ class IRCRawEvents(object):
     def onRawRPL_NAMREPLY(self, ev):
         if not ev.msg:
             return
-        weirdsymbol = ev.msg.split()[0]     # Used for channel status, "@" is used for secret channels, "*" for private channels, and "=" for others (public channels).
+        # Used for channel status, "@" is used for secret channels, "*" for private channels, and "=" for others (public channels).
+        weirdsymbol = ev.msg.split()[0]
         channel = ev.msg.split()[1]
         nicks = ev.msg.split()[2:]
 

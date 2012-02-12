@@ -5,7 +5,6 @@ from irc_lib.protocols.event import Event
 
 
 class DCCRawEvents(object):
-
     def onRawDCCMsg(self, ev):
         if not ev.msg:
             return
@@ -27,7 +26,6 @@ class DCCRawEvents(object):
     def onRawDCCCHAT(self, sender, dcccmd, dccarg, dccip, dccport):
         nick = get_nick(sender)
         dccip = self.conv_ip_long_std(int(dccip))
-        #dccip   = '192.168.178.40'
         dccport = int(dccport)
 
         try:
@@ -38,8 +36,8 @@ class DCCRawEvents(object):
         except KeyError, msg:
             print '[DCCRawEvents.onRawDCCChat] Nick not found in socket table : %s' % nick
 
-        #print '%s %s | IP:%s Port:%s' % (dcccmd, dccarg, dccip, dccport)
 
+#
 
     def onRawDCCDefault(self, sender, dcccmd, dccarg, dccip, dccport):
         print 'RAW EVENT'

@@ -146,7 +146,8 @@ class MCPBotCmds(object):
             self.say(sender, " Syntax error. Use $B%s <membername>$N or $B%s <classname>.<membername>$N" % (cmd, cmd))
             return
 
-        if len(tmpmsg.split()) == 2:   # Do we have a signature to search for
+        # Do we have a signature to search for
+        if len(tmpmsg.split()) == 2:
             sname = tmpmsg.split()[1]
             tmpmsg = tmpmsg.split()[0]
 
@@ -564,7 +565,6 @@ class MCPBotCmds(object):
             directory = '.'
         else:
             directory = '/home/mcpfiles/renamer_csv'
-        #directory = "."
 
         outfieldcsv = 'fields.csv'
         outmethodcsv = 'methods.csv'
@@ -661,7 +661,6 @@ class MCPBotCmds(object):
 
     @database
     def dbCommit(self, sender, chan, cmd, msg, *args, **kwargs):
-
         c = kwargs['cursor']
         idversion = kwargs['idvers']
         pushforced = kwargs['pushforced']
@@ -935,5 +934,3 @@ class MCPBotCmds(object):
             self.releasedb(c)
 
             self.say(sender, 'Idea added with tag %s' % msg.split()[0].upper())
-
-#==END OF CLASS==

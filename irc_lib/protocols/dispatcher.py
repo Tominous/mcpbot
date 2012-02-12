@@ -8,9 +8,7 @@ from irc_lib.protocols.dcc.protocol import DCCProtocol
 
 
 class Dispatcher(object):
-
     def __init__(self, _nick, _out_msg, _in_msg, _locks, _bot):
-
         self.in_msg = _in_msg
 
         self.bot = _bot
@@ -26,7 +24,6 @@ class Dispatcher(object):
         self.dcc = DCCProtocol(_nick, _out_msg, self.dcc_queue, _locks, _bot)
 
         _bot.threadpool.add_task(self.treat_msg, _threadname='Dispatcher')
-        #thread.start_new_thread(self.treat_msg,  ())
 
     def treat_msg(self):
         while not self.bot.exit:

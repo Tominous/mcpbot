@@ -6,7 +6,6 @@ from rawevents import CTCPRawEvents
 
 
 class CTCPProtocol(CTCPCommands, CTCPRawEvents):
-
     def __init__(self, _nick, _out_msg, _in_msg, _locks, _bot):
         self.cnick = _nick
         self.out_msg = _out_msg
@@ -15,7 +14,6 @@ class CTCPProtocol(CTCPCommands, CTCPRawEvents):
         self.locks = _locks
 
         self.bot.threadpool.add_task(self.treat_msg, _threadname='CTCPHandler')
-        #thread.start_new_thread(self.treat_msg,  ())
 
     def treat_msg(self):
         while not self.bot.exit:
@@ -32,7 +30,8 @@ class CTCPProtocol(CTCPCommands, CTCPRawEvents):
             msg = msg.split()
             msg[3] = ' '.join(msg[3:])
             msg = msg[:4]
-            msg[3] = msg[3].replace('\x01', '')  # We remove the leading/tailing \x01
+            # We remove the leading/tailing \x01
+            msg[3] = msg[3].replace('\x01', '')
 
             if len(msg[3].split()) < 2:
                 outmsg = ' '

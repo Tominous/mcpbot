@@ -5,7 +5,6 @@ import threading
 #====================== DB Decorator ===================================
 def database(f):
     def warp_f(*args, **kwargs):
-
         if not 'DBLock' in globals():
             globals()['DBLock'] = threading.Lock()
 

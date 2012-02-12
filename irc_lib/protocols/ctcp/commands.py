@@ -2,7 +2,6 @@ import time
 
 
 class CTCPCommands(object):
-
     def rawcmd(self, target, cmd):
         self.out_msg.put(':%s PRIVMSG %s :\x01%s\x01\r\n' % (self.cnick, target, cmd))
 

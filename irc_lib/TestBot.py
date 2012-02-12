@@ -3,7 +3,6 @@ from IRCBotBase import IRCBotBase
 
 
 class TestBot(IRCBotBase):
-
     whitelist['ProfMobius'] = 5
 
     def __init__(self, nick='DevBot'):
@@ -84,7 +83,6 @@ class TestBot(IRCBotBase):
                 self.say(channel, 'ERROR : %s' % errormsg)
             except:
                 self.say(sender, 'ERROR : %s' % errormsg)
-            #self.say(ev.sender, msg)
 
 
 if __name__ == "__main__":

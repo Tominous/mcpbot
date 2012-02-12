@@ -6,7 +6,6 @@ from mcpbotcmds import MCPBotCmds
 
 
 class MCPBot(IRCBotBase, MCPBotCmds):
-
     def __init__(self, nick='DevBot', char='!'):
         IRCBotBase.__init__(self, nick, char)
         self.whitelist['ProfMobius'] = 5
@@ -18,7 +17,6 @@ class MCPBot(IRCBotBase, MCPBotCmds):
 
     def onDefault(self, ev):
         pass
-        #self.printq.put('%s S: %s C: %s T: %s M: %s' % (ev.type.ljust(5), ev.sender.ljust(25), ev.cmd.ljust(15), ev.target, ev.msg))
 
     def onCmd(self, ev):
         self.printq.put('> [%.2f][%d] %s S: %s C: %s T: %s M: %s' % (ev.stamp, ev.id, ev.type.ljust(5), ev.sender.ljust(25), ev.cmd.ljust(15), ev.target, ev.msg))
@@ -27,6 +25,7 @@ class MCPBot(IRCBotBase, MCPBotCmds):
             getattr(self, 'cmd_%s' % cmd)(ev.sender, ev.chan, ev.cmd, ev.msg)
         except AttributeError:
             getattr(self, 'cmdDefault')(ev.sender, ev.chan, ev.cmd, ev.msg)
+
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:

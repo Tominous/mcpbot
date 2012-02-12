@@ -6,7 +6,6 @@ from rawevents import NickServRawEvents
 
 
 class NickServProtocol(NickServCommands, NickServRawEvents):
-
     def __init__(self, _nick, _out_msg, _in_msg, _locks, _bot):
         self.cnick = _nick
         self.out_msg = _out_msg
@@ -33,9 +32,6 @@ class NickServProtocol(NickServCommands, NickServRawEvents):
             if len(msg) < 5:
                 msg.append(' ')
             ev = Event(msg[0], msg[4], msg[2], ' '.join([msg[3], msg[5]]), self.cnick, 'NSERV')
-
-    #def __init__(self, sender, cmd, target, msg, selfnick, etype):
-
 
             if hasattr(self, 'onRawNickServ%s' % ev.cmd):
                 self.bot.threadpool.add_task(getattr(self, 'onRawNickServ%s' % ev.cmd), ev)

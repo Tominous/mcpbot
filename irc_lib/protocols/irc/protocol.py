@@ -9,7 +9,6 @@ from constants import IRC_REPLIES
 
 
 class IRCProtocol(IRCCommands, IRCRawEvents):
-
     def __init__(self, _nick, _out_msg, _in_msg, _locks, _bot):
         self.cnick = _nick
         self.out_msg = _out_msg
@@ -21,7 +20,6 @@ class IRCProtocol(IRCCommands, IRCRawEvents):
 
     def treat_msg(self):
         while not self.bot.exit:
-
             # We check for msgs on the queue
             try:
                 msg = self.in_msg.get(True, 1)
@@ -54,7 +52,7 @@ class IRCProtocol(IRCCommands, IRCRawEvents):
                 msg.append(' ')
 
             # We treat the special case of QUIT.
-            #If we don't have a QUIT, we create a normal event
+            # If we don't have a QUIT, we create a normal event
             if msg[1] == 'QUIT':
                 ev = Event(msg[0], msg[1], '', ' '.join(msg[2:]), self.cnick, 'IRC')
             else:
@@ -111,5 +109,3 @@ class IRCProtocol(IRCCommands, IRCRawEvents):
         del self.bot.users[nick].chans[chan]
         if len(self.bot.users[nick].chans) == 0:
             del self.bot.users[nick]
-
-#DEAD CODE ZONE

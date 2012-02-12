@@ -18,13 +18,13 @@ class IRCBotBase(IRCBotAdvMtd, IRCBotIO):
     and access to all the procotols through self.<protocol> (irc, ctcp, dcc, and nickserv)"""
 
     def __init__(self, _nick='IRCBotLib', _char=':', _flood=1000):
-
         self.whitelist = {}
 
         self.log = None
 
         self.controlchar = _char
-        self.floodprotec = _flood            # Flood protection. Number of char / 30 secs (It is the way it works on esper.net)
+        # Flood protection. Number of char / 30 secs (It is the way it works on esper.net)
+        self.floodprotec = _flood
 
         self.cnick = _nick
 
@@ -45,8 +45,10 @@ class IRCBotBase(IRCBotAdvMtd, IRCBotIO):
         self.nthreads = 15
         self.threadpool = ThreadPool(self.nthreads)
 
-        self.out_msg = Queue()                                  # Outbound msgs
-        self.in_msg = Queue()                                  # Inbound msgs
+        # Outbound msgs
+        self.out_msg = Queue()
+        # Inbound msgs
+        self.in_msg = Queue()
         self.printq = Queue()
         self.loggingq = Queue()
         self.commandq = Queue()
@@ -57,7 +59,8 @@ class IRCBotBase(IRCBotAdvMtd, IRCBotIO):
         self.ctcp = self.dispatcher.ctcp
         self.dcc = self.dispatcher.dcc
 
-        self.irc_socket = None                                     # The basic IRC socket. For dcc, we are going to use another set of sockets.
+        # The basic IRC socket. For dcc, we are going to use another set of sockets.
+        self.irc_socket = None
 
         self.irc_status = {'Server': None, 'Registered': False, 'Channels': Set()}
         self.users = {}
@@ -93,6 +96,7 @@ class IRCBotBase(IRCBotAdvMtd, IRCBotIO):
         self.irc.password()
         self.irc.nick()
         self.irc.user()
+
         self.threadpool.add_task(self.inbound_loop, _threadname='MainInLoop')
         self.threadpool.add_task(self.outbound_loop, _threadname='MainOutLoop')
 

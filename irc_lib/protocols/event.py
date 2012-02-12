@@ -2,11 +2,10 @@ import time
 
 
 class Event(object):
-
     maxid = 0
 
     def __init__(self, sender, cmd, target, msg, selfnick, etype):
-        if   msg[0] == ':' and len(msg.strip()) == 1:
+        if msg[0] == ':' and len(msg.strip()) == 1:
             msg = ''
         elif msg[0] == ':':
             msg = msg[1:]

@@ -2,7 +2,6 @@ import time
 
 
 class CTCPRawEvents(object):
-
     def onRawCTCPFINGER(self, ev):
         self.rawnotice(ev.sender, 'FINGER :I am just an innocent bot!')
 
@@ -18,7 +17,6 @@ class CTCPRawEvents(object):
 
 
     def onRawCTCPPING(self, ev):
-        #if not ev.msg: return
         self.rawnotice(ev.sender, 'PING %s' % ev.msg)
 
     def onRawCTCPTIME(self, ev):

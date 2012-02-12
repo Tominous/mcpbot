@@ -22,7 +22,6 @@ class DCCSocket(object):
 
 
 class DCCProtocol(DCCCommands, DCCRawEvents):
-
     def __init__(self, _nick, _out_msg, _in_msg, _locks, _bot):
         self.cnick = _nick
         self.out_msg = _out_msg
@@ -36,7 +35,6 @@ class DCCProtocol(DCCCommands, DCCRawEvents):
         self.insocket = socket.socket()
         try:
             self.insocket.listen(10)
-            #self.insocket.setblocking(0)
             self.inip, self.inport = self.insocket.getsockname()
             self.inip = self.conv_ip_std_long(urllib.urlopen('http://automation.whatismyip.com/n09230945.asp').readlines()[0])
         except socket.error:
@@ -87,7 +85,6 @@ class DCCProtocol(DCCCommands, DCCRawEvents):
                 self.bot.threadpool.add_task(getattr(self.bot, 'onDefault'), msg[0], cmd, ' '.join(msg[2:]))
 
     def conv_ip_long_std(self, longip):
-
         hexip = hex(longip)[2:-1]
         if len(hexip) != 8:
             print 'Error !'
@@ -97,7 +94,6 @@ class DCCProtocol(DCCCommands, DCCRawEvents):
         part3 = int(hexip[4:6], 16)
         part4 = int(hexip[6:8], 16)
         ip = '%s.%s.%s.%s' % (part1, part2, part3, part4)
-
         return ip
 
     def conv_ip_std_long(self, stdip):
@@ -108,7 +104,6 @@ class DCCProtocol(DCCCommands, DCCRawEvents):
               hex(int(ip[3]))[2:])
         hexip = hexip.replace(' ', '0')
         longip = int(hexip, 16)
-
         return longip
 
     def inbound_loop(self):
@@ -117,7 +112,6 @@ class DCCProtocol(DCCCommands, DCCRawEvents):
             inputready, outputready, exceptready = select.select(input, [], [], 5)
 
             for s in inputready:
-
                 if s == self.insocket:
                     self.bot.printq.put('> Received connection request')
                     # handle the server socket
@@ -128,7 +122,7 @@ class DCCProtocol(DCCCommands, DCCRawEvents):
                         self.say(self.ip2nick[buffip[0]], 'Connection with user %s established.\r\n' % self.ip2nick[buffip[0]])
                         input.append(self.sockets[self.ip2nick[buffip[0]]])
                     else:
-                        #TODO : Check if something should be done here
+                        # TODO: Check if something should be done here
                         pass
                 else:
                     # handle all other sockets
@@ -154,7 +148,7 @@ class DCCProtocol(DCCCommands, DCCRawEvents):
 
                         msg_list = s.buffer.splitlines()
 
-                        #We push all the msg beside the last one (in case it is truncated)
+                        # We push all the msg beside the last one (in case it is truncated)
                         for msg in msg_list:
                             ev = Event(s.nick, 'DCCMSG', self.cnick, msg.strip(), self.cnick, 'DCCMSG')
 
@@ -168,7 +162,6 @@ class DCCProtocol(DCCCommands, DCCRawEvents):
                                 self.bot.threadpool.add_task(self.bot.onDefault, ev)
 
                         s.buffer = ''
-
                     else:
                         try:
                             self.bot.printq.put('> [No data] Connection closed with : %s' % s.nick)
@@ -176,7 +169,7 @@ class DCCProtocol(DCCCommands, DCCRawEvents):
                             s.socket.close()
                             input.remove(s)
                         except:
-                            #TODO : Specialized error handling. General except is BAD !
+                            # TODO : Specialized error handling. General except is BAD !
                             print "========="
                             print "> Unexpected error while closing the socket :", sys.exc_info()[0]
                             print "========="

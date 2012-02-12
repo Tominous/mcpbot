@@ -1,10 +1,10 @@
 import pickle
+from Queue import Empty
 
 from protocols.user import User
 
 
 class IRCBotAdvMtd(object):
-
     def getIP(self, nick):
         if not nick in self.users:
             self.users[nick] = User(nick)
@@ -34,8 +34,8 @@ class IRCBotAdvMtd(object):
     def say(self, nick, msg):
         if not msg:
             return
-        #if not nick in self.users: return
-        if nick in self.dcc.sockets and self.dcc.sockets[nick]:     # May have to come back here at some point if the users start holding their own socket
+        # May have to come back here at some point if the users start holding their own socket
+        if nick in self.dcc.sockets and self.dcc.sockets[nick]:
             self.dcc.say(nick, str(msg))
         elif nick[0] in ['#', '&']:
             self.irc.privmsg(nick, msg)

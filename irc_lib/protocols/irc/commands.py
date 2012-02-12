@@ -2,7 +2,6 @@ from irc_lib.utils.colors import conv_s2i
 
 
 class IRCCommands(object):
-
     def rawcmd(self, cmd):
         self.out_msg.put(':%s %s\r\n' % (self.cnick, cmd))
 

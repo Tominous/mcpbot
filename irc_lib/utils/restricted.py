@@ -5,7 +5,7 @@ def restricted(level=4):
             sender = args[1]
             chan = args[2]
 
-            #Small work around for !pub restricted commands
+            # Small work around for !pub restricted commands
             if sender == chan:
                 whitelisted = True
                 status = 3
@@ -16,7 +16,7 @@ def restricted(level=4):
                 if sender in bot.whitelist:
                     usrlevel = bot.whitelist[sender]
 
-            #Official auth check
+            # Official auth check
             if not whitelisted or int(status) != 3 or level > usrlevel:
                 if chan:
                     bot.say(chan, '%s tried to use a restricted command.' % sender)

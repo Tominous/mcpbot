@@ -1,4 +1,4 @@
-#Short hand to IRC
+# Short hand to IRC
 S2I = {
     '$B': '\x02',
     '$U': '\x1f',

@@ -13,7 +13,6 @@ class MCPBot(IRCBotBase, MCPBotCmds):
 
     def onDefault(self, ev):
         pass
-        #self.printq.put('%s S: %s C: %s T: %s M: %s' % (ev.type.ljust(5), ev.sender.ljust(25), ev.cmd.ljust(15), ev.target, ev.msg))
 
     def onCmd(self, ev):
         self.printq.put('> [%.2f][%d] %s S: %s C: %s T: %s M: %s' % (ev.stamp, ev.id, ev.type.ljust(5), ev.sender.ljust(25), ev.cmd.ljust(15), ev.target, ev.msg))

@@ -17,7 +17,7 @@ class IRCBotIO(object):
         #This way, everything slow down when we reach the flood limit, but after 30 seconds, the bucket is full again.
 
         allowed_chars = self.floodprotec
-        start_time    = time.time()
+        start_time = time.time()
         while not self.exit:
             delta_time = time.time() - start_time
             allowed_chars = min(allowed_chars + (self.floodprotec / 30.0) * delta_time, self.floodprotec)
@@ -50,7 +50,7 @@ class IRCBotIO(object):
                 continue
 
             try:
-                buffer  += self.irc_socket.recv(512)
+                buffer += self.irc_socket.recv(512)
             except socket.timeout:
                 continue
             msg_list = buffer.splitlines()

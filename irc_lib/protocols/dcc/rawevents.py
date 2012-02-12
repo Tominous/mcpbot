@@ -26,8 +26,8 @@ class DCCRawEvents(object):
             self.bot.commandq.put(outev)
 
     def onRawDCCCHAT(self, sender, dcccmd, dccarg, dccip, dccport):
-        nick    = get_nick(sender)
-        dccip   = self.conv_ip_long_std(int(dccip))
+        nick = get_nick(sender)
+        dccip = self.conv_ip_long_std(int(dccip))
         #dccip   = '192.168.178.40'
         dccport = int(dccport)
 

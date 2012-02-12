@@ -34,7 +34,7 @@ class DCCCommands(object):
             if (nick in self.sockets) and (self.sockets[nick] != None):
                 self.sockets[nick].close()
                 del self.sockets[nick]
-            self.sockets[nick]      = None
+            self.sockets[nick] = None
         except KeyError, msg:
             print '[DCCCommands.dcc] Nick not found in socket table : %s' % nick
 

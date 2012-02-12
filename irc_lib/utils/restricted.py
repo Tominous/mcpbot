@@ -1,18 +1,17 @@
 def restricted(level=4):
     def wrap(f):
         def wrap_f(*args):
-
-            bot    = args[0]
+            bot = args[0]
             sender = args[1]
-            chan   = args[2]
+            chan = args[2]
 
             #Small work around for !pub restricted commands
             if sender == chan:
                 whitelisted = True
-                status      = 3
-                usrlevel    = 4
+                status = 3
+                usrlevel = 4
             else:
-                status      = bot.getStatus(sender)
+                status = bot.getStatus(sender)
                 whitelisted = sender in bot.whitelist
                 if sender in bot.whitelist:
                     usrlevel = bot.whitelist[sender]

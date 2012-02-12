@@ -71,7 +71,7 @@ class MCPBotCmds(object):
 
     @database
     def getClass(self, sender, chan, cmd, msg, side, *args, **kwargs):
-        c         = kwargs['cursor']
+        c = kwargs['cursor']
         idversion = kwargs['idvers']
         side_lookup = {'client': 0, 'server': 1}
         msg = msg.strip()
@@ -127,7 +127,7 @@ class MCPBotCmds(object):
 
     @database
     def outputMembers(self, sender, chan, cmd, msg, side, etype, *args, **kwargs):
-        c         = kwargs['cursor']
+        c = kwargs['cursor']
         idversion = kwargs['idvers']
         side_lookup = {'client': 0, 'server': 1}
         type_lookup = {'fields': 'field', 'methods': 'func'}
@@ -146,8 +146,8 @@ class MCPBotCmds(object):
             return
 
         if len(tmpmsg.split()) == 2:   # Do we have a signature to search for
-            sname    = tmpmsg.split()[1]
-            tmpmsg   = tmpmsg.split()[0]
+            sname = tmpmsg.split()[1]
+            tmpmsg = tmpmsg.split()[0]
 
         if len(tmpmsg.split('.')) == 2:
             cname = tmpmsg.split('.')[0]
@@ -191,10 +191,10 @@ class MCPBotCmds(object):
         results = c.fetchall()
 
         if sender in self.dcc.sockets and self.dcc.sockets[sender]:
-            lowlimit  = 10
+            lowlimit = 10
             highlimit = 999
         else:
-            lowlimit  = 1
+            lowlimit = 1
             highlimit = 10
 
         if len(results) > highlimit:
@@ -206,11 +206,11 @@ class MCPBotCmds(object):
             self.say(sender, "$B[ GET %s %s ]" % (side.upper(), etype.upper()))
             self.say(sender, " Ambiguous request $R'%s'$N" % msg)
             self.say(sender, " Found %s possible answers" % len(results))
-            maxlencsv   = max(map(len, ['%s.%s' % (result[6], result[0])   for result in results]))
+            maxlencsv = max(map(len, ['%s.%s' % (result[6], result[0])   for result in results]))
             maxlennotch = max(map(len, ['[%s.%s]' % (result[7], result[1]) for result in results]))
             for result in results:
                 name, notch, searge, sig, notchsig, desc, classname, classnotch = result
-                fullcsv   = '%s.%s' % (classname, name)
+                fullcsv = '%s.%s' % (classname, name)
                 fullnotch = '[%s.%s]' % (classnotch, notch)
                 self.say(sender, " %s %s %s %s" % (fullcsv.ljust(maxlencsv + 2), fullnotch.ljust(maxlennotch + 2), sig, notchsig))
         elif lowlimit >= len(results) > 0:
@@ -237,7 +237,7 @@ class MCPBotCmds(object):
     def cmd_search(self, sender, chan, cmd, msg, *args, **kwargs):
         """$Bsearch <pattern>$N  : Search for a pattern."""
 
-        c         = kwargs['cursor']
+        c = kwargs['cursor']
         idversion = kwargs['idvers']
 
         msg.strip()
@@ -247,10 +247,10 @@ class MCPBotCmds(object):
         results = {'classes': None, 'fields': None, 'methods': None}
 
         if sender in self.dcc.sockets and self.dcc.sockets[sender]:
-            lowlimit  = 0
+            lowlimit = 0
             highlimit = 100
         else:
-            lowlimit  = 1
+            lowlimit = 1
             highlimit = 10
 
         self.say(sender, "$B[ SEARCH RESULTS ]")
@@ -267,7 +267,7 @@ class MCPBotCmds(object):
             if not results['classes']:
                 self.say(sender, " [%s][  CLASS] No results" % side.upper())
             else:
-                maxlenname  = max(map(len, [result[0] for result in results['classes']]))
+                maxlenname = max(map(len, [result[0] for result in results['classes']]))
                 maxlennotch = max(map(len, [result[1] for result in results['classes']]))
                 if len(results['classes']) > highlimit:
                     self.say(sender, " [%s][  CLASS] Too many results : %d" % (side.upper(), len(results['classes'])))
@@ -280,14 +280,14 @@ class MCPBotCmds(object):
                 if not results[etype]:
                     self.say(sender, " [%s][%7s] No results" % (side.upper(), etype.upper()))
                 else:
-                    maxlenname  = max(map(len, ['%s.%s' % (result[6], result[0])   for result in results[etype]]))
+                    maxlenname = max(map(len, ['%s.%s' % (result[6], result[0])   for result in results[etype]]))
                     maxlennotch = max(map(len, ['[%s.%s]' % (result[7], result[1]) for result in results[etype]]))
                     if len(results[etype]) > highlimit:
                         self.say(sender, " [%s][%7s] Too many results : %d" % (side.upper(), etype.upper(), len(results[etype])))
                     else:
                         for result in results[etype]:
                             name, notch, searge, sig, notchsig, desc, classname, classnotch = result
-                            fullname   = '%s.%s' % (classname, name)
+                            fullname = '%s.%s' % (classname, name)
                             fullnotch = '[%s.%s]' % (classnotch, notch)
                             self.say(sender, " [%s][%7s] %s %s %s %s" % (side.upper(), etype.upper(), fullname.ljust(maxlenname + 2), fullnotch.ljust(maxlennotch + 2), sig, notchsig))
 
@@ -330,9 +330,9 @@ class MCPBotCmds(object):
     @database
     def setMember(self, sender, chan, cmd, msg, side, etype, *args, **kwargs):
 
-        c         = kwargs['cursor']
+        c = kwargs['cursor']
         idversion = kwargs['idvers']
-        forced    = kwargs['forced']
+        forced = kwargs['forced']
 
         msg = msg.strip()
         type_lookup = {'methods': 'func', 'fields': 'field'}
@@ -343,7 +343,7 @@ class MCPBotCmds(object):
             self.say(sender, " Syntax error. Use $B%s <membername> <newname> [newdescription]$N" % (cmd))
             return
 
-        msg     = map(string.strip, msg.split())
+        msg = map(string.strip, msg.split())
         oldname = msg[0]
         newname = msg[1]
         newdesc = None
@@ -380,11 +380,11 @@ class MCPBotCmds(object):
             self.say(sender, " Ambiguous request $R'%s'$N" % oldname)
             self.say(sender, " Found %s possible answers" % len(results))
 
-            maxlencsv   = max(map(len, ['%s.%s' % (result[5], result[2])   for result in results]))
+            maxlencsv = max(map(len, ['%s.%s' % (result[5], result[2])   for result in results]))
             maxlennotch = max(map(len, ['[%s.%s]' % (result[6], result[1]) for result in results]))
             for result in results:
                 name, notch, searge, sig, notchsig, desc, classname, classnotch, id = result
-                fullcsv   = '%s.%s' % (classname, name)
+                fullcsv = '%s.%s' % (classname, name)
                 fullnotch = '[%s.%s]' % (classnotch, notch)
                 self.say(sender, " %s %s %s" % (fullcsv.ljust(maxlencsv + 2), fullnotch.ljust(maxlennotch + 2), sig))
             return
@@ -468,7 +468,7 @@ class MCPBotCmds(object):
 
     @database
     def revertChanges(self, sender, chan, cmd, msg, side, etype, *args, **kwargs):
-        c         = kwargs['cursor']
+        c = kwargs['cursor']
         idversion = kwargs['idvers']
 
         type_lookup = {'methods': 'func', 'fields': 'field'}
@@ -494,7 +494,7 @@ class MCPBotCmds(object):
             self.say(sender, "$BPlease use DCC for getlog")
             return
 
-        c         = kwargs['cursor']
+        c = kwargs['cursor']
         idversion = kwargs['idvers']
 
         msg = msg.strip()
@@ -517,9 +517,9 @@ class MCPBotCmds(object):
                 results = c.fetchall()
 
                 if results:
-                    maxlennick   = max(map(len, [result[6] for result in results]))
+                    maxlennick = max(map(len, [result[6] for result in results]))
                     maxlensearge = max(map(len, [result[1] for result in results]))
-                    maxlenmname  = max(map(len, [result[0] for result in results]))
+                    maxlenmname = max(map(len, [result[0] for result in results]))
 
                 for forcedstatus in [0, 1]:
                     for result in results:
@@ -555,8 +555,8 @@ class MCPBotCmds(object):
     @database
     def updateCsv(self, sender, chan, cmd, msg, *args, **kwargs):
 
-        c          = kwargs['cursor']
-        idversion  = kwargs['idvers']
+        c = kwargs['cursor']
+        idversion = kwargs['idvers']
         pushforced = kwargs['pushforced']
 
         if self.cnick == 'MCPBot_NG':
@@ -565,7 +565,7 @@ class MCPBotCmds(object):
             directory = '/home/mcpfiles/renamer_csv'
         #directory = "."
 
-        outfieldcsv  = 'fields.csv'
+        outfieldcsv = 'fields.csv'
         outmethodcsv = 'methods.csv'
 
         ffmetho = open('%s/%s' % (directory, outmethodcsv), 'w')
@@ -610,7 +610,7 @@ class MCPBotCmds(object):
     @restricted(3)
     @database
     def cmd_altcsv(self, sender, chan, cmd, msg, *args, **kwargs):
-        c         = kwargs['cursor']
+        c = kwargs['cursor']
         idversion = kwargs['idvers']
 
         if self.cnick == 'MCPBot':
@@ -661,8 +661,8 @@ class MCPBotCmds(object):
     @database
     def dbCommit(self, sender, chan, cmd, msg, *args, **kwargs):
 
-        c          = kwargs['cursor']
-        idversion  = kwargs['idvers']
+        c = kwargs['cursor']
+        idversion = kwargs['idvers']
         pushforced = kwargs['pushforced']
 
         nentries = 0
@@ -701,7 +701,7 @@ class MCPBotCmds(object):
     def cmd_addwhite(self, sender, chan, cmd, msg, *args, **kwargs):
         msg = msg.strip().split()
         if len(msg) == 1:
-            nick  = msg[0]
+            nick = msg[0]
             level = 4
             if level >= self.whitelist[sender]:
                 self.say(sender, "You don't have the rights to do that.")
@@ -709,7 +709,7 @@ class MCPBotCmds(object):
             self.addWhitelist(nick)
         elif len(msg) == 2:
             try:
-                nick  = msg[0]
+                nick = msg[0]
                 level = int(msg[1])
                 if level > 4:
                     self.say(sender, "Max level is 4.")
@@ -788,7 +788,7 @@ class MCPBotCmds(object):
 
     @database
     def cmd_status(self, sender, chan, cmd, msg, *args, **kwargs):
-        c         = kwargs['cursor']
+        c = kwargs['cursor']
         idversion = kwargs['idvers']
 
         type_lookup = {'methods': 'func', 'fields': 'field'}
@@ -809,7 +809,7 @@ class MCPBotCmds(object):
                                       FROM vclassesstats WHERE side = ? AND versionid = ?""" % (etype, etype, etype),
                                       (side_lookup[side], idversion)).fetchone()
 
-                self.say(sender, " [%s][%7s] : T $B%4d$N | R $B%4d$N | U $B%4d$N | $B%5.2f%%$N"  % (side[0].upper(), etype.upper(), total, ren, urn, float(ren) / float(total) * 100))
+                self.say(sender, " [%s][%7s] : T $B%4d$N | R $B%4d$N | U $B%4d$N | $B%5.2f%%$N" % (side[0].upper(), etype.upper(), total, ren, urn, float(ren) / float(total) * 100))
 
         nthreads = len(threading.enumerate())
         if nthreads == self.nthreads + 1:
@@ -844,7 +844,7 @@ class MCPBotCmds(object):
 
     @database
     def cmd_todo(self, sender, chan, cmd, msg, *args, **kwargs):
-        c         = kwargs['cursor']
+        c = kwargs['cursor']
         idversion = kwargs['idvers']
 
         type_lookup = {'methods': 'func', 'fields': 'field'}

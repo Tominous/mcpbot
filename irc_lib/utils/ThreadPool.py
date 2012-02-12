@@ -8,7 +8,7 @@ class Worker(Thread):
     """Thread executing tasks from a given tasks queue"""
     def __init__(self, tasks):
         Thread.__init__(self)
-        self.ncalls  = 0
+        self.ncalls = 0
         self.nscalls = 0
         self.nfcalls = 0
         self.tasks = tasks

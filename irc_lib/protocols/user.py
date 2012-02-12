@@ -1,10 +1,10 @@
 class User(object):
     def __init__(self, nick):
-        self.nick   = nick
+        self.nick = nick
         self.status = -1
-        self.host   = -1
-        self.ip     = -1
-        self.chans  = {}
+        self.host = -1
+        self.ip = -1
+        self.chans = {}
         self.socket = None
 
     def get_string(self):

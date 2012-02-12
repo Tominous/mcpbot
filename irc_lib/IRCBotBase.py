@@ -19,48 +19,48 @@ class IRCBotBase(IRCBotAdvMtd, IRCBotIO):
 
     def __init__(self, _nick='IRCBotLib', _char=':', _flood=1000):
 
-        self.whitelist   = {}
+        self.whitelist = {}
 
-        self.log         = None
+        self.log = None
 
         self.controlchar = _char
         self.floodprotec = _flood            # Flood protection. Number of char / 30 secs (It is the way it works on esper.net)
 
-        self.cnick       = _nick
+        self.cnick = _nick
 
-        self.rawmsg      = False
+        self.rawmsg = False
 
-        self.locks           = {
+        self.locks = {
             'WhoIs': Condition(),
             'ServReg': Condition(),
             'NSStatus': Condition(),
             'BotDB': Lock()
         }
 
-        self.localdic        = {}
-        self.globaldic       = {'self': self}
+        self.localdic = {}
+        self.globaldic = {'self': self}
 
-        self.exit            = False
+        self.exit = False
 
-        self.nthreads        = 15
-        self.threadpool      = ThreadPool(self.nthreads)
+        self.nthreads = 15
+        self.threadpool = ThreadPool(self.nthreads)
 
-        self.out_msg         = Queue()                                  # Outbound msgs
-        self.in_msg          = Queue()                                  # Inbound msgs
-        self.printq          = Queue()
-        self.loggingq        = Queue()
-        self.commandq        = Queue()
+        self.out_msg = Queue()                                  # Outbound msgs
+        self.in_msg = Queue()                                  # Inbound msgs
+        self.printq = Queue()
+        self.loggingq = Queue()
+        self.commandq = Queue()
 
-        self.dispatcher      = Dispatcher(self.cnick, self.out_msg, self.in_msg, self.locks, self)  # IRC Protocol handler
-        self.irc             = self.dispatcher.irc
-        self.nickserv        = self.dispatcher.nse
-        self.ctcp            = self.dispatcher.ctcp
-        self.dcc             = self.dispatcher.dcc
+        self.dispatcher = Dispatcher(self.cnick, self.out_msg, self.in_msg, self.locks, self)  # IRC Protocol handler
+        self.irc = self.dispatcher.irc
+        self.nickserv = self.dispatcher.nse
+        self.ctcp = self.dispatcher.ctcp
+        self.dcc = self.dispatcher.dcc
 
-        self.irc_socket      = None                                     # The basic IRC socket. For dcc, we are going to use another set of sockets.
+        self.irc_socket = None                                     # The basic IRC socket. For dcc, we are going to use another set of sockets.
 
-        self.irc_status      = {'Server': None, 'Registered': False, 'Channels': Set()}
-        self.users           = {}
+        self.irc_status = {'Server': None, 'Registered': False, 'Channels': Set()}
+        self.users = {}
 
         self.threadpool.add_task(self.print_loop, _threadname='PrintLoop')
         self.threadpool.add_task(self.logging_loop, _threadname='LoggingLoop')

@@ -71,8 +71,8 @@ class IRCRawEvents(object):
         if not ev.msg:
             return
         weirdsymbol = ev.msg.split()[0]     # Used for channel status, "@" is used for secret channels, "*" for private channels, and "=" for others (public channels).
-        channel     = ev.msg.split()[1]
-        nicks       = ev.msg.split()[2:]
+        channel = ev.msg.split()[1]
+        nicks = ev.msg.split()[2:]
 
         c = self.bot.acquiredb()
         for nick in nicks:
@@ -90,7 +90,7 @@ class IRCRawEvents(object):
         self.locks['WhoIs'].acquire()
         if nick in self.bot.users:
             self.bot.users[nick].host = host
-            self.bot.users[nick].ip   = get_ip(host)
+            self.bot.users[nick].ip = get_ip(host)
         self.locks['WhoIs'].notifyAll()
         self.locks['WhoIs'].release()
 

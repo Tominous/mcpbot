@@ -18,7 +18,7 @@ class DCCSocket(object):
     def __init__(self, socket, nick):
         self.buffer = ''
         self.socket = socket
-        self.nick   = nick
+        self.nick = nick
 
     def fileno(self):
         return self.socket.fileno()
@@ -27,16 +27,16 @@ class DCCSocket(object):
 class DCCProtocol(DCCCommands, DCCRawEvents):
 
     def __init__(self, _nick, _out_msg, _in_msg, _locks, _bot):
-        self.cnick           = _nick
-        self.out_msg         = _out_msg
-        self.in_msg          = _in_msg
-        self.bot             = _bot
-        self.locks           = _locks
+        self.cnick = _nick
+        self.out_msg = _out_msg
+        self.in_msg = _in_msg
+        self.bot = _bot
+        self.locks = _locks
 
-        self.sockets         = {}
-        self.ip2nick         = {}
+        self.sockets = {}
+        self.ip2nick = {}
 
-        self.insocket      = socket.socket()
+        self.insocket = socket.socket()
         try:
             self.insocket.listen(10)
             #self.insocket.setblocking(0)
@@ -62,19 +62,19 @@ class DCCProtocol(DCCCommands, DCCRawEvents):
 
             msg = msg.split()
 
-            sender   = get_nick(msg[0])
-            cmd      = msg[1]
+            sender = get_nick(msg[0])
+            cmd = msg[1]
             destnick = msg[2]
-            dcchead  = msg[3][2:]
-            dcccmd   = msg[4]
+            dcchead = msg[3][2:]
+            dcccmd = msg[4]
             if len(msg) > 5:
-                dccarg   = msg[5]
-                dccip    = msg[6]
-                dccport  = msg[7][:-1]
+                dccarg = msg[5]
+                dccip = msg[6]
+                dccport = msg[7][:-1]
             else:
-                dccarg   = ''
-                dccip    = ''
-                dccport  = ''
+                dccarg = ''
+                dccip = ''
+                dccport = ''
 
             if cmd not in ['PRIVMSG', 'NOTICE']:
                 raise IRCBotError('Invalid command from DCC : %s' % msg)
@@ -99,7 +99,7 @@ class DCCProtocol(DCCCommands, DCCRawEvents):
         part2 = int(hexip[2:4], 16)
         part3 = int(hexip[4:6], 16)
         part4 = int(hexip[6:8], 16)
-        ip    = '%s.%s.%s.%s' % (part1, part2, part3, part4)
+        ip = '%s.%s.%s.%s' % (part1, part2, part3, part4)
 
         return ip
 
@@ -109,7 +109,7 @@ class DCCProtocol(DCCCommands, DCCRawEvents):
               hex(int(ip[1]))[2:],
               hex(int(ip[2]))[2:],
               hex(int(ip[3]))[2:])
-        hexip  = hexip.replace(' ', '0')
+        hexip = hexip.replace(' ', '0')
         longip = int(hexip, 16)
 
         return longip

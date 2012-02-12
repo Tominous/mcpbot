@@ -20,7 +20,7 @@ class IRCCommands(object):
             user = self.cnick
             host = self.cnick
             server = self.cnick
-            real   = ':%s' % self.cnick.upper()
+            real = ':%s' % self.cnick.upper()
         self.rawcmd('USER %s %s %s %s' % (user, host, server, real))
 
     def pong(self, timestamp):

@@ -14,11 +14,11 @@ import time
 class IRCProtocol(IRCCommands, IRCRawEvents):
 
     def __init__(self, _nick, _out_msg, _in_msg, _locks, _bot):
-        self.cnick           = _nick
-        self.out_msg         = _out_msg
-        self.in_msg          = _in_msg
-        self.bot             = _bot
-        self.locks           = _locks
+        self.cnick = _nick
+        self.out_msg = _out_msg
+        self.in_msg = _in_msg
+        self.bot = _bot
+        self.locks = _locks
 
         self.bot.threadpool.add_task(self.treat_msg, _threadname='IRCHandler')
 

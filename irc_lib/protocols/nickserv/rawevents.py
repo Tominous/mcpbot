@@ -9,7 +9,7 @@ class NickServRawEvents(object):
         if not ev.msg:
             return
         self.bot.printq.put(ev.msg)
-        snick  = ev.msg.split()[0]
+        snick = ev.msg.split()[0]
         status = ev.msg.split()[1]
 
         self.locks['NSStatus'].acquire()

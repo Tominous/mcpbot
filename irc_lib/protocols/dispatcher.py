@@ -1,10 +1,10 @@
-from irc_lib.protocols.irc.protocol      import IRCProtocol
-from irc_lib.protocols.nickserv.protocol import NickServProtocol
-from irc_lib.protocols.ctcp.protocol     import CTCPProtocol
-from irc_lib.protocols.dcc.protocol      import DCCProtocol
-from irc_lib.utils.irc_name import get_nick
 from Queue import Queue, Empty
-import thread
+
+from irc_lib.utils.irc_name import get_nick
+from irc_lib.protocols.irc.protocol import IRCProtocol
+from irc_lib.protocols.nickserv.protocol import NickServProtocol
+from irc_lib.protocols.ctcp.protocol import CTCPProtocol
+from irc_lib.protocols.dcc.protocol import DCCProtocol
 
 
 class Dispatcher(object):

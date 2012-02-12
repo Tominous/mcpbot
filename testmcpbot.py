@@ -1,8 +1,7 @@
-from sets               import Set
-from irc_lib.IRCBotBase import IRCBotBase
-from mcpbotcmds         import MCPBotCmds
-import pickle
 import sys
+
+from irc_lib.IRCBotBase import IRCBotBase
+from mcpbotcmds import MCPBotCmds
 
 
 class MCPBot(IRCBotBase, MCPBotCmds):

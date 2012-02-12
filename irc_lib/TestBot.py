@@ -1,8 +1,4 @@
-import time
-import urllib
-from utils.irc_name import get_nick
 from utils.restricted import restricted
-from sets import Set
 from IRCBotBase import IRCBotBase
 
 

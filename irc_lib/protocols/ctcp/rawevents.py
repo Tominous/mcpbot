@@ -1,4 +1,3 @@
-from irc_lib.utils.irc_name import get_nick
 import time
 
 

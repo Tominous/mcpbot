@@ -1,9 +1,6 @@
 import time
 import socket
-import os
-import select
-import pprint
-from Queue import Queue, Empty
+from Queue import Empty
 
 
 class IRCBotIO(object):

@@ -1,11 +1,8 @@
-from irc_lib.utils.irc_name import get_nick
-from commands  import CTCPCommands
-from rawevents import CTCPRawEvents
-from irc_lib.IRCBotError import IRCBotError
+from Queue import Empty
+
 from irc_lib.protocols.event import Event
-from Queue import Queue, Empty
-import thread
-import time
+from commands import CTCPCommands
+from rawevents import CTCPRawEvents
 
 
 class CTCPProtocol(CTCPCommands, CTCPRawEvents):

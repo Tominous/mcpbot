@@ -1,8 +1,8 @@
-from sets               import Set
-from irc_lib.IRCBotBase import IRCBotBase
-from mcpbotcmds         import MCPBotCmds
 import sys
 import time
+
+from irc_lib.IRCBotBase import IRCBotBase
+from mcpbotcmds import MCPBotCmds
 
 
 class MCPBot(IRCBotBase, MCPBotCmds):

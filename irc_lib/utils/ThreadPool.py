@@ -1,7 +1,7 @@
+import sys
+import traceback
 from Queue import Queue
 from threading import Thread
-import traceback
-import sys
 
 
 class Worker(Thread):

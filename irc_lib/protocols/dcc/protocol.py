@@ -1,17 +1,14 @@
-from irc_lib.utils.irc_name import get_nick
-from commands  import DCCCommands
-from rawevents import DCCRawEvents
-from irc_lib.IRCBotError import IRCBotError
-from irc_lib.protocols.event import Event
-from irc_lib.protocols.user import User
-from Queue import Queue, Empty
 import socket
-import thread
-import time
 import urllib
 import select
-import traceback
 import sys
+from Queue import Empty
+
+from irc_lib.utils.irc_name import get_nick
+from irc_lib.IRCBotError import IRCBotError
+from irc_lib.protocols.event import Event
+from commands import DCCCommands
+from rawevents import DCCRawEvents
 
 
 class DCCSocket(object):

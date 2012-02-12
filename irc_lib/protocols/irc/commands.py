@@ -1,4 +1,3 @@
-import constants as cst
 from irc_lib.utils.colors import conv_s2i
 
 

@@ -1,16 +1,15 @@
 import socket
-import thread
 import sqlite3
 import time
-import os
 from sets import Set
 from threading import Condition, Lock
 from protocols.dispatcher import Dispatcher
 from Queue import Queue, Empty
+
+from utils.ThreadPool import ThreadPool
 from IRCBotError import IRCBotError
 from IRCBotAdvMtd import IRCBotAdvMtd
 from IRCBotIO import IRCBotIO
-from utils.ThreadPool import ThreadPool
 
 
 class IRCBotBase(IRCBotAdvMtd, IRCBotIO):

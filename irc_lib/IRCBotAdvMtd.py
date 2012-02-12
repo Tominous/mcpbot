@@ -1,7 +1,5 @@
-import thread
-import time
-import os
 import pickle
+
 from protocols.user import User
 
 

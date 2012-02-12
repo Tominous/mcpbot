@@ -4,6 +4,7 @@ import string
 import csv
 import re
 import threading
+
 from irc_lib.utils.restricted import restricted
 from database import database
 

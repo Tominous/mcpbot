@@ -35,10 +35,8 @@ class IRCProtocol(IRCCommands, IRCRawEvents):
             msg = msg.split()
 
             # If the reply is numerical, we change the cmd type to the correct type
-            try:
-                msg[1] = IRC_REPLIES.get(int(msg[1]), 'UNKNOWN_%d' % int(msg[1]))
-            except ValueError:
-                pass
+            if msg[1] in IRC_REPLIES:
+                msg[1] = IRC_REPLIES[msg[1]]
 
             # We treat the ping special case
             if msg[0] == 'PING':

@@ -430,7 +430,7 @@ class MCPBotCmds(object):
                 return
 
         if len(results) == 1:
-            name, notch, searge, sig, notchsig, desc, classname, classnotch, methodid = results[0]
+            name, notch, searge, sig, notchsig, desc, classname, classnotch, entryid = results[0]
             self.say(sender, "Name     : $B%s => %s" % (name, newname))
             self.say(sender, "$BOld desc$N : %s" % desc)
 
@@ -444,7 +444,7 @@ class MCPBotCmds(object):
                 newdesc = newdesc.replace('"', "'")
 
             c.execute("""INSERT INTO %shist VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""" % etype,
-                    (None, int(id), name, desc, newname, newdesc, int(time.time()), sender, forced, cmd))
+                    (None, int(entryid), name, desc, newname, newdesc, int(time.time()), sender, forced, cmd))
             self.say(sender, "$BNew desc$N : %s" % newdesc)
 
     #===================================================================

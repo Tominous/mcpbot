@@ -40,27 +40,27 @@ class IRCBotIO(object):
 
     def inbound_loop(self):
         """Incoming message thread. Check for new data on the socket and push the data to the dispatcher queue if any."""
-        buffer = ''
+        buf = ''
         while not self.exit:
             if not self.irc_socket:
                 continue
 
             try:
-                buffer += self.irc_socket.recv(512)
+                buf += self.irc_socket.recv(512)
             except socket.timeout:
                 continue
-            msg_list = buffer.splitlines()
+            msg_list = buf.splitlines()
 
             # We push all the msg beside the last one (in case it is truncated)
             for msg in msg_list[:-1]:
                 self.in_msg.put(msg)
 
             # If the last message is truncated, we push it back in the buffer. Else, we push it on the queue and clear the buffer.
-            if buffer[-2:] != '\r\n':
-                buffer = msg_list[-1]
+            if buf[-2:] != '\r\n':
+                buf = msg_list[-1]
             else:
                 self.in_msg.put(msg_list[-1])
-                buffer = ''
+                buf = ''
 
     def print_loop(self):
         """Loop to handle console output. Only way to have coherent output in a threaded environement.
@@ -84,6 +84,6 @@ class IRCBotIO(object):
             c = self.acquiredb()
             try:
                 c.execute("""INSERT INTO logs VALUES (?, ?, ?, ?, ?, ?, ?)""", (None, ev.type, ev.cmd, ev.sender, ev.target, ev.msg, int(time.time())))
-            except:
+            except Exception:
                 pass
             self.releasedb(c)

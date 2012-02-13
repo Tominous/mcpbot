@@ -107,5 +107,5 @@ class IRCProtocol(IRCCommands, IRCRawEvents):
             return
 
         del self.bot.users[nick].chans[chan]
-        if len(self.bot.users[nick].chans) == 0:
+        if not len(self.bot.users[nick].chans):
             del self.bot.users[nick]

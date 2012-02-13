@@ -15,6 +15,8 @@ def restricted(level=4):
                 whitelisted = sender in bot.whitelist
                 if sender in bot.whitelist:
                     usrlevel = bot.whitelist[sender]
+                else:
+                    usrlevel = 0
 
             # Official auth check
             if not whitelisted or int(status) != 3 or level > usrlevel:

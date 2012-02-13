@@ -33,7 +33,7 @@ class DCCRawEvents(object):
             self.sockets[nick].connect((dccip, dccport))
             self.sockets[nick].setblocking(0)
             self.buffers[nick] = ''
-        except KeyError, msg:
+        except KeyError:
             print '[DCCRawEvents.onRawDCCChat] Nick not found in socket table : %s' % nick
 
 

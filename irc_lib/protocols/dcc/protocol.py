@@ -12,10 +12,10 @@ from rawevents import DCCRawEvents
 
 
 class DCCSocket(object):
-    def __init__(self, socket, nick):
+    def __init__(self, _socket, _nick):
         self.buffer = ''
-        self.socket = socket
-        self.nick = nick
+        self.socket = _socket
+        self.nick = _nick
 
     def fileno(self):
         return self.socket.fileno()
@@ -34,7 +34,7 @@ class DCCProtocol(DCCCommands, DCCRawEvents):
 
         self.insocket = socket.socket()
         try:
-            self.insocket.listen(10)
+            self.insocket.listen(5)
             self.inip, self.inport = self.insocket.getsockname()
             self.inip = self.conv_ip_std_long(urllib.urlopen('http://automation.whatismyip.com/n09230945.asp').readlines()[0])
         except socket.error:
@@ -107,9 +107,9 @@ class DCCProtocol(DCCCommands, DCCRawEvents):
         return longip
 
     def inbound_loop(self):
-        input = [self.insocket]
+        inp = [self.insocket]
         while not self.bot.exit:
-            inputready, outputready, exceptready = select.select(input, [], [], 5)
+            inputready, outputready, exceptready = select.select(inp, [], [], 5)
 
             for s in inputready:
                 if s == self.insocket:
@@ -120,20 +120,21 @@ class DCCProtocol(DCCCommands, DCCRawEvents):
                         self.bot.printq.put('> User identified as : %s %s' % (self.ip2nick[buffip[0]], buffip[0]))
                         self.sockets[self.ip2nick[buffip[0]]] = DCCSocket(buffsocket, self.ip2nick[buffip[0]])
                         self.say(self.ip2nick[buffip[0]], 'Connection with user %s established.\r\n' % self.ip2nick[buffip[0]])
-                        input.append(self.sockets[self.ip2nick[buffip[0]]])
+                        inp.append(self.sockets[self.ip2nick[buffip[0]]])
                     else:
                         # TODO: Check if something should be done here
                         pass
                 else:
                     # handle all other sockets
+                    data = None
                     try:
                         data = s.socket.recv(512)
-                    except socket.error, msg:
+                    except socket.error as msg:
                         if 'Connection reset by peer' in msg:
                             self.bot.printq.put('> [Connection reset] Connection closed with : %s' % s.nick)
                             del self.sockets[s.nick]
                             s.socket.close()
-                            input.remove(s)
+                            inp.remove(s)
                             continue
                     if data:
                         s.buffer += data
@@ -167,8 +168,8 @@ class DCCProtocol(DCCCommands, DCCRawEvents):
                             self.bot.printq.put('> [No data] Connection closed with : %s' % s.nick)
                             del self.sockets[s.nick]
                             s.socket.close()
-                            input.remove(s)
-                        except:
+                            inp.remove(s)
+                        except Exception:
                             # TODO : Specialized error handling. General except is BAD !
                             print "========="
                             print "> Unexpected error while closing the socket :", sys.exc_info()[0]

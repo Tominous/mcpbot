@@ -17,16 +17,16 @@ class CTCPCommands(object):
     def finger(self, target):
         self.rawcmd(target, 'FINGER')
 
-    def version():
+    def version(self, target):
         self.rawcmd(target, 'VERSION')
 
-    def source():
+    def source(self, target):
         self.rawcmd(target, 'SOURCE')
 
-    def userinfo():
+    def userinfo(self, target):
         self.rawcmd(target, 'USERINFO')
 
-    def clientinfo():
+    def clientinfo(self, target):
         self.rawcmd(target, 'CLIENTINFO')
 
     def errmsg(self):

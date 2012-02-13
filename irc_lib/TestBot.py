@@ -3,14 +3,12 @@ from IRCBotBase import IRCBotBase
 
 
 class TestBot(IRCBotBase):
-    whitelist['ProfMobius'] = 5
-
     def __init__(self, nick='DevBot'):
         IRCBotBase.__init__(self, nick)
+        self.whitelist['ProfMobius'] = 5
 
     def onDefault(self, ev):
         self.printq.put('%s S: %s C: %s T: %s M: %s' % (ev.type.ljust(5), ev.sender.ljust(25), ev.cmd.ljust(15), ev.target.ljust(10), ev.msg))
-        pass
 
     def onCmd(self, ev):
         self.printq.put('%s S: %s C: %s T: %s M: %s' % (ev.type.ljust(5), ev.sender.ljust(25), ev.cmd.ljust(15), ev.target, ev.msg))
@@ -76,12 +74,12 @@ class TestBot(IRCBotBase):
     def cmdExec(self, sender, channel, cmd):
         try:
             self.printq.put(cmd)
-            exec(cmd) in self.globaldic, self.localdic
+            exec cmd in self.globaldic, self.localdic
         except Exception as errormsg:
             self.printq.put('ERROR : %s' % errormsg)
             try:
                 self.say(channel, 'ERROR : %s' % errormsg)
-            except:
+            except Exception:
                 self.say(sender, 'ERROR : %s' % errormsg)
 
 

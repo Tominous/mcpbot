@@ -1,5 +1,4 @@
 import pickle
-from Queue import Empty
 
 from protocols.user import User
 
@@ -58,7 +57,7 @@ class IRCBotAdvMtd(object):
             ff = open(filename, 'r')
             self.whitelist = pickle.load(ff)
             ff.close()
-        except:
+        except Exception:
             pass
 
     def startLogging(self, filename='bot.log'):

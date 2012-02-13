@@ -1,7 +1,6 @@
 import socket
 import sqlite3
 import time
-from sets import Set
 from threading import Condition, Lock
 from protocols.dispatcher import Dispatcher
 from Queue import Queue, Empty
@@ -62,7 +61,7 @@ class IRCBotBase(IRCBotAdvMtd, IRCBotIO):
         # The basic IRC socket. For dcc, we are going to use another set of sockets.
         self.irc_socket = None
 
-        self.irc_status = {'Server': None, 'Registered': False, 'Channels': Set()}
+        self.irc_status = {'Server': None, 'Registered': False, 'Channels': set()}
         self.users = {}
 
         self.threadpool.add_task(self.print_loop, _threadname='PrintLoop')

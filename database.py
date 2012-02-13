@@ -4,7 +4,7 @@ import threading
 
 #====================== DB Decorator ===================================
 def database(f):
-    def warp_f(*args, **kwargs):
+    def wrap_f(*args, **kwargs):
         if not 'DBLock' in globals():
             globals()['DBLock'] = threading.Lock()
 
@@ -24,10 +24,10 @@ def database(f):
             c.close()
             dbase.close()
             DBLock.release()
-        except Exception, msg:
+        except Exception as msg:
             DBLock.release()
             print msg
             raise
 
         return rows
-    return warp_f
+    return wrap_f

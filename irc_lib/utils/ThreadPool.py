@@ -30,7 +30,7 @@ class Worker(Thread):
             self.tasks.task_done()
 
 
-class ThreadPool:
+class ThreadPool(object):
     """Pool of threads consuming tasks from a queue"""
     def __init__(self, num_threads):
         self.tasks = Queue(num_threads)
@@ -51,9 +51,9 @@ if __name__ == '__main__':
 
     from time import sleep
 
-    def wait_delay(d):
-        print 'sleeping for (%d)sec' % d
-        sleep(d)
+    def wait_delay(delay):
+        print 'sleeping for (%d)sec' % delay
+        sleep(delay)
 
     # 1) Init a Thread pool with the desired number of threads
     pool = ThreadPool(20)

@@ -257,13 +257,14 @@ class MCPBotCmds(object):
 
         self.say(sender, "$B[ SEARCH RESULTS ]")
         for side in ['client', 'server']:
-            c.execute("""SELECT c.name, c.notch FROM vclasses c WHERE (c.name LIKE ?) AND c.side = ? AND c.versionid = ?""", ('%%%s%%' % (msg), side_lookup[side], idversion))
+            c.execute("""SELECT c.name, c.notch FROM vclasses c WHERE (c.name LIKE ?) AND c.side = ? AND c.versionid = ?""",
+                ('%%%s%%' % msg, side_lookup[side], idversion))
             results['classes'] = c.fetchall()
 
             for etype in ['fields', 'methods']:
                 c.execute("""SELECT m.name, m.notch, m.searge, m.sig, m.notchsig, m.desc, m.classname, m.classnotch FROM v%s m
                             WHERE (m.name LIKE ? ESCAPE '!') AND m.side = ? AND m.versionid = ?""" % etype,
-                            ('%%%s%%' % (msg), side_lookup[side], idversion))
+                            ('%%%s%%' % msg, side_lookup[side], idversion))
                 results[etype] = c.fetchall()
 
             if not results['classes']:
@@ -331,7 +332,6 @@ class MCPBotCmds(object):
 
     @database
     def setMember(self, sender, chan, cmd, msg, side, etype, *args, **kwargs):
-
         c = kwargs['cursor']
         idversion = kwargs['idvers']
         forced = kwargs['forced']
@@ -342,7 +342,7 @@ class MCPBotCmds(object):
 
         if not msg or msg.split() < 2:
             self.say(sender, "$B[ SET %s %s ]" % (side.upper(), etype.upper()))
-            self.say(sender, " Syntax error. Use $B%s <membername> <newname> [newdescription]$N" % (cmd))
+            self.say(sender, " Syntax error. Use $B%s <membername> <newname> [newdescription]$N" % cmd)
             return
 
         msg = map(string.strip, msg.split())
@@ -385,13 +385,13 @@ class MCPBotCmds(object):
             maxlencsv = max(map(len, ['%s.%s' % (result[5], result[2])   for result in results]))
             maxlennotch = max(map(len, ['[%s.%s]' % (result[6], result[1]) for result in results]))
             for result in results:
-                name, notch, searge, sig, notchsig, desc, classname, classnotch, id = result
+                name, notch, searge, sig, notchsig, desc, classname, classnotch, methodid = result
                 fullcsv = '%s.%s' % (classname, name)
                 fullnotch = '[%s.%s]' % (classnotch, notch)
                 self.say(sender, " %s %s %s" % (fullcsv.ljust(maxlencsv + 2), fullnotch.ljust(maxlennotch + 2), sig))
             return
 
-        elif len(results) == 0:
+        elif not len(results):
             self.say(sender, " No result for %s" % oldname)
             return
         ##
@@ -431,11 +431,11 @@ class MCPBotCmds(object):
                 return
 
         if len(results) == 1:
-            name, notch, searge, sig, notchsig, desc, classname, classnotch, id = results[0]
+            name, notch, searge, sig, notchsig, desc, classname, classnotch, methodid = results[0]
             self.say(sender, "Name     : $B%s => %s" % (name, newname))
-            self.say(sender, "$BOld desc$N : %s" % (desc))
+            self.say(sender, "$BOld desc$N : %s" % desc)
 
-            if   not newdesc and not desc:
+            if not newdesc and not desc:
                 newdesc = None
             elif not newdesc:
                 newdesc = desc.replace('"', "'")
@@ -446,7 +446,7 @@ class MCPBotCmds(object):
 
             c.execute("""INSERT INTO %shist VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""" % etype,
                     (None, int(id), name, desc, newname, newdesc, int(time.time()), sender, forced, cmd))
-            self.say(sender, "$BNew desc$N : %s" % (newdesc))
+            self.say(sender, "$BNew desc$N : %s" % newdesc)
 
     #===================================================================
 
@@ -509,7 +509,7 @@ class MCPBotCmds(object):
         side_lookup = {'client': 0, 'server': 1}
 
         self.say(sender, "$B[ LOGS ]")
-        for side  in ['server', 'client']:
+        for side in ['server', 'client']:
             for etype in ['methods', 'fields']:
                 c.execute("""SELECT m.name, m.searge, m.desc, h.newname, h.newdesc, strftime('%s',h.timestamp, 'unixepoch') as htimestamp, h.nick, h.cmd, h.forced
                             FROM  %s m
@@ -523,18 +523,18 @@ class MCPBotCmds(object):
                     maxlensearge = max(map(len, [result[1] for result in results]))
                     maxlenmname = max(map(len, [result[0] for result in results]))
 
-                for forcedstatus in [0, 1]:
-                    for result in results:
-                        mname, msearge, mdesc, hname, hdesc, htimestamp, hnick, hcmd, hforced = result
+                    for forcedstatus in [0, 1]:
+                        for result in results:
+                            mname, msearge, mdesc, hname, hdesc, htimestamp, hnick, hcmd, hforced = result
 
-                        if hforced == forcedstatus:
-                            if fulllog:
-                                self.say(sender, "+ %s, %s, %s" % (htimestamp, hnick, hcmd))
-                                self.say(sender, "  [%s%s][%s] %s => %s" % (side[0].upper(), etype[0].upper(), msearge.ljust(maxlensearge), mname.ljust(maxlenmname), hname))
-                                self.say(sender, "  [%s%s][%s] %s => %s" % (side[0].upper(), etype[0].upper(), msearge.ljust(maxlensearge), mdesc, hdesc))
-                            else:
-                                indexmember = re.search('[0-9]+', msearge).group()
-                                self.say(sender, "+ %s, %s [%s%s][%5s][%4s] %s => %s" % (htimestamp, hnick.ljust(maxlennick), side[0].upper(), etype[0].upper(), indexmember, hcmd, mname.ljust(maxlensearge), hname))
+                            if hforced == forcedstatus:
+                                if fulllog:
+                                    self.say(sender, "+ %s, %s, %s" % (htimestamp, hnick, hcmd))
+                                    self.say(sender, "  [%s%s][%s] %s => %s" % (side[0].upper(), etype[0].upper(), msearge.ljust(maxlensearge), mname.ljust(maxlenmname), hname))
+                                    self.say(sender, "  [%s%s][%s] %s => %s" % (side[0].upper(), etype[0].upper(), msearge.ljust(maxlensearge), mdesc, hdesc))
+                                else:
+                                    indexmember = re.search('[0-9]+', msearge).group()
+                                    self.say(sender, "+ %s, %s [%s%s][%5s][%4s] %s => %s" % (htimestamp, hnick.ljust(maxlennick), side[0].upper(), etype[0].upper(), indexmember, hcmd, mname.ljust(maxlensearge), hname))
 
     @restricted(3)
     def cmd_commit(self, sender, chan, cmd, msg, *args, **kwargs):
@@ -706,7 +706,6 @@ class MCPBotCmds(object):
             if level >= self.whitelist[sender]:
                 self.say(sender, "You don't have the rights to do that.")
                 return
-            self.addWhitelist(nick)
         elif len(msg) == 2:
             try:
                 nick = msg[0]
@@ -717,12 +716,13 @@ class MCPBotCmds(object):
                 if level >= self.whitelist[sender]:
                     self.say(sender, "You don't have the rights to do that.")
                     return
-                self.addWhitelist(nick, level)
-            except:
+            except Exception:
                 self.say(sender, "Syntax error : $Baddwhite <nick> [level]")
                 return
         else:
             self.say(sender, "Syntax error : $Baddwhite <nick> [level]")
+            return
+        self.addWhitelist(nick, level)
         self.say(sender, "Added %s with level %d to whitelist" % (nick, level))
 
     @restricted(0)
@@ -758,7 +758,7 @@ class MCPBotCmds(object):
     def cmd_exec(self, sender, chan, cmd, msg, *args, **kwargs):
         try:
             print msg
-            exec(msg) in self.globaldic, self.localdic
+            exec msg in self.globaldic, self.localdic
         except Exception as errormsg:
             self.printq.put('ERROR : %s' % errormsg)
             self.say(sender, 'ERROR : %s' % errormsg)
@@ -860,14 +860,14 @@ class MCPBotCmds(object):
 
         self.say(sender, "$B[ TODO %s ]" % msg.upper())
         for result in results:
-            id, name, memberst, membersr, membersu = result
+            classid, name, memberst, membersr, membersu = result
             if not memberst:
                 memberst = 0
             if not membersr:
                 membersr = 0
             if not membersu:
                 membersu = 0
-            if membersr == 0:
+            if not membersr:
                 percent = 0.
             else:
                 percent = float(membersr) / float(memberst) * 100.0
@@ -899,7 +899,7 @@ class MCPBotCmds(object):
         if msg == 'idea':
             msg = ''
 
-        if len(msg.split()) == 0:
+        if not len(msg.split()):
             c = self.acquiredb()
             results = c.execute("""SELECT tag FROM notices GROUP BY tag""").fetchall()
             self.releasedb(c)

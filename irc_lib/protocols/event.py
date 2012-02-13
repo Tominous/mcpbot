@@ -21,7 +21,7 @@ class Event(object):
             self.senderuser = backpart.split('@')[0]
             try:
                 self.senderhost = backpart.split('@')[1]
-            except:
+            except Exception:
                 pass
         self.senderfull = sender.strip()
         self.cmd = cmd.strip()

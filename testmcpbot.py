@@ -31,7 +31,6 @@ if __name__ == "__main__":
     bot.connect('irc.esper.net')
     bot.nickserv.identify(sys.argv[1])
     bot.irc.join('#test')
-    bot.startLogging()
     bot.loadWhitelist()
 
     bot.start()

@@ -87,5 +87,4 @@ if __name__ == "__main__":
     bot = TestBot('PMDevBot')
     bot.connect('irc.esper.net')
     bot.irc.join('#test')
-    bot.startLogging()
     bot.start()

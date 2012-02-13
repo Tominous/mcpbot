@@ -58,8 +58,7 @@ class IRCProtocol(IRCCommands, IRCRawEvents):
             else:
                 ev = Event(msg[0], msg[1], msg[2], ' '.join(msg[3:]), self.cnick, 'IRC')
 
-            if self.bot.log:
-                self.bot.loggingq.put(ev)
+            self.bot.loggingq.put(ev)
 
             # We call the corresponding raw event if it exist, or the rawDefault if not.
             if hasattr(self, 'onRaw%s' % ev.cmd):

@@ -49,6 +49,7 @@ class IRCBotIO(object):
                 buf += self.irc_socket.recv(512)
             except socket.timeout:
                 continue
+            # breaks with error: [Errno 104] Connection reset by peer
             msg_list = buf.splitlines()
 
             # We push all the msg beside the last one (in case it is truncated)
@@ -79,7 +80,6 @@ class IRCBotIO(object):
                 ev = self.loggingq.get(True, 1)
             except Empty:
                 continue
-
 
             c = self.acquiredb()
             try:

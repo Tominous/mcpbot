@@ -39,6 +39,5 @@ if __name__ == "__main__":
     time.sleep(15)
     print 'joining channels'
     bot.irc.join('#test')
-    bot.startLogging()
     bot.loadWhitelist()
     bot.start()

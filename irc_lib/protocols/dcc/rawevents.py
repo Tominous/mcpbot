@@ -8,8 +8,7 @@ class DCCRawEvents(object):
     def onRawDCCMsg(self, ev):
         if not ev.msg:
             return
-        if self.bot.log:
-            self.bot.loggingq.put(ev)
+        self.bot.loggingq.put(ev)
 
         ev.msg = ev.msg.strip()
         if len(ev.msg) > 1:

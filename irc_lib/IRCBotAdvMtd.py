@@ -60,12 +60,3 @@ class IRCBotAdvMtd(object):
         except Exception:
             pass
 
-    def startLogging(self, filename='bot.log'):
-        if not self.log:
-            self.log = open(filename, 'a')
-
-    def stopLogging(self):
-        if self.log:
-            self.log.close()
-            self.log = None
-

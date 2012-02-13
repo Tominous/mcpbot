@@ -19,8 +19,6 @@ class IRCBotBase(IRCBotAdvMtd, IRCBotIO):
     def __init__(self, _nick='IRCBotLib', _char=':', _flood=1000):
         self.whitelist = {}
 
-        self.log = None
-
         self.controlchar = _char
         # Flood protection. Number of char / 30 secs (It is the way it works on esper.net)
         self.floodprotec = _flood
@@ -76,8 +74,7 @@ class IRCBotBase(IRCBotAdvMtd, IRCBotIO):
                 continue
             self.commandq.task_done()
 
-            if self.log:
-                self.loggingq.put(msg)
+            self.loggingq.put(msg)
 
             if hasattr(self, 'onCmd'):
                 self.threadpool.add_task(getattr(self, 'onCmd'), msg)
@@ -112,8 +109,6 @@ class IRCBotBase(IRCBotAdvMtd, IRCBotIO):
                 print 'EXIT REQUESTED. SHUTTING DOWN THE BOT'
                 self.exit = True
                 self.threadpool.wait_completion()
-                if self.log:
-                    self.stopLogging()
                 raise
 
     def acquiredb(self):

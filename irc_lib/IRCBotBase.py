@@ -50,7 +50,8 @@ class IRCBotBase(IRCBotAdvMtd, IRCBotIO):
         self.loggingq = Queue()
         self.commandq = Queue()
 
-        self.dispatcher = Dispatcher(self.cnick, self.out_msg, self.in_msg, self.locks, self)  # IRC Protocol handler
+        # IRC Protocol handler
+        self.dispatcher = Dispatcher(self.cnick, self.out_msg, self.in_msg, self.locks, self)
         self.irc = self.dispatcher.irc
         self.nickserv = self.dispatcher.nse
         self.ctcp = self.dispatcher.ctcp

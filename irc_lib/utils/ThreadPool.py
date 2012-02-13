@@ -24,7 +24,7 @@ class Worker(Thread):
             try:
                 func(*args, **kargs)
                 self.nscalls += 1
-            except Exception, e:
+            except Exception as e:
                 self.nfcalls += 1
                 traceback.print_exception(sys.exc_info()[0], e, sys.exc_info()[2])
             self.tasks.task_done()

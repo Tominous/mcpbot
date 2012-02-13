@@ -1,6 +1,5 @@
 import sqlite3
 import time
-import string
 import csv
 import re
 import threading
@@ -208,8 +207,8 @@ class MCPBotCmds(object):
             self.say(sender, "$B[ GET %s %s ]" % (side.upper(), etype.upper()))
             self.say(sender, " Ambiguous request $R'%s'$N" % msg)
             self.say(sender, " Found %s possible answers" % len(results))
-            maxlencsv = max(map(len, ['%s.%s' % (result[6], result[0])   for result in results]))
-            maxlennotch = max(map(len, ['[%s.%s]' % (result[7], result[1]) for result in results]))
+            maxlencsv = max([len('%s.%s' % (result[6], result[0])) for result in results])
+            maxlennotch = max([len('[%s.%s]' % (result[7], result[1])) for result in results])
             for result in results:
                 name, notch, searge, sig, notchsig, desc, classname, classnotch = result
                 fullcsv = '%s.%s' % (classname, name)
@@ -270,8 +269,8 @@ class MCPBotCmds(object):
             if not results['classes']:
                 self.say(sender, " [%s][  CLASS] No results" % side.upper())
             else:
-                maxlenname = max(map(len, [result[0] for result in results['classes']]))
-                maxlennotch = max(map(len, [result[1] for result in results['classes']]))
+                maxlenname = max([len(result[0]) for result in results['classes']])
+                maxlennotch = max([len(result[1]) for result in results['classes']])
                 if len(results['classes']) > highlimit:
                     self.say(sender, " [%s][  CLASS] Too many results : %d" % (side.upper(), len(results['classes'])))
                 else:
@@ -283,8 +282,8 @@ class MCPBotCmds(object):
                 if not results[etype]:
                     self.say(sender, " [%s][%7s] No results" % (side.upper(), etype.upper()))
                 else:
-                    maxlenname = max(map(len, ['%s.%s' % (result[6], result[0])   for result in results[etype]]))
-                    maxlennotch = max(map(len, ['[%s.%s]' % (result[7], result[1]) for result in results[etype]]))
+                    maxlenname = max([len('%s.%s' % (result[6], result[0])) for result in results[etype]])
+                    maxlennotch = max([len('[%s.%s]' % (result[7], result[1])) for result in results[etype]])
                     if len(results[etype]) > highlimit:
                         self.say(sender, " [%s][%7s] Too many results : %d" % (side.upper(), etype.upper(), len(results[etype])))
                     else:
@@ -345,7 +344,7 @@ class MCPBotCmds(object):
             self.say(sender, " Syntax error. Use $B%s <membername> <newname> [newdescription]$N" % cmd)
             return
 
-        msg = map(string.strip, msg.split())
+        msg = msg.split()
         oldname = msg[0]
         newname = msg[1]
         newdesc = None
@@ -382,8 +381,8 @@ class MCPBotCmds(object):
             self.say(sender, " Ambiguous request $R'%s'$N" % oldname)
             self.say(sender, " Found %s possible answers" % len(results))
 
-            maxlencsv = max(map(len, ['%s.%s' % (result[5], result[2])   for result in results]))
-            maxlennotch = max(map(len, ['[%s.%s]' % (result[6], result[1]) for result in results]))
+            maxlencsv = max([len('%s.%s' % (result[5], result[2])) for result in results])
+            maxlennotch = max([len('[%s.%s]' % (result[6], result[1])) for result in results])
             for result in results:
                 name, notch, searge, sig, notchsig, desc, classname, classnotch, methodid = result
                 fullcsv = '%s.%s' % (classname, name)
@@ -519,9 +518,9 @@ class MCPBotCmds(object):
                 results = c.fetchall()
 
                 if results:
-                    maxlennick = max(map(len, [result[6] for result in results]))
-                    maxlensearge = max(map(len, [result[1] for result in results]))
-                    maxlenmname = max(map(len, [result[0] for result in results]))
+                    maxlennick = max([len(result[6]) for result in results])
+                    maxlensearge = max([len(result[1]) for result in results])
+                    maxlenmname = max([len(result[0]) for result in results])
 
                     for forcedstatus in [0, 1]:
                         for result in results:
@@ -929,7 +928,7 @@ class MCPBotCmds(object):
             (userid,) = c.execute("""SELECT id FROM nicks WHERE nick = ?""", (sender,)).fetchone()
             try:
                 c.execute("""INSERT INTO notices VALUES (?, ?, ?, ?, ?, ?)""", (None, 'IDEA', msg.split()[0].strip().upper(), ' '.join(msg.split()[1:]), int(time.time()), userid))
-            except Exception, errormsg:
+            except Exception as errormsg:
                 print errormsg
             self.releasedb(c)
 

@@ -99,7 +99,7 @@ class IRCBotBase(IRCBotAdvMtd, IRCBotIO):
         self.threadpool.add_task(self.inbound_loop, _threadname='MainInLoop')
         self.threadpool.add_task(self.outbound_loop, _threadname='MainOutLoop')
 
-    def onDefault(self, sender, cmd, msg):
+    def onDefault(self, ev):
         """Default event handler (do nothing)"""
         pass
 

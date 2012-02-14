@@ -82,7 +82,7 @@ class IRCBotBase(IRCBotAdvMtd, IRCBotIO):
             else:
                 self.threadpool.add_task(getattr(self, 'onDefault'), msg)
 
-    def connect(self, server, port=6667):
+    def connect(self, server, port=6667, password=None):
         """Connect to a server, handle authentification and start the communication threads."""
         if self.irc_socket:
             raise IRCBotError('Socket already existing, can not complete the connect command')
@@ -90,7 +90,7 @@ class IRCBotBase(IRCBotAdvMtd, IRCBotIO):
         self.irc_socket.connect((server, port))
         self.irc_socket.settimeout(1)
 
-        self.irc.password()
+        self.irc.password(password)
         self.irc.nick()
         self.irc.user()
 

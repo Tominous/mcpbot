@@ -5,8 +5,9 @@ class IRCCommands(object):
     def rawcmd(self, cmd):
         self.out_msg.put(':%s %s\r\n' % (self.cnick, cmd))
 
-    def password(self, password='thisisapassword'):
-        self.rawcmd('PASS %s' % password)
+    def password(self, password=None):
+        if password:
+            self.rawcmd('PASS %s' % password)
 
     def nick(self, nick=None):
         if not nick:

@@ -15,10 +15,13 @@ class IRCCommands(object):
         self.rawcmd('NICK %s' % nick)
 
     def user(self, user=None, host=None, server=None, real=None):
-        if not user or not host or not server or not real:
+        if not user:
             user = self.cnick
+        if not host:
             host = self.cnick
+        if not server:
             server = self.cnick
+        if not real:
             real = ':%s' % self.cnick.upper()
         self.rawcmd('USER %s %s %s %s' % (user, host, server, real))
 

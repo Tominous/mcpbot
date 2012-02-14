@@ -96,8 +96,9 @@ class IRCRawEvents(object):
     def onRawNICK(self, ev):
         if ev.sender == self.cnick:
             return
-        self.bot.users[ev.target] = self.bot.users[ev.sender]
-        del self.bot.users[ev.sender]
+        if ev.sender in self.bot.users:
+            self.bot.users[ev.target] = self.bot.users[ev.sender]
+            del self.bot.users[ev.sender]
 
     def onRawINVITE(self, ev):
         if not ev.msg:

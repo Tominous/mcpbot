@@ -39,4 +39,4 @@ class DCCRawEvents(object):
 #
 
     def onRawDCCDefault(self, sender, dcccmd, dccarg, dccip, dccport):
-        print 'RAW EVENT'
+        print 'RAW DCC EVENT: %s %s %s' % (sender, dcccmd, dccarg)

@@ -1,6 +1,10 @@
 import time
 import socket
+import re
 from Queue import Empty
+
+
+_LINESEP_REGEXP = re.compile(r'\r?\n')
 
 
 class IRCBotIO(object):
@@ -43,25 +47,24 @@ class IRCBotIO(object):
         buf = ''
         while not self.exit:
             if not self.irc_socket:
+                print 'no socket'
                 continue
 
+            # breaks with error: [Errno 104] Connection reset by peer
             try:
-                buf += self.irc_socket.recv(512)
+                new_data = self.irc_socket.recv(512)
             except socket.timeout:
                 continue
-            # breaks with error: [Errno 104] Connection reset by peer
-            msg_list = buf.splitlines()
+            if not new_data:
+                continue
 
-            # We push all the msg beside the last one (in case it is truncated)
-            for msg in msg_list[:-1]:
+            msg_list = _LINESEP_REGEXP.split(buf + new_data)
+
+            # Push last line back into buffer in case its truncated
+            buf = msg_list.pop()
+
+            for msg in msg_list:
                 self.in_msg.put(msg)
-
-            # If the last message is truncated, we push it back in the buffer. Else, we push it on the queue and clear the buffer.
-            if buf[-2:] != '\r\n':
-                buf = msg_list[-1]
-            else:
-                self.in_msg.put(msg_list[-1])
-                buf = ''
 
     def print_loop(self):
         """Loop to handle console output. Only way to have coherent output in a threaded environement.

@@ -8,14 +8,7 @@ class IRCRawEvents(object):
     def onRawPING(self, msg):
         self.pong(msg[1])
 
-    def onRawNOTICE(self, ev):
-        if not ev.msg:
-            return
-
-        if ev.target in ['AUTH', '*']:
-            self.bot.printq.put('> Connected to server %s' % ev.sender)
-            self.bot.irc_status['Server'] = ev.sender
-            return
+#
 
     def onRawPRIVMSG(self, ev):
         if not ev.msg:
@@ -54,6 +47,10 @@ class IRCRawEvents(object):
         c = self.bot.acquiredb()
         c.execute("""UPDATE nicks SET timestamp = ?, online = ? WHERE nick = ?""", (int(time.time()), 0, ev.sender))
         self.bot.releasedb(c)
+
+    def onRawRPL_WELCOME(self, ev):
+        self.bot.irc_status['Server'] = ev.sender
+        self.bot.printq.put('> Connected to server %s' % ev.sender)
 
     def onRawRPL_MOTDSTART(self, ev):
         if ev.sender == self.bot.irc_status['Server']:

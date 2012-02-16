@@ -18,6 +18,9 @@ class IRCProtocol(IRCCommands, IRCRawEvents):
 
         self.bot.threadpool.add_task(self.treat_msg, _threadname='IRCHandler')
 
+    def log(self, msg):
+        self.bot.log(msg)
+
     def treat_msg(self):
         while not self.bot.exit:
             # We check for msgs on the queue
@@ -56,7 +59,7 @@ class IRCProtocol(IRCCommands, IRCRawEvents):
             else:
                 ev = Event(msg[0], msg[1], msg[2], ' '.join(msg[3:]), self.cnick, 'IRC')
 
-            self.bot.loggingq.put(ev)
+            self.log(ev)
 
             # We call the corresponding raw event if it exist, or the rawDefault if not.
             if hasattr(self, 'onRaw%s' % ev.cmd):

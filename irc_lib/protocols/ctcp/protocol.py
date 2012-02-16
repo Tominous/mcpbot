@@ -15,6 +15,9 @@ class CTCPProtocol(CTCPCommands, CTCPRawEvents):
 
         self.bot.threadpool.add_task(self.treat_msg, _threadname='CTCPHandler')
 
+    def log(self, msg):
+        self.bot.log(msg)
+
     def treat_msg(self):
         while not self.bot.exit:
             try:

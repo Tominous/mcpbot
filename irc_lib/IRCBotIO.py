@@ -31,7 +31,7 @@ class IRCBotIO(object):
                 continue
             self.out_msg.task_done()
             if self.rawmsg:
-                self.printq.put('> %s' % repr(msg))
+                self.log('> %s' % repr(msg))
             out_line = msg + '\r\n'
             if len(out_line) > int(allowed_chars):
                 time.sleep((len(out_line) * 1.25) / (self.floodprotec / 30.0))
@@ -65,7 +65,7 @@ class IRCBotIO(object):
 
             for msg in msg_list:
                 if self.rawmsg:
-                    self.printq.put('< %s' % repr(msg))
+                    self.log('< %s' % repr(msg))
                 self.in_msg.put(msg)
 
     def print_loop(self):

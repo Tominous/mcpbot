@@ -7,7 +7,7 @@ class NickServRawEvents(object):
     def onRawNickServACC(self, ev):
         if not ev.msg:
             return
-        self.bot.printq.put(ev.msg)
+        self.log(ev.msg)
         snick = ev.msg.split()[0]
         status = ev.msg.split()[1]
 

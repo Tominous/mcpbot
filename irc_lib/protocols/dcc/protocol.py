@@ -38,11 +38,14 @@ class DCCProtocol(DCCCommands, DCCRawEvents):
             self.inip, self.inport = self.insocket.getsockname()
             self.inip = self.conv_ip_std_long(urllib.urlopen('http://automation.whatismyip.com/n09230945.asp').readlines()[0])
         except socket.error:
-            self.bot.printq.put("DCC insocket failed")
+            self.log("DCC insocket failed")
             return
 
         self.bot.threadpool.add_task(self.treat_msg, _threadname='DCCHandler')
         self.bot.threadpool.add_task(self.inbound_loop, _threadname='DCCInLoop')
+
+    def log(self, msg):
+        self.bot.log(msg)
 
     def treat_msg(self):
         while not self.bot.exit:
@@ -114,11 +117,11 @@ class DCCProtocol(DCCCommands, DCCRawEvents):
 
             for s in inputready:
                 if s == self.insocket:
-                    self.bot.printq.put('> Received connection request')
+                    self.log('> Received connection request')
                     # handle the server socket
                     buffsocket, buffip = self.insocket.accept()
                     if buffip[0] in self.ip2nick:
-                        self.bot.printq.put('> User identified as : %s %s' % (self.ip2nick[buffip[0]], buffip[0]))
+                        self.log('> User identified as : %s %s' % (self.ip2nick[buffip[0]], buffip[0]))
                         self.sockets[self.ip2nick[buffip[0]]] = DCCSocket(buffsocket, self.ip2nick[buffip[0]])
                         self.say(self.ip2nick[buffip[0]], 'Connection with user %s established.\r\n' % self.ip2nick[buffip[0]])
                         inp.append(self.sockets[self.ip2nick[buffip[0]]])
@@ -132,7 +135,7 @@ class DCCProtocol(DCCCommands, DCCRawEvents):
                         data = s.socket.recv(512)
                     except socket.error as msg:
                         if 'Connection reset by peer' in msg:
-                            self.bot.printq.put('> [Connection reset] Connection closed with : %s' % s.nick)
+                            self.log('> [Connection reset] Connection closed with : %s' % s.nick)
                             del self.sockets[s.nick]
                             s.socket.close()
                             inp.remove(s)
@@ -141,7 +144,7 @@ class DCCProtocol(DCCCommands, DCCRawEvents):
                         s.buffer += data
 
                         if self.bot.rawmsg:
-                            self.bot.printq.put('< ' + s.buffer)
+                            self.log('< ' + s.buffer)
 
                         print r'>%s<' % s.buffer
                         if not s.buffer.strip():
@@ -154,7 +157,7 @@ class DCCProtocol(DCCCommands, DCCRawEvents):
                         for msg in msg_list:
                             ev = Event(s.nick, 'DCCMSG', self.cnick, msg.strip(), self.cnick, 'DCCMSG')
 
-                            self.bot.loggingq.put(ev)
+                            self.log(ev)
 
                             self.bot.threadpool.add_task(self.onRawDCCMsg, ev)
                             if hasattr(self.bot, 'onDCCMsg'):
@@ -165,7 +168,7 @@ class DCCProtocol(DCCCommands, DCCRawEvents):
                         s.buffer = ''
                     else:
                         try:
-                            self.bot.printq.put('> [No data] Connection closed with : %s' % s.nick)
+                            self.log('> [No data] Connection closed with : %s' % s.nick)
                             del self.sockets[s.nick]
                             s.socket.close()
                             inp.remove(s)

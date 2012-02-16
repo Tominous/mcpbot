@@ -50,7 +50,7 @@ class IRCRawEvents(object):
 
     def onRawRPL_WELCOME(self, ev):
         self.bot.irc_status['Server'] = ev.sender
-        self.bot.printq.put('> Connected to server %s' % ev.sender)
+        self.log('> Connected to server %s' % ev.sender)
 
     def onRawRPL_MOTDSTART(self, ev):
         if ev.sender == self.bot.irc_status['Server']:
@@ -58,7 +58,7 @@ class IRCRawEvents(object):
             self.bot.irc_status['Registered'] = True
             self.locks['ServReg'].notifyAll()
             self.locks['ServReg'].release()
-            self.bot.printq.put('> MOTD found. Registered with server.')
+            self.log('> MOTD found. Registered with server.')
 
     def onRawRPL_NAMREPLY(self, ev):
         if not ev.msg:

@@ -67,6 +67,9 @@ class IRCBotBase(IRCBotAdvMtd, IRCBotIO):
         self.threadpool.add_task(self.logging_loop, _threadname='LoggingLoop')
         self.threadpool.add_task(self.command_loop, _threadname='CommandLoop')
 
+    def log(self, msg):
+        self.printq.put(msg)
+
     def command_loop(self):
         while not self.exit:
             try:

@@ -157,7 +157,7 @@ class DCCProtocol(DCCCommands, DCCRawEvents):
                         for msg in msg_list:
                             ev = Event(s.nick, 'DCCMSG', self.cnick, msg.strip(), 'DCCMSG')
 
-                            self.log(ev)
+                            self.bot.loggingq.put(ev)
 
                             self.bot.threadpool.add_task(self.onRawDCCMsg, ev)
                             if hasattr(self.bot, 'onDCCMsg'):

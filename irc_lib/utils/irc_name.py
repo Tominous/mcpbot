@@ -19,6 +19,7 @@ def get_ip(host):
     except socket.gaierror:
         return '0.0.0.0'
 
+
 def split_prefix(prefix):
     rest, _, host = prefix.partition('@')
     nick, _, user = rest.partition('!')

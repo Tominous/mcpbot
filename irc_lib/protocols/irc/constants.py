@@ -1,16 +1,16 @@
 IRC_COMMANDS = [
-    'PASS',     #
-    'NICK',     #
-    'USER',     #
+    'PASS',
+    'NICK',
+    'USER',
     'SERVER',
     'OPER',
-    'QUIT',     #
+    'QUIT',
     'SQUIT',
-    'JOIN',     #
-    'PART',     #
+    'JOIN',
+    'PART',
     'MODE',
     'TOPIC',
-    'NAMES',    #
+    'NAMES',
     'LIST',
     'INVITE',
     'KICK',
@@ -21,24 +21,24 @@ IRC_COMMANDS = [
     'CONNECT',
     'TRACE',
     'ADMIN',
-    'INFO',     #
-    'PRIVMSG',  #
-    'NOTICE',   #
-    'WHO',      #
-    'WHOIS',    #
-    'WHOWAS',   #
+    'INFO',
+    'PRIVMSG',
+    'NOTICE',
+    'WHO',
+    'WHOIS',
+    'WHOWAS',
     'KILL',
     'PING',
-    'PONG',     #
+    'PONG',
     'ERROR',
-    'AWAY',     #
+    'AWAY',
     'REHASH',
     'RESTART',
     'SUMMON',
-    'USERS',    #
+    'USERS',
     'WALLOPS',
-    'USERHOST', #
-    'ISON',     #
+    'USERHOST',
+    'ISON',
 ]
 
 IRC_MODES = {

@@ -1,4 +1,3 @@
-import time
 from Queue import Empty
 
 from irc_lib.protocols.event import Event
@@ -73,7 +72,7 @@ class IRCProtocol(IRCCommands, IRCRawEvents):
             else:
                 self.bot.threadpool.add_task(getattr(self.bot, 'onDefault'), ev)
 
-    def add_user(self, nick, chan=None, user=None, host=None, c=None):
+    def add_user(self, nick, chan=None):
         nick_status = '-'
         if nick[0] == ':':
             nick = nick[1:]

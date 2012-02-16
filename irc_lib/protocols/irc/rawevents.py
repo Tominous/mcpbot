@@ -1,5 +1,3 @@
-import time
-
 from irc_lib.utils.irc_name import get_ip
 from irc_lib.protocols.event import Event
 
@@ -34,9 +32,7 @@ class IRCRawEvents(object):
         if ev.sender == self.cnick:
             self.bot.irc_status['Channels'].add(ev.chan)
         else:
-            c = self.bot.acquiredb()
-            self.add_user(ev.sender, ev.chan, ev.senderuser, ev.senderhost, c)
-            self.bot.releasedb(c)
+            self.add_user(ev.sender, ev.chan)
 
     def onRawPART(self, ev):
         self.rm_user(ev.sender, ev.chan)
@@ -64,10 +60,8 @@ class IRCRawEvents(object):
         channel = ev.msg.split()[1]
         nicks = ev.msg.split()[2:]
 
-        c = self.bot.acquiredb()
         for nick in nicks:
-            self.add_user(nick, channel, c=c)
-        self.bot.releasedb(c)
+            self.add_user(nick, channel)
 
     def onRawRPL_WHOISUSER(self, ev):
         if not ev.msg:

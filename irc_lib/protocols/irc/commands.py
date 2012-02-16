@@ -28,13 +28,16 @@ class IRCCommands(object):
     def pong(self, timestamp):
         self.rawcmd('PONG %s' % timestamp)
 
-    def join(self, chan, key=''):
+    def join(self, chan, key=None):
         self.locks['ServReg'].acquire()
         while not self.bot.irc_status['Registered']:
             self.locks['ServReg'].wait()
         self.locks['ServReg'].release()
 
-        self.rawcmd('JOIN %s %s' % (chan, key))
+        if key:
+            self.rawcmd('JOIN %s %s' % (chan, key))
+        else:
+            self.rawcmd('JOIN %s' % chan)
 
     def privmsg(self, target, msg, color=True):
         if color:

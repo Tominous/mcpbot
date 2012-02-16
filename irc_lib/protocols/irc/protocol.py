@@ -88,12 +88,6 @@ class IRCProtocol(IRCCommands, IRCRawEvents):
             return
         self.bot.users[snick].chans[chan] = nick_status
 
-        c.execute("""INSERT OR IGNORE INTO nicks VALUES (?,?,?,?,?,?)""", (None, snick, user, host, int(time.time()), 1))
-        if user:
-            c.execute("""UPDATE nicks SET user=?, host=?, timestamp=?, online=? WHERE nick = ?""", (user, host, int(time.time()), 1, nick))
-        else:
-            c.execute("""UPDATE nicks SET timestamp = ?, online = ? WHERE nick = ?""", (int(time.time()), 1, nick))
-
     def rm_user(self, nick, chan=None):
         if nick[0] == ':':
             nick = nick[1:]

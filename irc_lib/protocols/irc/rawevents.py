@@ -44,10 +44,6 @@ class IRCRawEvents(object):
     def onRawQUIT(self, ev):
         self.rm_user(ev.sender)
 
-        c = self.bot.acquiredb()
-        c.execute("""UPDATE nicks SET timestamp = ?, online = ? WHERE nick = ?""", (int(time.time()), 0, ev.sender))
-        self.bot.releasedb(c)
-
     def onRawRPL_WELCOME(self, ev):
         self.bot.irc_status['Server'] = ev.sender
         self.log('> Connected to server %s' % ev.sender)
@@ -87,10 +83,6 @@ class IRCRawEvents(object):
             self.bot.users[nick].ip = get_ip(host)
         self.locks['WhoIs'].notifyAll()
         self.locks['WhoIs'].release()
-
-        c = self.bot.acquiredb()
-        c.execute("""UPDATE nicks SET user=?, host=? WHERE nick = ?""", (user, host, nick))
-        self.bot.releasedb(c)
 
 
     def onRawNICK(self, ev):

@@ -1,3 +1,4 @@
+import os
 import pickle
 
 from protocols.user import User
@@ -48,15 +49,11 @@ class IRCBotAdvMtd(object):
         del self.whitelist[nick]
 
     def saveWhitelist(self, filename='whitelist.pck'):
-        ff = open(filename, 'w')
-        pickle.dump(self.whitelist, ff)
-        ff.close()
+        with open(filename, 'w') as ff:
+            pickle.dump(self.whitelist, ff)
 
     def loadWhitelist(self, filename='whitelist.pck'):
-        try:
-            ff = open(filename, 'r')
-            self.whitelist = pickle.load(ff)
-            ff.close()
-        except Exception:
-            pass
+        if os.path.isfile(filename):
+            with open(filename, 'r') as ff:
+                self.whitelist = pickle.load(ff)
 

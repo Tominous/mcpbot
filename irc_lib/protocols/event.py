@@ -19,10 +19,8 @@ class Event(object):
         if len(sender.split('!')) == 2:
             backpart = sender.split('!')[1]
             self.senderuser = backpart.split('@')[0]
-            try:
+            if len(backpart.split('@')) == 2:
                 self.senderhost = backpart.split('@')[1]
-            except Exception:
-                pass
         self.senderfull = sender.strip()
         self.cmd = cmd.strip()
         self.target = target.strip()

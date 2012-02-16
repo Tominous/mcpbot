@@ -706,17 +706,17 @@ class MCPBotCmds(object):
                 self.say(sender, "You don't have the rights to do that.")
                 return
         elif len(msg) == 2:
+            nick = msg[0]
             try:
-                nick = msg[0]
                 level = int(msg[1])
-                if level > 4:
-                    self.say(sender, "Max level is 4.")
-                    return
-                if level >= self.whitelist[sender]:
-                    self.say(sender, "You don't have the rights to do that.")
-                    return
-            except Exception:
+            except ValueError:
                 self.say(sender, "Syntax error : $Baddwhite <nick> [level]")
+                return
+            if level > 4:
+                self.say(sender, "Max level is 4.")
+                return
+            if level >= self.whitelist[sender]:
+                self.say(sender, "You don't have the rights to do that.")
                 return
         else:
             self.say(sender, "Syntax error : $Baddwhite <nick> [level]")
@@ -926,10 +926,7 @@ class MCPBotCmds(object):
         else:
             c = self.acquiredb()
             (userid,) = c.execute("""SELECT id FROM nicks WHERE nick = ?""", (sender,)).fetchone()
-            try:
-                c.execute("""INSERT INTO notices VALUES (?, ?, ?, ?, ?, ?)""", (None, 'IDEA', msg.split()[0].strip().upper(), ' '.join(msg.split()[1:]), int(time.time()), userid))
-            except Exception as errormsg:
-                print errormsg
+            c.execute("""INSERT INTO notices VALUES (?, ?, ?, ?, ?, ?)""", (None, 'IDEA', msg.split()[0].strip().upper(), ' '.join(msg.split()[1:]), int(time.time()), userid))
             self.releasedb(c)
 
             self.say(sender, 'Idea added with tag %s' % msg.split()[0].upper())

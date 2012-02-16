@@ -87,8 +87,5 @@ class IRCBotIO(object):
                 continue
 
             c = self.acquiredb()
-            try:
-                c.execute("""INSERT INTO logs VALUES (?, ?, ?, ?, ?, ?, ?)""", (None, ev.type, ev.cmd, ev.sender, ev.target, ev.msg, int(time.time())))
-            except Exception:
-                pass
+            c.execute("""INSERT INTO logs VALUES (?, ?, ?, ?, ?, ?, ?)""", (None, ev.type, ev.cmd, ev.sender, ev.target, ev.msg, int(time.time())))
             self.releasedb(c)

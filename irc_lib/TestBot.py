@@ -77,10 +77,7 @@ class TestBot(IRCBotBase):
             exec cmd in self.globaldic, self.localdic
         except Exception as errormsg:
             self.log('ERROR : %s' % errormsg)
-            try:
-                self.say(channel, 'ERROR : %s' % errormsg)
-            except Exception:
-                self.say(sender, 'ERROR : %s' % errormsg)
+            self.say(sender, 'ERROR : %s' % errormsg)
 
 
 if __name__ == "__main__":

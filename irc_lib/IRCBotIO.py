@@ -1,6 +1,7 @@
 import time
 import socket
 import re
+import sqlite3
 from Queue import Empty
 
 
@@ -80,12 +81,13 @@ class IRCBotIO(object):
             print msg
 
     def logging_loop(self):
-        while not self.exit:
-            try:
-                ev = self.loggingq.get(True, 1)
-            except Empty:
-                continue
+        with sqlite3.connect(self.dbconf) as db:
+            while not self.exit:
+                try:
+                    ev = self.loggingq.get(True, 1)
+                except Empty:
+                    continue
 
-            c = self.acquiredb()
-            c.execute("""INSERT INTO logs VALUES (?, ?, ?, ?, ?, ?, ?)""", (None, ev.type, ev.cmd, ev.sender, ev.target, ev.msg, int(time.time())))
-            self.releasedb(c)
+                db.execute("""INSERT INTO logs VALUES (?, ?, ?, ?, ?, ?, ?)""",
+                    (None, ev.type, ev.cmd, ev.sender, ev.target, ev.msg, int(time.time())))
+                db.commit()

@@ -9,7 +9,6 @@ class MCPBot(IRCBotBase, MCPBotCmds):
     def __init__(self, nick='DevBot', char='!'):
         IRCBotBase.__init__(self, nick, char)
         self.whitelist['ProfMobius'] = 5
-        self.dbconf = 'ircbot.sqlite'
 
     def onDefault(self, ev):
         pass

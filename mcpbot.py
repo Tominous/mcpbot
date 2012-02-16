@@ -13,7 +13,6 @@ class MCPBot(IRCBotBase, MCPBotCmds):
         self.whitelist['ZeuX'] = 5
         self.whitelist['Ingis'] = 5
         self.whitelist['Fesh0r'] = 5
-        self.dbconf = 'ircbot.sqlite'
 
     def onDefault(self, ev):
         pass

@@ -1,7 +1,6 @@
 import socket
-import sqlite3
 import time
-from threading import Condition, Lock
+from threading import Condition
 from protocols.dispatcher import Dispatcher
 from Queue import Queue, Empty
 
@@ -16,7 +15,7 @@ class IRCBotBase(IRCBotAdvMtd, IRCBotIO):
     Provides a threadpool to handle bot commands, a user list updated as information become available,
     and access to all the procotols through self.<protocol> (irc, ctcp, dcc, and nickserv)"""
 
-    def __init__(self, _nick='IRCBotLib', _char=':', _flood=1000):
+    def __init__(self, _nick='IRCBotLib', _char=':', _flood=1000, _dbconf='ircbot.sqlite'):
         self.whitelist = {}
 
         self.controlchar = _char
@@ -25,13 +24,14 @@ class IRCBotBase(IRCBotAdvMtd, IRCBotIO):
 
         self.cnick = _nick
 
+        self.dbconf = _dbconf
+
         self.rawmsg = False
 
         self.locks = {
             'WhoIs': Condition(),
             'ServReg': Condition(),
-            'NSStatus': Condition(),
-            'BotDB': Lock()
+            'NSStatus': Condition()
         }
 
         self.localdic = {}
@@ -114,16 +114,3 @@ class IRCBotBase(IRCBotAdvMtd, IRCBotIO):
                 self.exit = True
                 self.threadpool.wait_completion()
                 raise
-
-    def acquiredb(self):
-        self.locks['BotDB'].acquire()
-        self.botdbase = sqlite3.connect(self.dbconf)
-        c = self.botdbase.cursor()
-        return c
-
-    def releasedb(self, c):
-        self.botdbase.commit()
-        c.close()
-        self.botdbase.close()
-        self.botdbase = None
-        self.locks['BotDB'].release()

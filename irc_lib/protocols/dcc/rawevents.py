@@ -8,6 +8,7 @@ class DCCRawEvents(object):
     def onRawDCCMsg(self, ev):
         if not ev.msg:
             return
+        self.log(ev)
 
         ev.msg = ev.msg.strip()
         if len(ev.msg) > 1:

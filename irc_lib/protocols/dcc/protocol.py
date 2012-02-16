@@ -155,7 +155,7 @@ class DCCProtocol(DCCCommands, DCCRawEvents):
 
                         # We push all the msg beside the last one (in case it is truncated)
                         for msg in msg_list:
-                            ev = Event(s.nick, 'DCCMSG', self.cnick, msg.strip(), self.cnick, 'DCCMSG')
+                            ev = Event(s.nick, 'DCCMSG', self.cnick, msg.strip(), 'DCCMSG')
 
                             self.log(ev)
 

@@ -4,11 +4,13 @@ import socket
 def get_nick(name):
     if name[0] == ':':
         name = name[1:]
-    return name.split('!')[0]
+    nick, _, _ = split_prefix(name)
+    return nick
 
 
 def get_host(name):
-    return name.split('@')[-1]
+    _, _, host = split_prefix(name)
+    return host
 
 
 def get_ip(host):
@@ -16,3 +18,8 @@ def get_ip(host):
         return socket.gethostbyname(host)
     except socket.gaierror:
         return '0.0.0.0'
+
+def split_prefix(prefix):
+    rest, _, host = prefix.partition('@')
+    nick, _, user = rest.partition('!')
+    return nick, user, host

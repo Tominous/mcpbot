@@ -55,9 +55,9 @@ class IRCProtocol(IRCCommands, IRCRawEvents):
             # We treat the special case of QUIT.
             # If we don't have a QUIT, we create a normal event
             if msg[1] == 'QUIT':
-                ev = Event(msg[0], msg[1], '', ' '.join(msg[2:]), self.cnick, 'IRC')
+                ev = Event(msg[0], msg[1], '', ' '.join(msg[2:]), 'IRC')
             else:
-                ev = Event(msg[0], msg[1], msg[2], ' '.join(msg[3:]), self.cnick, 'IRC')
+                ev = Event(msg[0], msg[1], msg[2], ' '.join(msg[3:]), 'IRC')
 
             self.log(ev)
 

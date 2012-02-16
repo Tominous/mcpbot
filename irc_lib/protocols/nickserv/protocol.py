@@ -34,7 +34,7 @@ class NickServProtocol(NickServCommands, NickServRawEvents):
 
             if len(msg) < 5:
                 msg.append(' ')
-            ev = Event(msg[0], msg[4], msg[2], ' '.join([msg[3], msg[5]]), self.cnick, 'NSERV')
+            ev = Event(msg[0], msg[4], msg[2], ' '.join([msg[3], msg[5]]), 'NSERV')
 
             if hasattr(self, 'onRawNickServ%s' % ev.cmd):
                 self.bot.threadpool.add_task(getattr(self, 'onRawNickServ%s' % ev.cmd), ev)

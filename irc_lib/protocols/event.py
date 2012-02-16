@@ -1,10 +1,12 @@
 import time
 
+from irc_lib.utils.irc_name import split_prefix
+
 
 class Event(object):
     maxid = 0
 
-    def __init__(self, sender, cmd, target, msg, selfnick, etype):
+    def __init__(self, sender, cmd, target, msg, etype):
         if msg[0] == ':' and len(msg.strip()) == 1:
             msg = ''
         elif msg[0] == ':':
@@ -13,14 +15,7 @@ class Event(object):
             sender = sender[1:]
         if target and target[0] == ':':
             target = target[1:]
-        self.sender = sender.split('!')[0].strip()
-        self.senderuser = None
-        self.senderhost = None
-        if len(sender.split('!')) == 2:
-            backpart = sender.split('!')[1]
-            self.senderuser = backpart.split('@')[0]
-            if len(backpart.split('@')) == 2:
-                self.senderhost = backpart.split('@')[1]
+        self.sender, self.senderuser, self.senderhost = split_prefix(sender.strip())
         self.senderfull = sender.strip()
         self.cmd = cmd.strip()
         self.target = target.strip()

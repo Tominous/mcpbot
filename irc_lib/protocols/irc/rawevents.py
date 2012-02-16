@@ -27,7 +27,7 @@ class IRCRawEvents(object):
                 outmsg = ' '
             else:
                 outmsg = ' '.join(ev.msg.split()[1:])
-            evcmd = Event(ev.sender, outcmd, ev.target, outmsg, self.cnick, 'CMD')
+            evcmd = Event(ev.sender, outcmd, ev.target, outmsg, 'CMD')
             self.bot.commandq.put(evcmd)
 
     def onRawJOIN(self, ev):

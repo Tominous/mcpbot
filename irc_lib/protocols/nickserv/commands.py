@@ -1,6 +1,6 @@
 class NickServCommands(object):
     def rawcmd(self, cmd):
-        self.out_msg.put(':%s PRIVMSG NickServ :%s\r\n' % (self.cnick, cmd))
+        self.out_msg.put(':%s PRIVMSG NickServ :%s' % (self.cnick, cmd))
 
     def register(self):
         pass

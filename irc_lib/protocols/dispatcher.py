@@ -38,9 +38,6 @@ class Dispatcher(object):
             if not msg:
                 continue
 
-            if self.bot.rawmsg:
-                self.bot.printq.put('< "%s"' % msg)
-
             sender = get_nick(msg.split()[0])
             cmd = msg.split()[1]
 

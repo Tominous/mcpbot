@@ -3,10 +3,10 @@ import time
 
 class CTCPCommands(object):
     def rawcmd(self, target, cmd):
-        self.out_msg.put(':%s PRIVMSG %s :\x01%s\x01\r\n' % (self.cnick, target, cmd))
+        self.out_msg.put(':%s PRIVMSG %s :\x01%s\x01' % (self.cnick, target, cmd))
 
     def rawnotice(self, target, cmd):
-        self.out_msg.put(':%s NOTICE %s :\x01%s\x01\r\n' % (self.cnick, target, cmd))
+        self.out_msg.put(':%s NOTICE %s :\x01%s\x01' % (self.cnick, target, cmd))
 
     def time(self, target):
         self.rawcmd(target, 'TIME')

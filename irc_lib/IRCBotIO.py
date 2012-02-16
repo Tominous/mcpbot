@@ -31,16 +31,16 @@ class IRCBotIO(object):
                 continue
             self.out_msg.task_done()
             if self.rawmsg:
-                self.printq.put('> ' + msg.strip())
-            if len(msg) > int(allowed_chars):
-                time.sleep((len(msg) * 1.25) / (self.floodprotec / 30.0))
+                self.printq.put('> %s' % repr(msg))
+            out_line = msg + '\r\n'
+            if len(out_line) > int(allowed_chars):
+                time.sleep((len(out_line) * 1.25) / (self.floodprotec / 30.0))
             try:
-                self.irc_socket.send(msg)
-                allowed_chars -= len(msg)
+                self.irc_socket.send(out_line)
+                allowed_chars -= len(out_line)
             except socket.timeout:
                 self.out_msg.put(msg)
                 continue
-
 
     def inbound_loop(self):
         """Incoming message thread. Check for new data on the socket and push the data to the dispatcher queue if any."""
@@ -64,6 +64,8 @@ class IRCBotIO(object):
             buf = msg_list.pop()
 
             for msg in msg_list:
+                if self.rawmsg:
+                    self.printq.put('< %s' % repr(msg))
                 self.in_msg.put(msg)
 
     def print_loop(self):

@@ -5,7 +5,7 @@ from irc_lib.utils.colors import conv_s2i
 
 class DCCCommands(object):
     def rawcmd(self, target, cmd):
-        self.out_msg.put(':%s PRIVMSG %s :\x01DCC %s\x01\r\n' % (self.cnick, target, cmd))
+        self.out_msg.put(':%s PRIVMSG %s :\x01DCC %s\x01' % (self.cnick, target, cmd))
 
     def say(self, nick, msg, color=True):
         if color:

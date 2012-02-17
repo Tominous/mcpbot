@@ -3,13 +3,12 @@ from irc_lib.protocols.event import Event
 
 
 class IRCRawEvents(object):
-    def onRawPING(self, prefix, args):
+    def onIRC_PING(self, prefix, args):
         target = args[0]
         self.pong(target)
 
-#
 
-    def onRawPRIVMSG(self, prefix, args):
+    def onIRC_PRIVMSG(self, prefix, args):
         sender = get_nick(prefix)
         target = args[0]
         msg = args[1]
@@ -32,7 +31,7 @@ class IRCRawEvents(object):
             evcmd = Event(sender, outcmd, target, outmsg, 'CMD')
             self.bot.commandq.put(evcmd)
 
-    def onRawJOIN(self, prefix, args):
+    def onIRC_JOIN(self, prefix, args):
         sender = get_nick(prefix)
         chan = args[0]
         if sender == self.cnick:
@@ -40,36 +39,36 @@ class IRCRawEvents(object):
         else:
             self.add_user(sender, chan)
 
-    def onRawPART(self, prefix, args):
+    def onIRC_PART(self, prefix, args):
         sender = get_nick(prefix)
         chan = args[0]
         msg = args[1]
         self.rm_user(sender, chan)
 
-    def onRawQUIT(self, prefix, args):
+    def onIRC_QUIT(self, prefix, args):
         sender = get_nick(prefix)
         msg = args[0]
         self.rm_user(sender)
 
-    def onRawRPL_WELCOME(self, prefix, args):
+    def onIRC_RPL_WELCOME(self, prefix, args):
         server = prefix
         target = args[0]
         msg = args[1]
-        self.bot.irc_status['Server'] = prefix
-        self.log('> Connected to server %s' % prefix)
+        self.bot.irc_status['Server'] = server
+        self.log('> Connected to server %s' % server)
 
-    def onRawRPL_MOTDSTART(self, prefix, args):
+    def onIRC_RPL_MOTDSTART(self, prefix, args):
         server = prefix
         target = args[0]
         msg = args[1]
-        if prefix == self.bot.irc_status['Server']:
+        if server == self.bot.irc_status['Server']:
             self.locks['ServReg'].acquire()
             self.bot.irc_status['Registered'] = True
             self.locks['ServReg'].notifyAll()
             self.locks['ServReg'].release()
             self.log('> MOTD found. Registered with server.')
 
-    def onRawRPL_NAMREPLY(self, prefix, args):
+    def onIRC_RPL_NAMREPLY(self, prefix, args):
         server = prefix
         # Used for channel status, "@" is used for secret channels, "*" for private channels, and "=" for others (public channels).
         target = args[0]
@@ -80,8 +79,8 @@ class IRCRawEvents(object):
         for nick in nicks:
             self.add_user(nick, channel)
 
-    def onRawRPL_WHOISUSER(self, prefix, args):
-        sender = prefix
+    def onIRC_RPL_WHOISUSER(self, prefix, args):
+        server = prefix
         target = args[0]
         nick = args[1]
         user = args[2]
@@ -95,7 +94,7 @@ class IRCRawEvents(object):
         self.locks['WhoIs'].notifyAll()
         self.locks['WhoIs'].release()
 
-    def onRawNICK(self, prefix, args):
+    def onIRC_NICK(self, prefix, args):
         sender = get_nick(prefix)
         newnick = args[0]
         if sender == self.cnick:
@@ -104,11 +103,11 @@ class IRCRawEvents(object):
             self.bot.users[newnick] = self.bot.users[sender]
             del self.bot.users[sender]
 
-    def onRawINVITE(self, prefix, args):
+    def onIRC_INVITE(self, prefix, args):
         sender = get_nick(prefix)
         target = args[0]
         chan = args[1]
         self.join(chan)
 
-    def onRawDefault(self, command, prefix, args):
-        self.bot.printq.put("Raw%s %s %s" % (command, repr(split_prefix(prefix)), str(args)))
+    def onIRC_Default(self, command, prefix, args):
+        self.bot.printq.put("IRC_%s %s %s" % (command, repr(split_prefix(prefix)), str(args)))

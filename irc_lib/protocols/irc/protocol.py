@@ -52,14 +52,16 @@ class IRCProtocol(IRCCommands, IRCRawEvents):
             self.bot.loggingq.put(ev)
 
             # We call the corresponding raw event if it exist, or the rawDefault if not.
-            if hasattr(self, 'onRaw%s' % command):
-                self.bot.threadpool.add_task(getattr(self, 'onRaw%s' % command), prefix, args)
+            if hasattr(self, 'onIRC_%s' % command):
+                self.bot.threadpool.add_task(getattr(self, 'onIRC_%s' % command), prefix, args)
             else:
-                self.bot.threadpool.add_task(getattr(self, 'onRawDefault'), command, prefix, args)
+                self.bot.threadpool.add_task(getattr(self, 'onIRC_Default'), command, prefix, args)
 
             # We call the corresponding event if it exist, or the Default if not.
-            if hasattr(self.bot, 'on%s' % command):
-                self.bot.threadpool.add_task(getattr(self.bot, 'on%s' % command), prefix, args)
+            if hasattr(self.bot, 'onIRC_%s' % command):
+                self.bot.threadpool.add_task(getattr(self.bot, 'onIRC_%s' % command), prefix, args)
+            elif hasattr(self.bot, 'onIRC_Default'):
+                self.bot.threadpool.add_task(getattr(self.bot, 'onIRC_Default'), command, prefix, args)
             else:
                 self.bot.threadpool.add_task(getattr(self.bot, 'onDefault'), ev)
 

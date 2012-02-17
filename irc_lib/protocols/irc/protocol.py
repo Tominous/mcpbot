@@ -29,50 +29,42 @@ class IRCProtocol(IRCCommands, IRCRawEvents):
                 continue
             self.in_msg.task_done()
 
-            # We check if we have an actual msg or if it is empty (never should be)
-            msg = msg.strip()
-            if not msg:
-                continue
-
-            msg = msg.split()
+            # parse the various fields out of the message
+            prefix = ''
+            trailing = []
+            if msg[0] == ':':
+                prefix, msg = msg[1:].split(' ', 1)
+            if msg.find(' :') != -1:
+                msg, trailing = msg.split(' :', 1)
+                args = msg.split()
+                args.append(trailing)
+            else:
+                args = msg.split()
+            # uppercase the command as mIRC is lame apparently, shouldn't matter as we are talking to a server anyway
+            command = args.pop(0).upper()
 
             # If the reply is numerical, we change the cmd type to the correct type
-            if msg[1] in IRC_REPLIES:
-                msg[1] = IRC_REPLIES[msg[1]]
+            if command in IRC_REPLIES:
+                command = IRC_REPLIES[command]
 
-            # We treat the ping special case
-            if msg[0] == 'PING':
-                self.onRawPING(msg)
-                if hasattr(self.bot, 'onPING'):
-                    self.bot.onPING(msg)
-                continue
-
-            # We add an space to the msg if the msg is less than 3 elements (we create an actual msg field for the event object)
-            if len(msg) < 4:
-                msg.append(' ')
-
-            # We treat the special case of QUIT.
-            # If we don't have a QUIT, we create a normal event
-            if msg[1] == 'QUIT':
-                ev = Event(msg[0], msg[1], '', ' '.join(msg[2:]), 'IRC')
-            else:
-                ev = Event(msg[0], msg[1], msg[2], ' '.join(msg[3:]), 'IRC')
-
+            # fake event used for logging and onDefault, missing target
+            ev = Event(prefix, command, '', str(args), 'IRC')
             self.bot.loggingq.put(ev)
 
             # We call the corresponding raw event if it exist, or the rawDefault if not.
-            if hasattr(self, 'onRaw%s' % ev.cmd):
-                self.bot.threadpool.add_task(getattr(self, 'onRaw%s' % ev.cmd), ev)
+            if hasattr(self, 'onRaw%s' % command):
+                self.bot.threadpool.add_task(getattr(self, 'onRaw%s' % command), prefix, args)
             else:
-                self.bot.threadpool.add_task(getattr(self, 'onRawDefault'), ev)
+                self.bot.threadpool.add_task(getattr(self, 'onRawDefault'), command, prefix, args)
 
             # We call the corresponding event if it exist, or the Default if not.
             if hasattr(self.bot, 'on%s' % ev.cmd):
-                self.bot.threadpool.add_task(getattr(self.bot, 'on%s' % ev.cmd), ev)
+                self.bot.threadpool.add_task(getattr(self.bot, 'on%s' % ev.cmd), prefix, args)
             else:
                 self.bot.threadpool.add_task(getattr(self.bot, 'onDefault'), ev)
 
     def add_user(self, nick, chan=None):
+        self.log('add_user: %s %s' % (nick, chan))
         nick_status = '-'
         if nick[0] == ':':
             nick = nick[1:]
@@ -88,6 +80,7 @@ class IRCProtocol(IRCCommands, IRCRawEvents):
         self.bot.users[snick].chans[chan] = nick_status
 
     def rm_user(self, nick, chan=None):
+        self.log('rm_user: %s %s' % (nick, chan))
         if nick[0] == ':':
             nick = nick[1:]
 

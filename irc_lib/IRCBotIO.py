@@ -82,6 +82,7 @@ class IRCBotIO(object):
 
     def logging_loop(self):
         with sqlite3.connect(self.dbconf) as db:
+            db.text_factory = str
             while not self.exit:
                 try:
                     ev = self.loggingq.get(True, 1)

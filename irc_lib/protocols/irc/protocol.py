@@ -58,8 +58,8 @@ class IRCProtocol(IRCCommands, IRCRawEvents):
                 self.bot.threadpool.add_task(getattr(self, 'onRawDefault'), command, prefix, args)
 
             # We call the corresponding event if it exist, or the Default if not.
-            if hasattr(self.bot, 'on%s' % ev.cmd):
-                self.bot.threadpool.add_task(getattr(self.bot, 'on%s' % ev.cmd), prefix, args)
+            if hasattr(self.bot, 'on%s' % command):
+                self.bot.threadpool.add_task(getattr(self.bot, 'on%s' % command), prefix, args)
             else:
                 self.bot.threadpool.add_task(getattr(self.bot, 'onDefault'), ev)
 

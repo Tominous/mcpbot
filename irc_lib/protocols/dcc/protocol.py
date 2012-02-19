@@ -75,6 +75,10 @@ class DCCProtocol(DCCCommands, DCCRawEvents):
                 dccip = ''
                 dccport = ''
 
+            # fake event used for logging and onDefault, missing target
+            ev = Event(msg[0], cmd, '', ' '.join(msg[2:]), 'DCC')
+            self.bot.loggingq.put(ev)
+
             if cmd not in ['PRIVMSG', 'NOTICE']:
                 raise IRCBotError('Invalid command from DCC : %s' % msg)
 
@@ -88,7 +92,7 @@ class DCCProtocol(DCCCommands, DCCRawEvents):
             elif hasattr(self.bot, 'onDCC_Default'):
                 self.bot.threadpool.add_task(getattr(self.bot, 'onDCC_Default'), sender, dcccmd, dccarg, dccip, dccport)
             else:
-                self.bot.threadpool.add_task(getattr(self.bot, 'onDefault'), msg[0], cmd, ' '.join(msg[2:]))
+                self.bot.threadpool.add_task(getattr(self.bot, 'onDefault'), ev)
 
     def conv_ip_long_std(self, longip):
         hexip = hex(longip)[2:-1]

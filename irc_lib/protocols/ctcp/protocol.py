@@ -42,6 +42,7 @@ class CTCPProtocol(CTCPCommands, CTCPRawEvents):
                 outmsg = ' '.join(msg[3].split()[1:])
 
             ev = Event(msg[0], msg[3].split()[0][1:], msg[2], outmsg, 'CTCP')
+            self.bot.loggingq.put(ev)
 
             if hasattr(self, 'onCTCP_%s' % ev.cmd):
                 self.bot.threadpool.add_task(getattr(self, 'onCTCP_%s' % ev.cmd), ev)

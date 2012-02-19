@@ -22,7 +22,7 @@ class DCCRawEvents(object):
 
             self.bot.commandq.put(outev)
 
-    def onRawDCCCHAT(self, sender, dcccmd, dccarg, dccip, dccport):
+    def onDCC_CHAT(self, sender, dcccmd, dccarg, dccip, dccport):
         nick = get_nick(sender)
         dccip = self.conv_ip_long_std(int(dccip))
         dccport = int(dccport)
@@ -33,10 +33,10 @@ class DCCRawEvents(object):
             self.sockets[nick].setblocking(0)
             self.buffers[nick] = ''
         except KeyError:
-            print '[DCCRawEvents.onRawDCCChat] Nick not found in socket table : %s' % nick
+            print '[DCCRawEvents.onDCC_Chat] Nick not found in socket table : %s' % nick
 
 
 #
 
-    def onRawDCCDefault(self, sender, dcccmd, dccarg, dccip, dccport):
+    def onDCC_Default(self, sender, dcccmd, dccarg, dccip, dccport):
         print 'RAW DCC EVENT: %s %s %s' % (sender, dcccmd, dccarg)

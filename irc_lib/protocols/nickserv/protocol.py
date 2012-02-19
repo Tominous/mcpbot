@@ -36,12 +36,14 @@ class NickServProtocol(NickServCommands, NickServRawEvents):
                 msg.append(' ')
             ev = Event(msg[0], msg[4], msg[2], ' '.join([msg[3], msg[5]]), 'NSERV')
 
-            if hasattr(self, 'onRawNickServ%s' % ev.cmd):
-                self.bot.threadpool.add_task(getattr(self, 'onRawNickServ%s' % ev.cmd), ev)
+            if hasattr(self, 'onNSERV_%s' % ev.cmd):
+                self.bot.threadpool.add_task(getattr(self, 'onNSERV_%s' % ev.cmd), ev)
             else:
-                self.bot.threadpool.add_task(getattr(self, 'onRawNickServDefault'), ev)
+                self.bot.threadpool.add_task(getattr(self, 'onNSERV_Default'), ev)
 
-            if hasattr(self.bot, 'onNickServ%s' % ev.cmd):
-                self.bot.threadpool.add_task(getattr(self.bot, 'onNickServ%s' % ev.cmd), ev)
+            if hasattr(self.bot, 'onNSERV_%s' % ev.cmd):
+                self.bot.threadpool.add_task(getattr(self.bot, 'onNSERV_%s' % ev.cmd), ev)
+            elif hasattr(self.bot, 'onNSERV_Default'):
+                self.bot.threadpool.add_task(getattr(self.bot, 'onNSERV_Default'), ev)
             else:
                 self.bot.threadpool.add_task(getattr(self.bot, 'onDefault'), ev)

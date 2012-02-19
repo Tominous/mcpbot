@@ -78,13 +78,15 @@ class DCCProtocol(DCCCommands, DCCRawEvents):
             if cmd not in ['PRIVMSG', 'NOTICE']:
                 raise IRCBotError('Invalid command from DCC : %s' % msg)
 
-            if hasattr(self, 'onRawDCC%s' % dcccmd):
-                self.bot.threadpool.add_task(getattr(self, 'onRawDCC%s' % dcccmd), sender, dcccmd, dccarg, dccip, dccport)
+            if hasattr(self, 'onDCC_%s' % dcccmd):
+                self.bot.threadpool.add_task(getattr(self, 'onDCC_%s' % dcccmd), sender, dcccmd, dccarg, dccip, dccport)
             else:
-                self.bot.threadpool.add_task(getattr(self, 'onRawDCCDefault'), sender, dcccmd, dccarg, dccip, dccport)
+                self.bot.threadpool.add_task(getattr(self, 'onDCC_Default'), sender, dcccmd, dccarg, dccip, dccport)
 
-            if hasattr(self.bot, 'onDCC%s' % dcccmd):
-                self.bot.threadpool.add_task(getattr(self.bot, 'onDCC%s' % dcccmd), sender, dcccmd, dccarg, dccip, dccport)
+            if hasattr(self.bot, 'onDCC_%s' % dcccmd):
+                self.bot.threadpool.add_task(getattr(self.bot, 'onDCC_%s' % dcccmd), sender, dcccmd, dccarg, dccip, dccport)
+            elif hasattr(self.bot, 'onDCC_Default'):
+                self.bot.threadpool.add_task(getattr(self.bot, 'onDCC_Default'), sender, dcccmd, dccarg, dccip, dccport)
             else:
                 self.bot.threadpool.add_task(getattr(self.bot, 'onDefault'), msg[0], cmd, ' '.join(msg[2:]))
 

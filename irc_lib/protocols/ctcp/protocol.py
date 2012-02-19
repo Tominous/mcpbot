@@ -43,12 +43,14 @@ class CTCPProtocol(CTCPCommands, CTCPRawEvents):
 
             ev = Event(msg[0], msg[3].split()[0][1:], msg[2], outmsg, 'CTCP')
 
-            if hasattr(self, 'onRawCTCP%s' % ev.cmd):
-                self.bot.threadpool.add_task(getattr(self, 'onRawCTCP%s' % ev.cmd), ev)
+            if hasattr(self, 'onCTCP_%s' % ev.cmd):
+                self.bot.threadpool.add_task(getattr(self, 'onCTCP_%s' % ev.cmd), ev)
             else:
-                self.bot.threadpool.add_task(getattr(self, 'onRawCTCPDefault'), ev)
+                self.bot.threadpool.add_task(getattr(self, 'onCTCP_Default'), ev)
 
-            if hasattr(self.bot, 'onCTCP%s' % ev.cmd):
-                self.bot.threadpool.add_task(getattr(self.bot, 'onCTCP%s' % ev.cmd), ev)
+            if hasattr(self.bot, 'onCTCP_%s' % ev.cmd):
+                self.bot.threadpool.add_task(getattr(self.bot, 'onCTCP_%s' % ev.cmd), ev)
+            elif hasattr(self.bot, 'onCTCP_Default' % ev.cmd):
+                self.bot.threadpool.add_task(getattr(self.bot, 'onCTCP_Default'), ev)
             else:
                 self.bot.threadpool.add_task(getattr(self.bot, 'onDefault'), ev)

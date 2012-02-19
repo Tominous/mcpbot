@@ -4,7 +4,7 @@ from irc_lib.protocols.user import User
 class NickServRawEvents(object):
 #
 
-    def onRawNickServACC(self, ev):
+    def onNSERV_ACC(self, ev):
         if not ev.msg:
             return
         self.bot.loggingq.put(ev)
@@ -18,5 +18,5 @@ class NickServRawEvents(object):
         self.locks['NSStatus'].notifyAll()
         self.locks['NSStatus'].release()
 
-    def onRawNickServDefault(self, ev):
+    def onNSERV_Default(self, ev):
         pass

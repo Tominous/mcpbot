@@ -19,10 +19,10 @@ class DCCCommands(object):
                 self.sockets[nick].socket.send(msg.strip() + '\r\n')
                 isGone = True
             except socket.error:
-                print 'Socket error !'
+                self.log('Socket error !')
                 raise
             except KeyError:
-                print '[DCCCommands.say] Nick not found in socket table : %s' % nick
+                self.log('[DCCCommands.say] Nick not found in socket table : %s' % nick)
 
     def dcc(self, nick):
         target_ip = self.bot.getIP(nick)

@@ -23,4 +23,4 @@ class CTCPRawEvents(object):
         self.rawnotice(ev.sender, 'TIME :%s' % time.ctime())
 
     def onCTCP_Default(self, ev):
-        print 'RAW CTCP EVENT: %s %s' % (ev.sender, ev.msg)
+        self.log('RAW CTCP EVENT: %s %s %s' % (ev.sender, ev.cmd, ev.msg))

@@ -105,7 +105,7 @@ class DCCProtocol(DCCCommands, DCCRawEvents):
     def conv_ip_long_std(self, longip):
         hexip = hex(longip)[2:-1]
         if len(hexip) != 8:
-            print 'Error !'
+            self.log('Error converting %d' % longip)
             return '0.0.0.0'
         part1 = int(hexip[0:2], 16)
         part2 = int(hexip[2:4], 16)
@@ -160,7 +160,7 @@ class DCCProtocol(DCCCommands, DCCRawEvents):
                         if self.bot.rawmsg:
                             self.log('< ' + s.buffer)
 
-                        print r'>%s<' % s.buffer
+                        self.log(r'>%s<' % s.buffer)
                         if not s.buffer.strip():
                             s.buffer = ''
                             continue
@@ -188,7 +188,5 @@ class DCCProtocol(DCCCommands, DCCRawEvents):
                             inp.remove(s)
                         except Exception:
                             # TODO : Specialized error handling. General except is BAD !
-                            print "========="
-                            print "> Unexpected error while closing the socket :", sys.exc_info()[0]
-                            print "========="
+                            self.log("> Unexpected error while closing the socket: %s" % sys.exc_info()[0])
                             raise

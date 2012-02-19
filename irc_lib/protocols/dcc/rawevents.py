@@ -31,12 +31,11 @@ class DCCRawEvents(object):
             self.sockets[nick] = socket.socket()
             self.sockets[nick].connect((dccip, dccport))
             self.sockets[nick].setblocking(0)
-            self.buffers[nick] = ''
         except KeyError:
-            print '[DCCRawEvents.onDCC_Chat] Nick not found in socket table : %s' % nick
-
+            self.log('[DCCRawEvents.onDCC_Chat] Nick not found in socket table : %s' % nick)
+        self.log('onDCC_CHAT: %s %s | IP:%s Port:%s' % (dcccmd, dccarg, dccip, dccport))
 
 #
 
     def onDCC_Default(self, sender, dcccmd, dccarg, dccip, dccport):
-        print 'RAW DCC EVENT: %s %s %s' % (sender, dcccmd, dccarg)
+        self.log('RAW DCC EVENT: %s %s %s' % (sender, dcccmd, dccarg))

@@ -87,7 +87,7 @@ class IRCProtocol(IRCCommands, IRCRawEvents):
             nick = nick[1:]
 
         if not nick in self.bot.users:
-            print 'WARNING : Tried to remove an inexisting user : %s.' % nick
+            self.log('WARNING : Tried to remove an inexisting user : %s.' % nick)
             return
 
         if not chan:

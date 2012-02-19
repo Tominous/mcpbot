@@ -755,7 +755,7 @@ class MCPBotCmds(object):
     @restricted(5)
     def cmd_exec(self, sender, chan, cmd, msg, *args, **kwargs):
         try:
-            print msg
+            self.log('EXEC: %s' % msg)
             exec msg in self.globaldic, self.localdic
         except Exception as errormsg:
             self.log('ERROR : %s' % errormsg)

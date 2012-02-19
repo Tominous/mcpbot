@@ -1,11 +1,15 @@
-from irc_lib.utils.irc_name import get_nick, get_ip, split_prefix
+from irc_lib.utils.irc_name import get_nick, get_ip
 from irc_lib.protocols.event import Event
 
 
 class IRCRawEvents(object):
     def onIRC_PING(self, prefix, args):
         target = args[0]
-        self.pong(target)
+        if len(args) > 1:
+            target2 = args[1]
+        else:
+            target2 = None
+        self.pong(target, target2)
 
 
     def onIRC_PRIVMSG(self, prefix, args):
@@ -34,6 +38,10 @@ class IRCRawEvents(object):
     def onIRC_JOIN(self, prefix, args):
         sender = get_nick(prefix)
         chan = args[0]
+        if len(args) > 1:
+            key = args[1]
+        else:
+            key = None
         if sender == self.cnick:
             self.bot.irc_status['Channels'].add(chan)
         else:
@@ -42,18 +50,27 @@ class IRCRawEvents(object):
     def onIRC_PART(self, prefix, args):
         sender = get_nick(prefix)
         chan = args[0]
-        msg = args[1]
+        if len(args) > 1:
+            msg = args[1]
+        else:
+            msg = ''
         self.rm_user(sender, chan)
 
     def onIRC_QUIT(self, prefix, args):
         sender = get_nick(prefix)
-        msg = args[0]
+        if len(args) > 0:
+            msg = args[0]
+        else:
+            msg = ''
         self.rm_user(sender)
 
     def onIRC_RPL_WELCOME(self, prefix, args):
         server = prefix
         target = args[0]
-        msg = args[1]
+        if len(args) > 1:
+            msg = args[1]
+        else:
+            msg = ''
         self.bot.irc_status['Server'] = server
         self.log('> Connected to server %s' % server)
 

@@ -25,8 +25,11 @@ class IRCCommands(object):
             real = ':%s' % self.cnick.upper()
         self.rawcmd('USER %s %s %s %s' % (user, host, server, real))
 
-    def pong(self, timestamp):
-        self.rawcmd('PONG %s' % timestamp)
+    def pong(self, server1, server2=None):
+        if server2:
+            self.rawcmd('PONG %s %s' % (server1, server2))
+        else:
+            self.rawcmd('PONG %s' % server1)
 
     def join(self, chan, key=None):
         self.locks['ServReg'].acquire()

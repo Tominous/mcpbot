@@ -32,14 +32,22 @@ class DCCProtocol(DCCCommands, DCCRawEvents):
         self.sockets = {}
         self.ip2nick = {}
 
+        listenhost = ''
+        listenport = 0
         self.insocket = socket.socket()
         try:
+            self.insocket.bind((listenhost, listenport))
             self.insocket.listen(5)
-            self.inip, self.inport = self.insocket.getsockname()
-            self.inip = self.conv_ip_std_long(urllib.urlopen('http://automation.whatismyip.com/n09230945.asp').readlines()[0])
+            listenhost, listenport = self.insocket.getsockname()
         except socket.error:
             self.log("DCC insocket failed")
-            return
+            raise
+
+        externalip = urllib.urlopen('http://automation.whatismyip.com/n09230945.asp').readlines()[0]
+        self.inip = self.conv_ip_std_long(externalip)
+        self.inport = listenport
+
+        self.log("DCC listening on %s:%d %s '%d %d'" % (listenhost, listenport, externalip, self.inip, self.inport))
 
         self.bot.threadpool.add_task(self.treat_msg, _threadname='DCCHandler')
         self.bot.threadpool.add_task(self.inbound_loop, _threadname='DCCInLoop')

@@ -66,7 +66,6 @@ class IRCProtocol(IRCCommands, IRCRawEvents):
                 self.bot.threadpool.add_task(getattr(self.bot, 'onDefault'), ev)
 
     def add_user(self, nick, chan=None):
-        self.log('add_user: %s %s' % (nick, chan))
         nick_status = '-'
         if nick[0] == ':':
             nick = nick[1:]
@@ -82,7 +81,6 @@ class IRCProtocol(IRCCommands, IRCRawEvents):
         self.bot.users[snick].chans[chan] = nick_status
 
     def rm_user(self, nick, chan=None):
-        self.log('rm_user: %s %s' % (nick, chan))
         if nick[0] == ':':
             nick = nick[1:]
 

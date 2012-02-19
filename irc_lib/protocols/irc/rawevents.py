@@ -110,4 +110,4 @@ class IRCRawEvents(object):
         self.join(chan)
 
     def onIRC_Default(self, command, prefix, args):
-        self.bot.printq.put("IRC_%s %s %s" % (command, repr(split_prefix(prefix)), str(args)))
+        pass

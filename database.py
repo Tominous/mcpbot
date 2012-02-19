@@ -1,5 +1,6 @@
 import sqlite3
 import threading
+from contextlib import closing
 
 
 #====================== DB Decorator ===================================
@@ -10,24 +11,17 @@ def database(f):
 
         try:
             DBLock.acquire()
-            dbase = sqlite3.connect('database.sqlite')
-            c = dbase.cursor()
+            with sqlite3.connect('database.sqlite') as con:
+                con.text_factory = sqlite3.OptimizedUnicode
+                con.row_factory = sqlite3.Row
+                with closing(con.cursor()) as cur:
+                    (idversion,) = cur.execute("""SELECT value FROM config WHERE name='currentversion'""").fetchone()
 
-            (idversion,) = c.execute("""SELECT value FROM config WHERE name='currentversion'""").fetchone()
-
-            kwargs['cursor'] = c
-            kwargs['idvers'] = idversion
-
-            rows = f(*args, **kwargs)
-
-            dbase.commit()
-            c.close()
-            dbase.close()
+                    kwargs['cursor'] = cur
+                    kwargs['idvers'] = idversion
+                    f(*args, **kwargs)
             DBLock.release()
-        except Exception as msg:
+        except Exception:
             DBLock.release()
-            print msg
             raise
-
-        return rows
     return wrap_f

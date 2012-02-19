@@ -51,7 +51,7 @@ class CTCPProtocol(CTCPCommands, CTCPRawEvents):
 
             if hasattr(self.bot, 'onCTCP_%s' % ev.cmd):
                 self.bot.threadpool.add_task(getattr(self.bot, 'onCTCP_%s' % ev.cmd), ev)
-            elif hasattr(self.bot, 'onCTCP_Default' % ev.cmd):
+            elif hasattr(self.bot, 'onCTCP_Default'):
                 self.bot.threadpool.add_task(getattr(self.bot, 'onCTCP_Default'), ev)
             else:
                 self.bot.threadpool.add_task(getattr(self.bot, 'onDefault'), ev)

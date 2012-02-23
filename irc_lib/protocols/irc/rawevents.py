@@ -19,6 +19,9 @@ class IRCRawEvents(object):
 
         ischan = target[0] in ['#', '&']
 
+        if not len(msg):
+            return
+
         outcmd = None
 
         if ischan and msg[0] == self.bot.controlchar:

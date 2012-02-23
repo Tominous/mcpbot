@@ -658,6 +658,45 @@ class MCPBotCmds(object):
 
         self.say(sender, "New CSVs exported")
 
+
+    @restricted(2)
+    @database
+    def cmd_testcsv(self, sender, chan, cmd, msg, *args, **kwargs):
+        c = kwargs['cursor']
+        idversion = kwargs['idvers']
+
+        if self.cnick == 'MCPBot':
+            trgdir = '/home/mcpfiles/mcptest'
+        else:
+            trgdir = 'devconf'
+
+        methodswriter = csv.writer(open('%s/methods.csv' % trgdir, 'wb'), delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+        c.execute("""SELECT searge, name, notch, sig, notchsig, classname, classnotch, package, side FROM vmethods
+                      WHERE NOT name=classname
+                            AND versionid=?""", (idversion,))
+        methodswriter.writerow(('searge', 'name', 'notch', 'sig', 'notchsig', 'classname', 'classnotch', 'package', 'side'))
+        for row in c:
+            methodswriter.writerow(row)
+
+        fieldswriter = csv.writer(open('%s/fields.csv' % trgdir, 'wb'), delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+        c.execute("""SELECT searge, name, notch, sig, notchsig, classname, classnotch, package, side FROM vfields
+                      WHERE NOT name=classname
+                            AND versionid=?""", (idversion,))
+        fieldswriter.writerow(('searge', 'name', 'notch', 'sig', 'notchsig', 'classname', 'classnotch', 'package', 'side'))
+        for row in c:
+            if row[0] == '$VALUE':
+                continue
+            fieldswriter.writerow(row)
+
+        classeswriter = csv.writer(open('%s/classes.csv' % trgdir, 'wb'), delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+        c.execute("""SELECT name, notch, supername, package, side FROM vclasses
+                      WHERE versionid=?""", (idversion,))
+        classeswriter.writerow(('name', 'notch', 'supername', 'package', 'side'))
+        for row in c:
+            classeswriter.writerow(row)
+
+        self.say(sender, "Test CSVs exported: http://mcp.ocean-labs.de/files/mcptest/")
+
     @database
     def dbCommit(self, sender, chan, cmd, msg, *args, **kwargs):
         c = kwargs['cursor']

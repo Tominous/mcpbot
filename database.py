@@ -13,7 +13,6 @@ def database(f):
             DBLock.acquire()
             with sqlite3.connect('database.sqlite') as con:
                 con.text_factory = sqlite3.OptimizedUnicode
-                con.row_factory = sqlite3.Row
                 with closing(con.cursor()) as cur:
                     (idversion,) = cur.execute("""SELECT value FROM config WHERE name='currentversion'""").fetchone()
 

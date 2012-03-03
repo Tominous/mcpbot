@@ -680,21 +680,25 @@ class MCPBotCmds(object):
 
         (mcpversion,) = c.execute("""SELECT mcpversion FROM versions WHERE id = ?""", (idversion,)).fetchone()
 
-        methodswriter = csv.writer(open('%s/methods.csv' % trgdir, 'wb'), delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-        c.execute("""SELECT searge, name, desc, side FROM vmethods
-                      WHERE NOT name = classname
-                            AND NOT searge = name
-                            AND versionid = ?""", (idversion,))
-        methodswriter.writerow(('searge', 'name', 'notch', 'sig', 'notchsig', 'classname', 'classnotch', 'package', 'side'))
+        methodswriter = csv.writer(open('%s/methods.csv' % trgdir, 'wb'))
+        c.execute("""SELECT DISTINCT searge, name, side, desc
+                     FROM vmethods
+                     WHERE name != classname
+                       AND searge != name
+                       AND versionid = ?
+                     ORDER BY side, searge""", (idversion,))
+        methodswriter.writerow(('searge', 'name', 'side', 'desc'))
         for row in c:
             methodswriter.writerow(row)
 
-        fieldswriter = csv.writer(open('%s/fields.csv' % trgdir, 'wb'), delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-        c.execute("""SELECT searge, name, desc, side FROM vfields
-                      WHERE NOT name = classname
-                            AND NOT searge = name
-                            AND versionid = ?""", (idversion,))
-        fieldswriter.writerow(('searge', 'name', 'notch', 'sig', 'notchsig', 'classname', 'classnotch', 'package', 'side'))
+        fieldswriter = csv.writer(open('%s/fields.csv' % trgdir, 'wb'))
+        c.execute("""SELECT DISTINCT searge, name, side, desc
+                     FROM vfields
+                     WHERE name != classname
+                       AND searge != name
+                       AND versionid = ?
+                     ORDER BY side, searge""", (idversion,))
+        fieldswriter.writerow(('searge', 'name', 'side', 'desc'))
         for row in c:
             fieldswriter.writerow(row)
 

@@ -659,6 +659,48 @@ class MCPBotCmds(object):
         self.say(sender, "New CSVs exported")
 
 
+    @restricted(3)
+    @database
+    def cmd_newcsv(self, sender, chan, cmd, msg, *args, **kwargs):
+        c = kwargs['cursor']
+        idversion = kwargs['idvers']
+
+        if self.cnick == 'MCPBot':
+            trgdir = '/home/mcpfiles/mcprolling_6.0/mcp/conf'
+        else:
+            trgdir = 'devconf'
+
+        if len(msg.split()) == 1:
+            idversion = c.execute("""SELECT id FROM versions WHERE mcpversion = ?""", (msg.split()[0],)).fetchone()
+            if not idversion:
+                self.say(sender, "Version not recognised.")
+                return
+            else:
+                (idversion,) = idversion
+
+        (mcpversion,) = c.execute("""SELECT mcpversion FROM versions WHERE id = ?""", (idversion,)).fetchone()
+
+        methodswriter = csv.writer(open('%s/methods.csv' % trgdir, 'wb'), delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+        c.execute("""SELECT searge, name, desc, side FROM vmethods
+                      WHERE NOT name = classname
+                            AND NOT searge = name
+                            AND versionid = ?""", (idversion,))
+        methodswriter.writerow(('searge', 'name', 'notch', 'sig', 'notchsig', 'classname', 'classnotch', 'package', 'side'))
+        for row in c:
+            methodswriter.writerow(row)
+
+        fieldswriter = csv.writer(open('%s/fields.csv' % trgdir, 'wb'), delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+        c.execute("""SELECT searge, name, desc, side FROM vfields
+                      WHERE NOT name = classname
+                            AND NOT searge = name
+                            AND versionid = ?""", (idversion,))
+        fieldswriter.writerow(('searge', 'name', 'notch', 'sig', 'notchsig', 'classname', 'classnotch', 'package', 'side'))
+        for row in c:
+            fieldswriter.writerow(row)
+
+        self.say(sender, "New new CSVs exported")
+
+
     @restricted(2)
     @database
     def cmd_testcsv(self, sender, chan, cmd, msg, *args, **kwargs):

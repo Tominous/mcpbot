@@ -821,11 +821,30 @@ class MCPBotCmds(object):
         c = kwargs['cursor']
         idversion = kwargs['idvers']
 
+        mcpversion, botversion, dbversion, clientversion, serverversion = c.execute("""
+            SELECT mcpversion, botversion, dbversion, clientversion, serverversion
+            FROM versions WHERE id = ?
+        """, (idversion,)).fetchone()
+
+        self.say(sender, "$B[ STATUS ]")
+        self.say(sender, " MCP    : $B%s" % mcpversion)
+        self.say(sender, " Bot    : $B%s" % botversion)
+        self.say(sender, " Client : $B%s" % clientversion)
+        self.say(sender, " Server : $B%s" % serverversion)
+
+
+    @database
+    def cmd_fullstatus(self, sender, chan, cmd, msg, *args, **kwargs):
+        c = kwargs['cursor']
+        idversion = kwargs['idvers']
+
         type_lookup = {'methods': 'func', 'fields': 'field'}
         side_lookup = {'client': 0, 'server': 1}
 
-        mcpversion, botversion, dbversion, clientversion, serverversion = \
-            c.execute("""SELECT mcpversion, botversion, dbversion, clientversion, serverversion FROM versions WHERE id = ?""", (idversion,)).fetchone()
+        mcpversion, botversion, dbversion, clientversion, serverversion = c.execute("""
+            SELECT mcpversion, botversion, dbversion, clientversion, serverversion
+            FROM versions WHERE id = ?
+        """, (idversion,)).fetchone()
 
         self.say(sender, "$B[ STATUS ]")
         self.say(sender, " MCP    : $B%s" % mcpversion)
@@ -835,9 +854,10 @@ class MCPBotCmds(object):
 
         for side  in ['client', 'server']:
             for etype in ['methods', 'fields']:
-                total, ren, urn = c.execute("""SELECT total(%st), total(%sr), total(%su)
-                                      FROM vclassesstats WHERE side = ? AND versionid = ?""" % (etype, etype, etype),
-                                      (side_lookup[side], idversion)).fetchone()
+                total, ren, urn = c.execute("""
+                    SELECT total(%st), total(%sr), total(%su)
+                    FROM vclassesstats WHERE side = ? AND versionid = ?
+                """ % (etype, etype, etype), (side_lookup[side], idversion)).fetchone()
 
                 self.say(sender, " [%s][%7s] : T $B%4d$N | R $B%4d$N | U $B%4d$N | $B%5.2f%%$N" % (side[0].upper(), etype.upper(), total, ren, urn, float(ren) / float(total) * 100))
 

@@ -607,60 +607,10 @@ class MCPBotCmds(object):
         ffmetho.close()
         fffield.close()
 
+
     @restricted(3)
     @database
     def cmd_altcsv(self, sender, chan, cmd, msg, *args, **kwargs):
-        c = kwargs['cursor']
-        idversion = kwargs['idvers']
-
-        if self.cnick == 'MCPBot':
-            trgdir = '/home/mcpfiles/mcprolling_5.6/mcp/conf'
-        else:
-            trgdir = 'devconf'
-
-        if len(msg.split()) == 1:
-            idversion = c.execute("""SELECT id FROM versions WHERE mcpversion = ?""", (msg.split()[0],)).fetchone()
-            if not idversion:
-                self.say(sender, "Version not recognised.")
-                return
-            else:
-                (idversion,) = idversion
-
-        (mcpversion,) = c.execute("""SELECT mcpversion FROM versions WHERE id = ?""", (idversion,)).fetchone()
-
-        methodswriter = csv.writer(open('%s/methods.csv' % trgdir, 'wb'), delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-        c.execute("""SELECT searge, name, notch, sig, notchsig, classname, classnotch, package, side FROM vmethods
-                      WHERE NOT name   = classname
-                            /*AND NOT searge = notch*/
-                            AND versionid = ?""", (idversion,))
-        methodswriter.writerow(('searge', 'name', 'notch', 'sig', 'notchsig', 'classname', 'classnotch', 'package', 'side'))
-        for row in c:
-            methodswriter.writerow(row)
-
-        fieldswriter = csv.writer(open('%s/fields.csv' % trgdir, 'wb'), delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-        c.execute("""SELECT searge, name, notch, sig, notchsig, classname, classnotch, package, side FROM vfields
-                      WHERE NOT name   = classname
-                            /*AND NOT searge = notch*/
-                            AND versionid = ?""", (idversion,))
-        fieldswriter.writerow(('searge', 'name', 'notch', 'sig', 'notchsig', 'classname', 'classnotch', 'package', 'side'))
-        for row in c:
-            if row[0] == '$VALUE':
-                continue
-            fieldswriter.writerow(row)
-
-        classeswriter = csv.writer(open('%s/classes.csv' % trgdir, 'wb'), delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-        c.execute("""SELECT name, notch, supername, package, side FROM vclasses
-                      WHERE /*NOT name = notch AND*/ versionid = ?""", (idversion,))
-        classeswriter.writerow(('name', 'notch', 'supername', 'package', 'side'))
-        for row in c:
-            classeswriter.writerow(row)
-
-        self.say(sender, "New CSVs exported")
-
-
-    @restricted(3)
-    @database
-    def cmd_newcsv(self, sender, chan, cmd, msg, *args, **kwargs):
         c = kwargs['cursor']
         idversion = kwargs['idvers']
 
@@ -701,7 +651,7 @@ class MCPBotCmds(object):
         for row in c:
             fieldswriter.writerow(row)
 
-        self.say(sender, "New new CSVs exported")
+        self.say(sender, "New CSVs exported")
 
 
     @restricted(2)
@@ -715,30 +665,27 @@ class MCPBotCmds(object):
         else:
             trgdir = 'devconf'
 
-        methodswriter = csv.writer(open('%s/methods.csv' % trgdir, 'wb'), delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-        c.execute("""SELECT searge, name, notch, sig, notchsig, classname, classnotch, package, side FROM vmethods
-                      WHERE NOT name=classname
-                            AND versionid=?""", (idversion,))
-        methodswriter.writerow(('searge', 'name', 'notch', 'sig', 'notchsig', 'classname', 'classnotch', 'package', 'side'))
+        methodswriter = csv.writer(open('%s/methods.csv' % trgdir, 'wb'))
+        c.execute("""SELECT DISTINCT searge, name, side, desc
+                     FROM vmethods
+                     WHERE name != classname
+                       AND searge != name
+                       AND versionid = ?
+                     ORDER BY side, searge""", (idversion,))
+        methodswriter.writerow(('searge', 'name', 'side', 'desc'))
         for row in c:
             methodswriter.writerow(row)
 
-        fieldswriter = csv.writer(open('%s/fields.csv' % trgdir, 'wb'), delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-        c.execute("""SELECT searge, name, notch, sig, notchsig, classname, classnotch, package, side FROM vfields
-                      WHERE NOT name=classname
-                            AND versionid=?""", (idversion,))
-        fieldswriter.writerow(('searge', 'name', 'notch', 'sig', 'notchsig', 'classname', 'classnotch', 'package', 'side'))
+        fieldswriter = csv.writer(open('%s/fields.csv' % trgdir, 'wb'))
+        c.execute("""SELECT DISTINCT searge, name, side, desc
+                     FROM vfields
+                     WHERE name != classname
+                       AND searge != name
+                       AND versionid = ?
+                     ORDER BY side, searge""", (idversion,))
+        fieldswriter.writerow(('searge', 'name', 'side', 'desc'))
         for row in c:
-            if row[0] == '$VALUE':
-                continue
             fieldswriter.writerow(row)
-
-        classeswriter = csv.writer(open('%s/classes.csv' % trgdir, 'wb'), delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-        c.execute("""SELECT name, notch, supername, package, side FROM vclasses
-                      WHERE versionid=?""", (idversion,))
-        classeswriter.writerow(('name', 'notch', 'supername', 'package', 'side'))
-        for row in c:
-            classeswriter.writerow(row)
 
         self.say(sender, "Test CSVs exported: http://mcp.ocean-labs.de/files/mcptest/")
 

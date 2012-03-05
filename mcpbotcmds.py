@@ -404,14 +404,13 @@ class MCPBotCmds(object):
                 self.say(sender, "$RYou are conflicting with at least one other method: %s. Please use forced update only if you are certain !" % result[0])
                 return
 
-        # DONT ALLOW DUPLICATE FIELD NAMES AT ALL
-        result = c.execute("""SELECT m.searge, m.name FROM vfields m
-                              WHERE m.name = ?
-                              AND m.side = ?
-                              AND m.versionid = ?""", (newname, side_lookup[side], idversion)).fetchone()
-        if result:
-            self.say(sender, "$RYou are conflicting with at least one other field: %s. Forced updates for duplicate fields not allowed !" % result[0])
-            return
+            result = c.execute("""SELECT m.searge, m.name FROM vfields m
+                                  WHERE m.name = ?
+                                  AND m.side = ?
+                                  AND m.versionid = ?""", (newname, side_lookup[side], idversion)).fetchone()
+            if result:
+                self.say(sender, "$RYou are conflicting with at least one other field: %s. Please use forced update only if you are certain !" % result[0])
+                return
 
         if not forced:
             result = c.execute("""SELECT m.searge, m.name FROM vmethods m

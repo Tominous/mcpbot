@@ -4,8 +4,13 @@ from irc_lib.utils.colors import conv_s2i
 
 
 class DCCCommands(object):
-    def rawcmd(self, target, cmd):
-        self.out_msg.put(':%s PRIVMSG %s :\x01DCC %s\x01' % (self.cnick, target, cmd))
+    def dcc_privmsg(self, target, cmd, args):
+        msg = cmd + ' ' + args
+        self.bot.ctcp.ctcp_privmsg(target, 'DCC', msg)
+
+    def dcc_notice(self, target, cmd, args):
+        msg = cmd + ' ' + args
+        self.bot.ctcp.ctcp_notice(target, 'DCC', msg)
 
     def say(self, nick, msg, color=True):
         if color:
@@ -33,4 +38,4 @@ class DCCCommands(object):
         self.sockets[nick] = None
 
         self.ip2nick[target_ip] = nick
-        self.rawcmd(nick, 'CHAT chat %s %s' % (self.inip, self.inport))
+        self.dcc_privmsg(nick, 'CHAT', 'CHAT %s %s' % (self.inip, self.inport))

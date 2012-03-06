@@ -607,7 +607,6 @@ class MCPBotCmds(object):
         ffmetho.close()
         fffield.close()
 
-
     @restricted(3)
     @database
     def cmd_altcsv(self, sender, chan, cmd, msg, *args, **kwargs):
@@ -652,7 +651,6 @@ class MCPBotCmds(object):
             fieldswriter.writerow(row)
 
         self.say(sender, "New CSVs exported")
-
 
     @restricted(2)
     @database
@@ -831,7 +829,6 @@ class MCPBotCmds(object):
         self.say(sender, " Bot    : $B%s" % botversion)
         self.say(sender, " Client : $B%s" % clientversion)
         self.say(sender, " Server : $B%s" % serverversion)
-
 
     @database
     def cmd_fullstatus(self, sender, chan, cmd, msg, *args, **kwargs):

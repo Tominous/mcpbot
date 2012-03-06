@@ -22,20 +22,19 @@ class DCCRawEvents(object):
 
             self.bot.commandq.put(outev)
 
-    def onDCC_CHAT(self, sender, dcccmd, dccarg, dccip, dccport):
-        nick = get_nick(sender)
-        dccip = self.conv_ip_long_std(int(dccip))
-        dccport = int(dccport)
+    def onDCC_CHAT(self, ev):
+        nick = ev.sender
+        args = ev.msg.split()
+        if len(args) != 3:
+            self.log("INVALID DCC CHAT: %s %s '%s'" % (ev.sender, ev.target, ev.msg))
+            return
+        dccprot = args[0]
+        dccip = self.conv_ip_long_std(int(args[1]))
+        dccport = int(args[2])
 
-        try:
-            self.sockets[nick] = socket.socket()
-            self.sockets[nick].connect((dccip, dccport))
-            self.sockets[nick].setblocking(0)
-        except KeyError:
-            self.log('[DCCRawEvents.onDCC_Chat] Nick not found in socket table : %s' % nick)
-        self.log('onDCC_CHAT: %s %s | IP:%s Port:%s' % (dcccmd, dccarg, dccip, dccport))
+        self.log("onDCC_CHAT: %s '%s' | IP:%s Port:%s" % (ev.sender, ev.msg, dccip, dccport))
 
 #
 
-    def onDCC_Default(self, sender, dcccmd, dccarg, dccip, dccport):
-        self.log('RAW DCC EVENT: %s %s %s' % (sender, dcccmd, dccarg))
+    def onDCC_Default(self, ev):
+        self.log("RAW DCC EVENT: %s %s %s '%s'" % (ev.sender, ev.target, ev.cmd, ev.msg))

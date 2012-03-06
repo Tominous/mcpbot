@@ -49,58 +49,27 @@ class DCCProtocol(DCCCommands, DCCRawEvents):
 
         self.log("DCC listening on %s:%d %s '%d %d'" % (listenhost, listenport, externalip, self.inip, self.inport))
 
-        self.bot.threadpool.add_task(self.msg_loop, _threadname='DCCHandler')
         self.bot.threadpool.add_task(self.inbound_loop, _threadname='DCCInLoop')
 
     def log(self, msg):
         self.bot.log(msg)
 
-    def msg_loop(self):
-        while not self.bot.exit:
-            try:
-                msg = self.in_msg.get(True, 1)
-            except Empty:
-                continue
-            self.in_msg.task_done()
-            self.process_msg(msg)
+    def process_msg(self, ev):
+        dcccmd, _, dccargs = ev.msg.partition(' ')
 
-    def process_msg(self, msg):
-        msg = msg.strip()
-        if not msg:
-            return
-
-        msg = msg.split()
-
-        sender = get_nick(msg[0])
-        cmd = msg[1]
-        destnick = msg[2]
-        dcchead = msg[3][2:]
-        dcccmd = msg[4]
-        if len(msg) > 5:
-            dccarg = msg[5]
-            dccip = msg[6]
-            dccport = msg[7][:-1]
-        else:
-            dccarg = ''
-            dccip = ''
-            dccport = ''
-
-        # fake event used for logging and onDefault, missing target
-        ev = Event(msg[0], cmd, '', ' '.join(msg[2:]), 'DCC')
+        # regenerate event with parsed dcc details
+        ev = Event(ev.senderfull, dcccmd, ev.target, dccargs, 'DCC')
         self.bot.loggingq.put(ev)
 
-        if cmd not in ['PRIVMSG', 'NOTICE']:
-            raise IRCBotError('Invalid command from DCC : %s' % msg)
-
         if hasattr(self, 'onDCC_%s' % dcccmd):
-            self.bot.threadpool.add_task(getattr(self, 'onDCC_%s' % dcccmd), sender, dcccmd, dccarg, dccip, dccport)
+            self.bot.threadpool.add_task(getattr(self, 'onDCC_%s' % dcccmd), ev)
         else:
-            self.bot.threadpool.add_task(getattr(self, 'onDCC_Default'), sender, dcccmd, dccarg, dccip, dccport)
+            self.bot.threadpool.add_task(getattr(self, 'onDCC_Default'), ev)
 
         if hasattr(self.bot, 'onDCC_%s' % dcccmd):
-            self.bot.threadpool.add_task(getattr(self.bot, 'onDCC_%s' % dcccmd), sender, dcccmd, dccarg, dccip, dccport)
+            self.bot.threadpool.add_task(getattr(self.bot, 'onDCC_%s' % dcccmd), ev)
         elif hasattr(self.bot, 'onDCC_Default'):
-            self.bot.threadpool.add_task(getattr(self.bot, 'onDCC_Default'), sender, dcccmd, dccarg, dccip, dccport)
+            self.bot.threadpool.add_task(getattr(self.bot, 'onDCC_Default'), ev)
         else:
             self.bot.threadpool.add_task(getattr(self.bot, 'onDefault'), ev)
 

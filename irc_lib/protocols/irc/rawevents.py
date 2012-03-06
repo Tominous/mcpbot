@@ -21,7 +21,7 @@ class IRCRawEvents(object):
             return
 
         if msg[0] == CTCP_DELIMITER:
-            self.bot.ctcp.process_msg(sender, target, msg)
+            self.bot.ctcp.process_msg(prefix, target, msg)
             return
 
         return
@@ -35,7 +35,7 @@ class IRCRawEvents(object):
             return
 
         if msg[0] == CTCP_DELIMITER:
-            self.bot.ctcp.process_msg(sender, target, msg)
+            self.bot.ctcp.process_msg(prefix, target, msg)
             return
 
         ischan = target[0] in ['#', '&']

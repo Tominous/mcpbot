@@ -15,7 +15,7 @@ class CTCPProtocol(CTCPCommands, CTCPRawEvents):
     def log(self, msg):
         self.bot.log(msg)
 
-    def process_msg(self, sender, target, msg):
+    def process_msg(self, prefix, target, msg):
         # remove leading/trailing CTCP_DELIMITER
         if msg[-1] == CTCP_DELIMITER:
             msg = msg[1:-1]
@@ -24,7 +24,7 @@ class CTCPProtocol(CTCPCommands, CTCPRawEvents):
 
         cmd, _, data = msg.partition(' ')
 
-        ev = Event(sender, cmd, target, data, 'CTCP')
+        ev = Event(prefix, cmd, target, data, 'CTCP')
         self.bot.loggingq.put(ev)
 
         if hasattr(self, 'onCTCP_%s' % ev.cmd):

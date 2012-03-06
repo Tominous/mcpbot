@@ -3,35 +3,36 @@ from constants import CTCP_DELIMITER
 
 
 class CTCPCommands(object):
-    def rawcmd(self, target, cmd):
-        self.out_msg.put(':%s PRIVMSG %s :%s%s\%s' % (self.cnick, target, CTCP_DELIMITER, cmd, CTCP_DELIMITER))
+    def ctcp_privmsg(self, target, tag, data=None):
+        if data:
+            msg = tag + ' ' + data
+        else:
+            msg = tag
+        msg = CTCP_DELIMITER + msg + CTCP_DELIMITER
+        self.bot.irc.privmsg(target, msg, color=False)
 
-    def rawnotice(self, target, cmd):
-        self.out_msg.put(':%s NOTICE %s :%s%s%s' % (self.cnick, target, CTCP_DELIMITER, cmd, CTCP_DELIMITER))
+    def ctcp_notice(self, target, tag, data=None):
+        if data:
+            msg = tag + ' ' + data
+        else:
+            msg = tag
+        msg = CTCP_DELIMITER + msg + CTCP_DELIMITER
+        self.bot.irc.notice(target, msg, color=False)
 
     def time(self, target):
-        self.rawcmd(target, 'TIME')
+        self.ctcp_privmsg(target, 'TIME')
 
     def action(self, channel, text):
-        self.rawcmd(channel, 'ACTION %s' % text)
-
-    def finger(self, target):
-        self.rawcmd(target, 'FINGER')
+        self.ctcp_privmsg(channel, 'ACTION', text)
 
     def version(self, target):
-        self.rawcmd(target, 'VERSION')
-
-    def source(self, target):
-        self.rawcmd(target, 'SOURCE')
+        self.ctcp_privmsg(target, 'VERSION')
 
     def userinfo(self, target):
-        self.rawcmd(target, 'USERINFO')
+        self.ctcp_privmsg(target, 'USERINFO')
 
     def clientinfo(self, target):
-        self.rawcmd(target, 'CLIENTINFO')
-
-    def errmsg(self):
-        pass
+        self.ctcp_privmsg(target, 'CLIENTINFO')
 
     def ping(self, target):
-        self.rawcmd(target, 'CLIENTINFO %s' % time.time())
+        self.ctcp_privmsg(target, 'PING', time.time())

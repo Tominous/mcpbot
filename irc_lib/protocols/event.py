@@ -7,9 +7,7 @@ class Event(object):
     maxid = 0
 
     def __init__(self, sender, cmd, target, msg, etype):
-        if msg[0] == ':' and len(msg.strip()) == 1:
-            msg = ''
-        elif msg[0] == ':':
+        if msg and msg[0] == ':':
             msg = msg[1:]
         if sender and sender[0] == ':':
             sender = sender[1:]

@@ -13,45 +13,47 @@ class CTCPProtocol(CTCPCommands, CTCPRawEvents):
         self.bot = _bot
         self.locks = _locks
 
-        self.bot.threadpool.add_task(self.treat_msg, _threadname='CTCPHandler')
+        self.bot.threadpool.add_task(self.msg_loop, _threadname='CTCPHandler')
 
     def log(self, msg):
         self.bot.log(msg)
 
-    def treat_msg(self):
+    def msg_loop(self):
         while not self.bot.exit:
             try:
                 msg = self.in_msg.get(True, 1)
             except Empty:
                 continue
             self.in_msg.task_done()
+            self.process_msg(msg)
 
-            msg = msg.strip()
-            if not msg:
-                continue
+    def process_msg(self, msg):
+        msg = msg.strip()
+        if not msg:
+            return
 
-            msg = msg.split()
-            msg[3] = ' '.join(msg[3:])
-            msg = msg[:4]
-            # We remove the leading/tailing \x01
-            msg[3] = msg[3].replace('\x01', '')
+        msg = msg.split()
+        msg[3] = ' '.join(msg[3:])
+        msg = msg[:4]
+        # We remove the leading/tailing \x01
+        msg[3] = msg[3].replace('\x01', '')
 
-            if len(msg[3].split()) < 2:
-                outmsg = ' '
-            else:
-                outmsg = ' '.join(msg[3].split()[1:])
+        if len(msg[3].split()) < 2:
+            outmsg = ' '
+        else:
+            outmsg = ' '.join(msg[3].split()[1:])
 
-            ev = Event(msg[0], msg[3].split()[0][1:], msg[2], outmsg, 'CTCP')
-            self.bot.loggingq.put(ev)
+        ev = Event(msg[0], msg[3].split()[0][1:], msg[2], outmsg, 'CTCP')
+        self.bot.loggingq.put(ev)
 
-            if hasattr(self, 'onCTCP_%s' % ev.cmd):
-                self.bot.threadpool.add_task(getattr(self, 'onCTCP_%s' % ev.cmd), ev)
-            else:
-                self.bot.threadpool.add_task(getattr(self, 'onCTCP_Default'), ev)
+        if hasattr(self, 'onCTCP_%s' % ev.cmd):
+            self.bot.threadpool.add_task(getattr(self, 'onCTCP_%s' % ev.cmd), ev)
+        else:
+            self.bot.threadpool.add_task(getattr(self, 'onCTCP_Default'), ev)
 
-            if hasattr(self.bot, 'onCTCP_%s' % ev.cmd):
-                self.bot.threadpool.add_task(getattr(self.bot, 'onCTCP_%s' % ev.cmd), ev)
-            elif hasattr(self.bot, 'onCTCP_Default'):
-                self.bot.threadpool.add_task(getattr(self.bot, 'onCTCP_Default'), ev)
-            else:
-                self.bot.threadpool.add_task(getattr(self.bot, 'onDefault'), ev)
+        if hasattr(self.bot, 'onCTCP_%s' % ev.cmd):
+            self.bot.threadpool.add_task(getattr(self.bot, 'onCTCP_%s' % ev.cmd), ev)
+        elif hasattr(self.bot, 'onCTCP_Default'):
+            self.bot.threadpool.add_task(getattr(self.bot, 'onCTCP_Default'), ev)
+        else:
+            self.bot.threadpool.add_task(getattr(self.bot, 'onDefault'), ev)

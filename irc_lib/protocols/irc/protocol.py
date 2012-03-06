@@ -15,12 +15,12 @@ class IRCProtocol(IRCCommands, IRCRawEvents):
         self.bot = _bot
         self.locks = _locks
 
-        self.bot.threadpool.add_task(self.treat_msg, _threadname='IRCHandler')
+        self.bot.threadpool.add_task(self.msg_loop, _threadname='IRCHandler')
 
     def log(self, msg):
         self.bot.log(msg)
 
-    def treat_msg(self):
+    def msg_loop(self):
         while not self.bot.exit:
             # We check for msgs on the queue
             try:
@@ -28,42 +28,44 @@ class IRCProtocol(IRCCommands, IRCRawEvents):
             except Empty:
                 continue
             self.in_msg.task_done()
+            self.process_msg(msg)
 
-            # parse the various fields out of the message
-            prefix = ''
-            trailing = []
-            if msg[0] == ':':
-                prefix, msg = msg[1:].split(' ', 1)
-            if msg.find(' :') != -1:
-                msg, trailing = msg.split(' :', 1)
-                args = msg.split()
-                args.append(trailing)
-            else:
-                args = msg.split()
-            # uppercase the command as mIRC is lame apparently, shouldn't matter as we are talking to a server anyway
-            command = args.pop(0).upper()
+    def process_msg(self, msg):
+        # parse the various fields out of the message
+        prefix = ''
+        trailing = []
+        if msg[0] == ':':
+            prefix, msg = msg[1:].split(' ', 1)
+        if msg.find(' :') != -1:
+            msg, trailing = msg.split(' :', 1)
+            args = msg.split()
+            args.append(trailing)
+        else:
+            args = msg.split()
+        # uppercase the command as mIRC is lame apparently, shouldn't matter as we are talking to a server anyway
+        command = args.pop(0).upper()
 
-            # If the reply is numerical, we change the cmd type to the correct type
-            if command in IRC_REPLIES:
-                command = IRC_REPLIES[command]
+        # If the reply is numerical, we change the cmd type to the correct type
+        if command in IRC_REPLIES:
+            command = IRC_REPLIES[command]
 
-            # fake event used for logging and onDefault, missing target
-            ev = Event(prefix, command, '', str(args), 'IRC')
-            self.bot.loggingq.put(ev)
+        # fake event used for logging and onDefault, missing target
+        ev = Event(prefix, command, '', str(args), 'IRC')
+        self.bot.loggingq.put(ev)
 
-            # We call the corresponding raw event if it exist, or the rawDefault if not.
-            if hasattr(self, 'onIRC_%s' % command):
-                self.bot.threadpool.add_task(getattr(self, 'onIRC_%s' % command), prefix, args)
-            else:
-                self.bot.threadpool.add_task(getattr(self, 'onIRC_Default'), command, prefix, args)
+        # We call the corresponding raw event if it exist, or the rawDefault if not.
+        if hasattr(self, 'onIRC_%s' % command):
+            self.bot.threadpool.add_task(getattr(self, 'onIRC_%s' % command), prefix, args)
+        else:
+            self.bot.threadpool.add_task(getattr(self, 'onIRC_Default'), command, prefix, args)
 
-            # We call the corresponding event if it exist, or the Default if not.
-            if hasattr(self.bot, 'onIRC_%s' % command):
-                self.bot.threadpool.add_task(getattr(self.bot, 'onIRC_%s' % command), prefix, args)
-            elif hasattr(self.bot, 'onIRC_Default'):
-                self.bot.threadpool.add_task(getattr(self.bot, 'onIRC_Default'), command, prefix, args)
-            else:
-                self.bot.threadpool.add_task(getattr(self.bot, 'onDefault'), ev)
+        # We call the corresponding event if it exist, or the Default if not.
+        if hasattr(self.bot, 'onIRC_%s' % command):
+            self.bot.threadpool.add_task(getattr(self.bot, 'onIRC_%s' % command), prefix, args)
+        elif hasattr(self.bot, 'onIRC_Default'):
+            self.bot.threadpool.add_task(getattr(self.bot, 'onIRC_Default'), command, prefix, args)
+        else:
+            self.bot.threadpool.add_task(getattr(self.bot, 'onDefault'), ev)
 
     def add_user(self, nick, chan=None):
         nick_status = '-'

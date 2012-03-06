@@ -23,32 +23,33 @@ class Dispatcher(object):
         self.ctcp = CTCPProtocol(_nick, _out_msg, self.ctcp_queue, _locks, _bot)
         self.dcc = DCCProtocol(_nick, _out_msg, self.dcc_queue, _locks, _bot)
 
-        _bot.threadpool.add_task(self.treat_msg, _threadname='Dispatcher')
+        _bot.threadpool.add_task(self.msg_loop, _threadname='Dispatcher')
 
-    def treat_msg(self):
+    def msg_loop(self):
         while not self.bot.exit:
             try:
                 msg = self.in_msg.get(True, 1)
             except Empty:
                 continue
-
             self.in_msg.task_done()
+            self.process_msg(msg)
 
-            msg = msg.strip()
-            if not msg:
-                continue
+    def process_msg(self, msg):
+        msg = msg.strip()
+        if not msg:
+            return
 
-            sender = get_nick(msg.split()[0])
-            cmd = msg.split()[1]
+        sender = get_nick(msg.split()[0])
+        cmd = msg.split()[1]
 
-            if sender.lower() == 'nickserv':
-                self.nse_queue.put(msg)
-            elif self.isCTCP(cmd, msg) and msg.split()[3][2:] == 'DCC':
-                self.dcc_queue.put(msg)
-            elif self.isCTCP(cmd, msg):
-                self.ctcp_queue.put(msg)
-            else:
-                self.irc_queue.put(msg)
+        if sender.lower() == 'nickserv':
+            self.nse_queue.put(msg)
+        elif self.isCTCP(cmd, msg) and msg.split()[3][2:] == 'DCC':
+            self.dcc_queue.put(msg)
+        elif self.isCTCP(cmd, msg):
+            self.ctcp_queue.put(msg)
+        else:
+            self.irc_queue.put(msg)
 
     def isCTCP(self, cmd, msg):
         if len(' '.join(msg.split()[3:])) < 2:

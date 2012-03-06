@@ -1,8 +1,7 @@
-from Queue import Empty
-
 from irc_lib.protocols.event import Event
 from commands import CTCPCommands
 from rawevents import CTCPRawEvents
+from constants import CTCP_DELIMITER
 
 
 class CTCPProtocol(CTCPCommands, CTCPRawEvents):
@@ -13,37 +12,19 @@ class CTCPProtocol(CTCPCommands, CTCPRawEvents):
         self.bot = _bot
         self.locks = _locks
 
-        self.bot.threadpool.add_task(self.msg_loop, _threadname='CTCPHandler')
-
     def log(self, msg):
         self.bot.log(msg)
 
-    def msg_loop(self):
-        while not self.bot.exit:
-            try:
-                msg = self.in_msg.get(True, 1)
-            except Empty:
-                continue
-            self.in_msg.task_done()
-            self.process_msg(msg)
-
-    def process_msg(self, msg):
-        msg = msg.strip()
-        if not msg:
-            return
-
-        msg = msg.split()
-        msg[3] = ' '.join(msg[3:])
-        msg = msg[:4]
-        # We remove the leading/tailing \x01
-        msg[3] = msg[3].replace('\x01', '')
-
-        if len(msg[3].split()) < 2:
-            outmsg = ' '
+    def process_msg(self, sender, target, msg):
+        # remove leading/trailing CTCP_DELIMITER
+        if msg[-1] == CTCP_DELIMITER:
+            msg = msg[1:-1]
         else:
-            outmsg = ' '.join(msg[3].split()[1:])
+            msg = msg[1:]
 
-        ev = Event(msg[0], msg[3].split()[0][1:], msg[2], outmsg, 'CTCP')
+        cmd, _, data = msg.partition(' ')
+
+        ev = Event(sender, cmd, target, data, 'CTCP')
         self.bot.loggingq.put(ev)
 
         if hasattr(self, 'onCTCP_%s' % ev.cmd):

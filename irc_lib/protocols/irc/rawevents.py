@@ -1,5 +1,6 @@
 from irc_lib.utils.irc_name import get_nick, get_ip
 from irc_lib.protocols.event import Event
+from irc_lib.protocols.ctcp.constants import CTCP_DELIMITER
 
 
 class IRCRawEvents(object):
@@ -11,17 +12,33 @@ class IRCRawEvents(object):
             target2 = None
         self.pong(target, target2)
 
+    def onIRC_NOTICE(self, prefix, args):
+        sender = get_nick(prefix)
+        target = args[0]
+        msg = args[1]
+
+        if not msg:
+            return
+
+        if msg[0] == CTCP_DELIMITER:
+            self.bot.ctcp.process_msg(sender, target, msg)
+            return
+
+        return
 
     def onIRC_PRIVMSG(self, prefix, args):
         sender = get_nick(prefix)
         target = args[0]
         msg = args[1]
 
-        ischan = target[0] in ['#', '&']
-
-        if not len(msg):
+        if not msg:
             return
 
+        if msg[0] == CTCP_DELIMITER:
+            self.bot.ctcp.process_msg(sender, target, msg)
+            return
+
+        ischan = target[0] in ['#', '&']
         outcmd = None
 
         if ischan and msg[0] == self.bot.controlchar:

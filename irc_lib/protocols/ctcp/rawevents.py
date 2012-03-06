@@ -26,4 +26,4 @@ class CTCPRawEvents(object):
         pass
 
     def onCTCP_Default(self, ev):
-        self.log('RAW CTCP EVENT: %s %s %s' % (ev.sender, ev.cmd, ev.msg))
+        self.log("RAW CTCP EVENT: %s %s %s '%s'" % (ev.sender, ev.target, ev.cmd, ev.msg))

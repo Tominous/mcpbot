@@ -33,7 +33,7 @@ class DCCCommands(object):
         target_ip = self.bot.getIP(nick)
 
         if nick in self.sockets and self.sockets[nick] is not None:
-            self.sockets[nick].close()
+            self.sockets[nick].socket.close()
             del self.sockets[nick]
         self.sockets[nick] = None
 

@@ -26,7 +26,7 @@ class DCCRawEvents(object):
             self.log("INVALID DCC CHAT: %s %s '%s'" % (ev.sender, ev.target, ev.msg))
             return
         dccprot = args[0]
-        dccip = self.conv_ip_long_std(int(args[1]))
+        dccip = self.conv_ip_long_std(args[1])
         dccport = int(args[2])
 
         self.log("onDCC_CHAT: %s '%s' | IP:%s Port:%s" % (ev.sender, ev.msg, dccip, dccport))

@@ -65,25 +65,33 @@ class DCCProtocol(DCCCommands, DCCRawEvents):
         cmd_func(ev)
 
     def conv_ip_long_std(self, longip):
-        hexip = hex(longip)[2:-1]
-        if len(hexip) != 8:
-            self.log('Error converting %d' % longip)
+        try:
+            ip = long(longip)
+        except ValueError:
+            self.log("Invalid DCC IP '%s'" % longip)
             return '0.0.0.0'
-        part1 = int(hexip[0:2], 16)
-        part2 = int(hexip[2:4], 16)
-        part3 = int(hexip[4:6], 16)
-        part4 = int(hexip[6:8], 16)
-        ip = '%s.%s.%s.%s' % (part1, part2, part3, part4)
-        return ip
+        if ip >= 2 ** 32:
+            self.log("Invalid DCC IP '%s'" % longip)
+            return '0.0.0.0'
+        address = [str(ip >> shift & 0xFF) for shift in [24, 16, 8, 0]]
+        return '.'.join(address)
 
     def conv_ip_std_long(self, stdip):
-        ip = stdip.split('.')
-        hexip = '%2s%2s%2s%2s' % (hex(int(ip[0]))[2:],
-              hex(int(ip[1]))[2:],
-              hex(int(ip[2]))[2:],
-              hex(int(ip[3]))[2:])
-        hexip = hexip.replace(' ', '0')
-        longip = int(hexip, 16)
+        address = stdip.split('.')
+        if len(address) != 4:
+            self.log("Invalid IP '%s'" % stdip)
+            return 0
+        longip = 0
+        for part, shift in zip(address, [24, 16, 8, 0]):
+            try:
+                ip_part = int(part)
+            except ValueError:
+                self.log("Invalid IP '%s'" % stdip)
+                return 0
+            if ip_part >= 2 ** 8:
+                self.log("Invalid IP '%s'" % stdip)
+                return 0
+            longip += ip_part << shift
         return longip
 
     def inbound_loop(self):

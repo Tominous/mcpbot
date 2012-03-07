@@ -72,8 +72,7 @@ class IRCBotIO(object):
                 self.irc.process_msg(msg)
 
     def print_loop(self):
-        """Loop to handle console output. Only way to have coherent output in a threaded environement.
-        To output something to the console, just push it on the printq queue (self.printq.put('aaa') or self.bot.printq('aaa') from inside the procotols."""
+        """Loop to handle console output. Only way to have coherent output in a threaded environement."""
         while not self.exit:
             try:
                 msg = self.printq.get(True, 1)

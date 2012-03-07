@@ -9,7 +9,7 @@ class CTCPCommands(object):
         else:
             msg = tag
         msg = CTCP_DELIMITER + msg + CTCP_DELIMITER
-        self.bot.irc.privmsg(target, msg, color=False)
+        self.irc.privmsg(target, msg, color=False)
 
     def ctcp_notice(self, target, tag, data=None):
         if data:
@@ -17,7 +17,7 @@ class CTCPCommands(object):
         else:
             msg = tag
         msg = CTCP_DELIMITER + msg + CTCP_DELIMITER
-        self.bot.irc.notice(target, msg, color=False)
+        self.irc.notice(target, msg, color=False)
 
     def time(self, target):
         self.ctcp_privmsg(target, 'TIME')

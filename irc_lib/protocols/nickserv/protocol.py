@@ -4,10 +4,11 @@ from rawevents import NickServRawEvents
 
 
 class NickServProtocol(NickServCommands, NickServRawEvents):
-    def __init__(self, _nick, _locks, _bot):
+    def __init__(self, _nick, _locks, _bot, _parent):
         self.cnick = _nick
         self.locks = _locks
         self.bot = _bot
+        self.irc = _parent
 
     def log(self, msg):
         self.bot.log(msg)

@@ -1,5 +1,7 @@
 from Queue import Empty
 
+from irc_lib.protocols.nickserv.protocol import NickServProtocol
+from irc_lib.protocols.ctcp.protocol import CTCPProtocol
 from irc_lib.protocols.event import Event
 from irc_lib.protocols.user import User
 from commands import IRCCommands
@@ -8,10 +10,14 @@ from constants import IRC_REPLIES
 
 
 class IRCProtocol(IRCCommands, IRCRawEvents):
-    def __init__(self, _nick, _locks, _bot):
+    def __init__(self, _nick, _locks, _bot, _parent):
         self.cnick = _nick
         self.locks = _locks
         self.bot = _bot
+
+        self.nickserv = NickServProtocol(self.cnick, self.locks, self.bot, self)
+        self.ctcp = CTCPProtocol(self.cnick, self.locks, self.bot, self)
+        self.dcc = self.ctcp.dcc
 
     def log(self, msg):
         self.bot.log(msg)

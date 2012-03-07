@@ -3,7 +3,7 @@ import time
 
 class CTCPRawEvents(object):
     def onCTCP_DCC(self, ev):
-        self.bot.dcc.process_msg(ev)
+        self.dcc.process_msg(ev)
 
     def onCTCP_VERSION(self, ev):
         self.ctcp_notice(ev.sender, 'VERSION', 'PMIrcLib:0.1:Python')

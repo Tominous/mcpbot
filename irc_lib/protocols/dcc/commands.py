@@ -6,11 +6,11 @@ from irc_lib.utils.colors import conv_s2i
 class DCCCommands(object):
     def dcc_privmsg(self, target, cmd, args):
         msg = cmd + ' ' + args
-        self.bot.ctcp.ctcp_privmsg(target, 'DCC', msg)
+        self.ctcp.ctcp_privmsg(target, 'DCC', msg)
 
     def dcc_notice(self, target, cmd, args):
         msg = cmd + ' ' + args
-        self.bot.ctcp.ctcp_notice(target, 'DCC', msg)
+        self.ctcp.ctcp_notice(target, 'DCC', msg)
 
     def say(self, nick, msg, color=True):
         if color:

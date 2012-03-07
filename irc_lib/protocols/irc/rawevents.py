@@ -25,11 +25,11 @@ class IRCRawEvents(object):
             return
 
         if sender == NICKSERV:
-            self.bot.nickserv.process_msg(prefix, target, msg)
+            self.nickserv.process_msg(prefix, target, msg)
             return
 
         if msg[0] == CTCP_DELIMITER:
-            self.bot.ctcp.process_msg(prefix, target, msg)
+            self.ctcp.process_msg(prefix, target, msg)
             return
 
         if cmd == 'PRIVMSG':

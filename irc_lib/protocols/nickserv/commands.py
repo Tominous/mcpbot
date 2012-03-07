@@ -3,10 +3,10 @@ from constants import NICKSERV
 
 class NickServCommands(object):
     def nserv_privmsg(self, msg):
-        self.bot.irc.privmsg(NICKSERV, msg, color=False)
+        self.irc.privmsg(NICKSERV, msg, color=False)
 
     def nserv_notice(self, msg):
-        self.bot.irc.notice(NICKSERV, msg, color=False)
+        self.irc.notice(NICKSERV, msg, color=False)
 
     def identify(self, password):
         self.locks['ServReg'].acquire()

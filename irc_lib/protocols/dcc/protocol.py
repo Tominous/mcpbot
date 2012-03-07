@@ -19,10 +19,11 @@ class DCCSocket(object):
 
 
 class DCCProtocol(DCCCommands, DCCRawEvents):
-    def __init__(self, _nick, _locks, _bot):
+    def __init__(self, _nick, _locks, _bot, _parent):
         self.cnick = _nick
         self.locks = _locks
         self.bot = _bot
+        self.ctcp = _parent
 
         self.sockets = {}
         self.ip2nick = {}

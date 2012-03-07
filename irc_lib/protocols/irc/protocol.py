@@ -8,27 +8,13 @@ from constants import IRC_REPLIES
 
 
 class IRCProtocol(IRCCommands, IRCRawEvents):
-    def __init__(self, _nick, _out_msg, _in_msg, _locks, _bot):
+    def __init__(self, _nick, _locks, _bot):
         self.cnick = _nick
-        self.out_msg = _out_msg
-        self.in_msg = _in_msg
-        self.bot = _bot
         self.locks = _locks
-
-        self.bot.threadpool.add_task(self.msg_loop, _threadname='IRCHandler')
+        self.bot = _bot
 
     def log(self, msg):
         self.bot.log(msg)
-
-    def msg_loop(self):
-        while not self.bot.exit:
-            # We check for msgs on the queue
-            try:
-                msg = self.in_msg.get(True, 1)
-            except Empty:
-                continue
-            self.in_msg.task_done()
-            self.process_msg(msg)
 
     def process_msg(self, msg):
         # parse the various fields out of the message

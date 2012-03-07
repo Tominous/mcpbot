@@ -47,18 +47,16 @@ class IRCBotBase(IRCBotAdvMtd, IRCBotIO):
 
         # Outbound msgs
         self.out_msg = Queue()
-        # Inbound msgs
-        self.in_msg = Queue()
 
         self.printq = Queue()
         self.loggingq = Queue()
         self.commandq = Queue()
 
         # IRC Protocol handler
-        self.irc = IRCProtocol(self.cnick, self.out_msg, self.in_msg, self.locks, self)
-        self.nickserv = NickServProtocol(self.cnick, self.out_msg, None, self.locks, self)
-        self.ctcp = CTCPProtocol(self.cnick, self.out_msg, None, self.locks, self)
-        self.dcc = DCCProtocol(self.cnick, self.out_msg, None, self.locks, self)
+        self.irc = IRCProtocol(self.cnick, self.locks, self)
+        self.nickserv = NickServProtocol(self.cnick, self.locks, self)
+        self.ctcp = CTCPProtocol(self.cnick, self.locks, self)
+        self.dcc = DCCProtocol(self.cnick, self.locks, self)
 
         # The basic IRC socket. For dcc, we are going to use another set of sockets.
         self.irc_socket = None

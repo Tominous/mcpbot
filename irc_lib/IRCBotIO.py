@@ -45,7 +45,7 @@ class IRCBotIO(object):
                 continue
 
     def inbound_loop(self):
-        """Incoming message thread. Check for new data on the socket and push the data to the dispatcher queue if any."""
+        """Incoming message thread. Check for new data on the socket and send the data to the irc protocol handler."""
         buf = ''
         while not self.exit:
             if not self.irc_socket:
@@ -69,7 +69,7 @@ class IRCBotIO(object):
             for msg in msg_list:
                 if self.rawmsg:
                     self.log('< %s' % repr(msg))
-                self.in_msg.put(msg)
+                self.irc.process_msg(msg)
 
     def print_loop(self):
         """Loop to handle console output. Only way to have coherent output in a threaded environement.

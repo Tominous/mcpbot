@@ -31,6 +31,9 @@ class IRCBotAdvMtd(object):
         self.locks['NSStatus'].release()
         return self.users[nick].status
 
+    def rawcmd(self, msg):
+        self.out_msg.put(msg)
+
     def say(self, nick, msg):
         if not msg:
             return

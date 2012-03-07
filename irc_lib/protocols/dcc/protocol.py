@@ -49,12 +49,15 @@ class DCCProtocol(DCCCommands, DCCRawEvents):
     def log(self, msg):
         self.bot.log(msg)
 
+    def eventlog(self, ev):
+        self.bot.eventlog(ev)
+
     def process_msg(self, ev):
         dcccmd, _, dccargs = ev.msg.partition(' ')
 
         # regenerate event with parsed dcc details
         ev = Event(ev.senderfull, dcccmd, ev.target, dccargs, 'DCC')
-        self.bot.loggingq.put(ev)
+        self.eventlog(ev)
 
         cmd_func = getattr(self, 'onDCC_%s' % dcccmd, self.onDCC_Default)
         cmd_func(ev)
@@ -138,7 +141,7 @@ class DCCProtocol(DCCCommands, DCCRawEvents):
                         # We push all the msg beside the last one (in case it is truncated)
                         for msg in msg_list:
                             ev = Event(s.nick, 'DCCMSG', self.cnick, msg.strip(), 'DCCMSG')
-                            self.bot.loggingq.put(ev)
+                            self.eventlog(ev)
 
                             self.bot.threadpool.add_task(self.onRawDCCMsg, ev)
 

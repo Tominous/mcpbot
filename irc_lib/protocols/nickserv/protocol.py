@@ -12,6 +12,9 @@ class NickServProtocol(NickServCommands, NickServRawEvents):
     def log(self, msg):
         self.bot.log(msg)
 
+    def eventlog(self, ev):
+        self.bot.eventlog(ev)
+
     def process_msg(self, prefix, target, msg):
         split_msg = msg.split()
         if len(split_msg) > 1 and split_msg[1] in ['ACC']:
@@ -20,7 +23,7 @@ class NickServProtocol(NickServCommands, NickServRawEvents):
             cmd = 'Unknown'
 
         ev = Event(prefix, cmd, target, msg, 'NSERV')
-        self.bot.loggingq.put(ev)
+        self.eventlog(ev)
 
         cmd_func = getattr(self, 'onNSERV_%s' % ev.cmd, self.onNSERV_Default)
         cmd_func(ev)

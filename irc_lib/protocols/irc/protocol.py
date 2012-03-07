@@ -16,6 +16,9 @@ class IRCProtocol(IRCCommands, IRCRawEvents):
     def log(self, msg):
         self.bot.log(msg)
 
+    def eventlog(self, ev):
+        self.bot.eventlog(ev)
+
     def process_msg(self, msg):
         # parse the various fields out of the message
         prefix = ''
@@ -37,7 +40,7 @@ class IRCProtocol(IRCCommands, IRCRawEvents):
 
         # fake event used for logging and onDefault, missing target
         ev = Event(prefix, cmd, '', str(args), 'IRC')
-        self.bot.loggingq.put(ev)
+        self.eventlog(ev)
 
         # We call the corresponding raw event if it exist, or the rawDefault if not.
         cmd_func = getattr(self, 'onIRC_%s' % cmd, self.onIRC_Default)

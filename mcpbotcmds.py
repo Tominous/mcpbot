@@ -48,10 +48,8 @@ class MCPBotCmds(object):
             self.say(sender, 'No public setters !')
             return
 
-        try:
-            getattr(self, 'cmd_%s' % cmd)(chan, chan, cmd, msg)
-        except AttributeError:
-            getattr(self, 'cmdDefault')(chan, chan, cmd, msg)
+        cmd_func = getattr(self, 'cmd_%s' % cmd, self.cmdDefault)
+        cmd_func(chan, chan, cmd, msg)
 
     #===================================================================
 

@@ -80,10 +80,8 @@ class IRCBotBase(IRCBotAdvMtd, IRCBotIO):
 
             self.loggingq.put(msg)
 
-            if hasattr(self, 'onCmd'):
-                self.threadpool.add_task(getattr(self, 'onCmd'), msg)
-            else:
-                self.threadpool.add_task(getattr(self, 'onDefault'), msg)
+            cmd_func = getattr(self, 'onCmd', self.onDefault)
+            self.threadpool.add_task(cmd_func, msg)
 
     def connect(self, server, port=6667, password=None):
         """Connect to a server, handle authentification and start the communication threads."""

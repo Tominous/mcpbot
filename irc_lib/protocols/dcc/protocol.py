@@ -58,17 +58,11 @@ class DCCProtocol(DCCCommands, DCCRawEvents):
         ev = Event(ev.senderfull, dcccmd, ev.target, dccargs, 'DCC')
         self.bot.loggingq.put(ev)
 
-        if hasattr(self, 'onDCC_%s' % dcccmd):
-            self.bot.threadpool.add_task(getattr(self, 'onDCC_%s' % dcccmd), ev)
-        else:
-            self.bot.threadpool.add_task(getattr(self, 'onDCC_Default'), ev)
+        cmd_func = getattr(self, 'onDCC_%s' % dcccmd, self.onDCC_Default)
+        self.bot.threadpool.add_task(cmd_func, ev)
 
-        if hasattr(self.bot, 'onDCC_%s' % dcccmd):
-            self.bot.threadpool.add_task(getattr(self.bot, 'onDCC_%s' % dcccmd), ev)
-        elif hasattr(self.bot, 'onDCC_Default'):
-            self.bot.threadpool.add_task(getattr(self.bot, 'onDCC_Default'), ev)
-        else:
-            self.bot.threadpool.add_task(getattr(self.bot, 'onDefault'), ev)
+        cmd_func = getattr(self.bot, 'onDCC_%s' % dcccmd, getattr(self.bot, 'onDCC_Default', self.bot.onDefault))
+        self.bot.threadpool.add_task(cmd_func, ev)
 
     def conv_ip_long_std(self, longip):
         hexip = hex(longip)[2:-1]

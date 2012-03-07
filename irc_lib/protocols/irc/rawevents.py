@@ -5,7 +5,7 @@ from irc_lib.protocols.nickserv.constants import NICKSERV
 
 
 class IRCRawEvents(object):
-    def onIRC_PING(self, prefix, args):
+    def onIRC_PING(self, cmd, prefix, args):
         target = args[0]
         if len(args) > 1:
             target2 = args[1]
@@ -13,7 +13,7 @@ class IRCRawEvents(object):
             target2 = None
         self.pong(target, target2)
 
-    def onIRC_NOTICE(self, prefix, args):
+    def onIRC_NOTICE(self, cmd, prefix, args):
         sender = get_nick(prefix)
         target = args[0]
         msg = args[1]
@@ -31,7 +31,7 @@ class IRCRawEvents(object):
 
         return
 
-    def onIRC_PRIVMSG(self, prefix, args):
+    def onIRC_PRIVMSG(self, cmd, prefix, args):
         sender = get_nick(prefix)
         target = args[0]
         msg = args[1]
@@ -64,7 +64,7 @@ class IRCRawEvents(object):
             evcmd = Event(sender, outcmd, target, outmsg, 'CMD')
             self.bot.commandq.put(evcmd)
 
-    def onIRC_JOIN(self, prefix, args):
+    def onIRC_JOIN(self, cmd, prefix, args):
         sender = get_nick(prefix)
         chan = args[0]
         if len(args) > 1:
@@ -76,7 +76,7 @@ class IRCRawEvents(object):
         else:
             self.add_user(sender, chan)
 
-    def onIRC_PART(self, prefix, args):
+    def onIRC_PART(self, cmd, prefix, args):
         sender = get_nick(prefix)
         chan = args[0]
         if len(args) > 1:
@@ -85,7 +85,7 @@ class IRCRawEvents(object):
             msg = ''
         self.rm_user(sender, chan)
 
-    def onIRC_QUIT(self, prefix, args):
+    def onIRC_QUIT(self, cmd, prefix, args):
         sender = get_nick(prefix)
         if len(args) > 0:
             msg = args[0]
@@ -93,7 +93,7 @@ class IRCRawEvents(object):
             msg = ''
         self.rm_user(sender)
 
-    def onIRC_RPL_WELCOME(self, prefix, args):
+    def onIRC_RPL_WELCOME(self, cmd, prefix, args):
         server = prefix
         target = args[0]
         if len(args) > 1:
@@ -103,7 +103,7 @@ class IRCRawEvents(object):
         self.bot.irc_status['Server'] = server
         self.log('> Connected to server %s' % server)
 
-    def onIRC_RPL_MOTDSTART(self, prefix, args):
+    def onIRC_RPL_MOTDSTART(self, cmd, prefix, args):
         server = prefix
         target = args[0]
         msg = args[1]
@@ -114,7 +114,7 @@ class IRCRawEvents(object):
             self.locks['ServReg'].release()
             self.log('> MOTD found. Registered with server.')
 
-    def onIRC_RPL_NAMREPLY(self, prefix, args):
+    def onIRC_RPL_NAMREPLY(self, cmd, prefix, args):
         server = prefix
         # Used for channel status, "@" is used for secret channels, "*" for private channels, and "=" for others (public channels).
         target = args[0]
@@ -125,7 +125,7 @@ class IRCRawEvents(object):
         for nick in nicks:
             self.add_user(nick, channel)
 
-    def onIRC_RPL_WHOISUSER(self, prefix, args):
+    def onIRC_RPL_WHOISUSER(self, cmd, prefix, args):
         server = prefix
         target = args[0]
         nick = args[1]
@@ -140,7 +140,7 @@ class IRCRawEvents(object):
         self.locks['WhoIs'].notifyAll()
         self.locks['WhoIs'].release()
 
-    def onIRC_NICK(self, prefix, args):
+    def onIRC_NICK(self, cmd, prefix, args):
         sender = get_nick(prefix)
         newnick = args[0]
         if sender == self.cnick:
@@ -149,11 +149,11 @@ class IRCRawEvents(object):
             self.bot.users[newnick] = self.bot.users[sender]
             del self.bot.users[sender]
 
-    def onIRC_INVITE(self, prefix, args):
+    def onIRC_INVITE(self, cmd, prefix, args):
         sender = get_nick(prefix)
         target = args[0]
         chan = args[1]
         self.join(chan)
 
-    def onIRC_Default(self, command, prefix, args):
+    def onIRC_Default(self, cmd, prefix, args):
         pass

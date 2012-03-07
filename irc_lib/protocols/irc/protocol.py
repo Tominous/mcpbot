@@ -43,29 +43,26 @@ class IRCProtocol(IRCCommands, IRCRawEvents):
         else:
             args = msg.split()
         # uppercase the command as mIRC is lame apparently, shouldn't matter as we are talking to a server anyway
-        command = args.pop(0).upper()
+        cmd = args.pop(0).upper()
 
         # If the reply is numerical, we change the cmd type to the correct type
-        if command in IRC_REPLIES:
-            command = IRC_REPLIES[command]
+        if cmd in IRC_REPLIES:
+            cmd = IRC_REPLIES[cmd]
 
         # fake event used for logging and onDefault, missing target
-        ev = Event(prefix, command, '', str(args), 'IRC')
+        ev = Event(prefix, cmd, '', str(args), 'IRC')
         self.bot.loggingq.put(ev)
 
         # We call the corresponding raw event if it exist, or the rawDefault if not.
-        if hasattr(self, 'onIRC_%s' % command):
-            self.bot.threadpool.add_task(getattr(self, 'onIRC_%s' % command), prefix, args)
-        else:
-            self.bot.threadpool.add_task(getattr(self, 'onIRC_Default'), command, prefix, args)
+        cmd_func = getattr(self, 'onIRC_%s' % cmd, self.onIRC_Default)
+        self.bot.threadpool.add_task(cmd_func, cmd, prefix, args)
 
         # We call the corresponding event if it exist, or the Default if not.
-        if hasattr(self.bot, 'onIRC_%s' % command):
-            self.bot.threadpool.add_task(getattr(self.bot, 'onIRC_%s' % command), prefix, args)
-        elif hasattr(self.bot, 'onIRC_Default'):
-            self.bot.threadpool.add_task(getattr(self.bot, 'onIRC_Default'), command, prefix, args)
+        cmd_func = getattr(self.bot, 'onIRC_%s' % cmd, getattr(self.bot, 'onIRC_Default', None))
+        if cmd_func:
+            self.bot.threadpool.add_task(cmd_func, cmd, prefix, args)
         else:
-            self.bot.threadpool.add_task(getattr(self.bot, 'onDefault'), ev)
+            self.bot.threadpool.add_task(self.bot.onDefault, ev)
 
     def add_user(self, nick, chan=None):
         nick_status = '-'

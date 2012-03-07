@@ -52,7 +52,6 @@ class TestBot(IRCBotBase):
         if ev.cmd == 'rmwhite':
             self.cmdRemoveWhite(ev.sender, ev.chan, ev.msg)
 
-
     def onDCCMsg(self, ev):
         self.dcc.say(ev.sender, ev.msg)
 

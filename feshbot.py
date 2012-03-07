@@ -10,8 +10,8 @@ class MCPBot(IRCBotBase, MCPBotCmds):
         self.whitelist['Fesh0r'] = 5
         self.rawmsg = True
 
-    def onIRC_Default(self, command, prefix, args):
-        self.log("IRC_%s %s %s" % (command, prefix, str(args)))
+    def onIRC_Default(self, cmd, prefix, args):
+        self.log("IRC_%s %s %s" % (cmd, prefix, str(args)))
 
     def onDefault(self, ev):
         self.log("%s_%s %s %s '%s'" % (ev.type, ev.cmd, ev.sender, ev.target, ev.msg))
@@ -19,10 +19,8 @@ class MCPBot(IRCBotBase, MCPBotCmds):
     def onCmd(self, ev):
         self.log('> [%.2f][%d] %s S: %s C: %s T: %s M: %s' % (ev.stamp, ev.id, ev.type.ljust(5), ev.sender.ljust(25), ev.cmd.ljust(15), ev.target, ev.msg))
         cmd = ev.cmd.lower()
-        try:
-            getattr(self, 'cmd_%s' % cmd)(ev.sender, ev.chan, ev.cmd, ev.msg)
-        except AttributeError:
-            getattr(self, 'cmdDefault')(ev.sender, ev.chan, ev.cmd, ev.msg)
+        cmd_func = getattr(self, 'cmd_%s' % cmd, self.cmdDefault)
+        cmd_func(ev.sender, ev.chan, ev.cmd, ev.msg)
 
 
 if __name__ == "__main__":

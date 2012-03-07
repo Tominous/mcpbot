@@ -20,10 +20,8 @@ class MCPBot(IRCBotBase, MCPBotCmds):
     def onCmd(self, ev):
         self.log('> [%.2f][%d] %s S: %s C: %s T: %s M: %s' % (ev.stamp, ev.id, ev.type.ljust(5), ev.sender.ljust(25), ev.cmd.ljust(15), ev.target, ev.msg))
         cmd = ev.cmd.lower()
-        try:
-            getattr(self, 'cmd_%s' % cmd)(ev.sender, ev.chan, ev.cmd, ev.msg)
-        except AttributeError:
-            getattr(self, 'cmdDefault')(ev.sender, ev.chan, ev.cmd, ev.msg)
+        cmd_func = getattr(self, 'cmd_%s' % cmd, self.cmdDefault)
+        cmd_func(ev.sender, ev.chan, ev.cmd, ev.msg)
 
 
 if __name__ == "__main__":

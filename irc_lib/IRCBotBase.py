@@ -1,9 +1,12 @@
 import socket
 import time
 from threading import Condition
-from protocols.dispatcher import Dispatcher
 from Queue import Queue, Empty
 
+from irc_lib.protocols.irc.protocol import IRCProtocol
+from irc_lib.protocols.nickserv.protocol import NickServProtocol
+from irc_lib.protocols.ctcp.protocol import CTCPProtocol
+from irc_lib.protocols.dcc.protocol import DCCProtocol
 from utils.ThreadPool import ThreadPool
 from IRCBotError import IRCBotError
 from IRCBotAdvMtd import IRCBotAdvMtd
@@ -46,16 +49,16 @@ class IRCBotBase(IRCBotAdvMtd, IRCBotIO):
         self.out_msg = Queue()
         # Inbound msgs
         self.in_msg = Queue()
+
         self.printq = Queue()
         self.loggingq = Queue()
         self.commandq = Queue()
 
         # IRC Protocol handler
-        self.dispatcher = Dispatcher(self.cnick, self.out_msg, self.in_msg, self.locks, self)
-        self.irc = self.dispatcher.irc
-        self.nickserv = self.dispatcher.nse
-        self.ctcp = self.dispatcher.ctcp
-        self.dcc = self.dispatcher.dcc
+        self.irc = IRCProtocol(self.cnick, self.out_msg, self.in_msg, self.locks, self)
+        self.nickserv = NickServProtocol(self.cnick, self.out_msg, None, self.locks, self)
+        self.ctcp = CTCPProtocol(self.cnick, self.out_msg, None, self.locks, self)
+        self.dcc = DCCProtocol(self.cnick, self.out_msg, None, self.locks, self)
 
         # The basic IRC socket. For dcc, we are going to use another set of sockets.
         self.irc_socket = None

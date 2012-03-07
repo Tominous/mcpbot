@@ -14,22 +14,7 @@ class IRCRawEvents(object):
         self.pong(target, target2)
 
     def onIRC_NOTICE(self, cmd, prefix, args):
-        sender = get_nick(prefix)
-        target = args[0]
-        msg = args[1]
-
-        if not msg:
-            return
-
-        if sender == NICKSERV:
-            self.bot.nickserv.process_msg(prefix, target, msg)
-            return
-
-        if msg[0] == CTCP_DELIMITER:
-            self.bot.ctcp.process_msg(prefix, target, msg)
-            return
-
-        return
+        self.onIRC_PRIVMSG(cmd, prefix, args)
 
     def onIRC_PRIVMSG(self, cmd, prefix, args):
         sender = get_nick(prefix)
@@ -47,22 +32,23 @@ class IRCRawEvents(object):
             self.bot.ctcp.process_msg(prefix, target, msg)
             return
 
-        ischan = target[0] in ['#', '&']
-        outcmd = None
+        if cmd == 'PRIVMSG':
+            ischan = target[0] in ['#', '&']
+            outcmd = None
 
-        if ischan and msg[0] == self.bot.controlchar:
-            outcmd = msg.split()[0][1:]
+            if ischan and msg[0] == self.bot.controlchar:
+                outcmd = msg.split()[0][1:]
 
-        if target == self.cnick and msg[0] != self.bot.controlchar:
-            outcmd = msg.split()[0]
+            if target == self.cnick and msg[0] != self.bot.controlchar:
+                outcmd = msg.split()[0]
 
-        if outcmd:
-            if len(msg.split()) < 2:
-                outmsg = ' '
-            else:
-                outmsg = ' '.join(msg.split()[1:])
-            evcmd = Event(sender, outcmd, target, outmsg, 'CMD')
-            self.bot.commandq.put(evcmd)
+            if outcmd:
+                if len(msg.split()) < 2:
+                    outmsg = ' '
+                else:
+                    outmsg = ' '.join(msg.split()[1:])
+                evcmd = Event(sender, outcmd, target, outmsg, 'CMD')
+                self.bot.commandq.put(evcmd)
 
     def onIRC_JOIN(self, cmd, prefix, args):
         sender = get_nick(prefix)

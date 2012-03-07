@@ -1,6 +1,7 @@
 from irc_lib.utils.irc_name import get_nick, get_ip
 from irc_lib.protocols.event import Event
 from irc_lib.protocols.ctcp.constants import CTCP_DELIMITER
+from irc_lib.protocols.nickserv.constants import NICKSERV
 
 
 class IRCRawEvents(object):
@@ -20,6 +21,10 @@ class IRCRawEvents(object):
         if not msg:
             return
 
+        if sender == NICKSERV:
+            self.bot.nickserv.process_msg(prefix, target, msg)
+            return
+
         if msg[0] == CTCP_DELIMITER:
             self.bot.ctcp.process_msg(prefix, target, msg)
             return
@@ -32,6 +37,10 @@ class IRCRawEvents(object):
         msg = args[1]
 
         if not msg:
+            return
+
+        if sender == NICKSERV:
+            self.bot.nickserv.process_msg(prefix, target, msg)
             return
 
         if msg[0] == CTCP_DELIMITER:

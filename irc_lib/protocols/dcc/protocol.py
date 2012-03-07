@@ -2,10 +2,7 @@ import socket
 import urllib
 import select
 import sys
-from Queue import Empty
 
-from irc_lib.utils.irc_name import get_nick
-from irc_lib.IRCBotError import IRCBotError
 from irc_lib.protocols.event import Event
 from commands import DCCCommands
 from rawevents import DCCRawEvents

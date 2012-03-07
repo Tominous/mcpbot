@@ -13,11 +13,8 @@ class MCPBot(IRCBotBase, MCPBotCmds):
     def onIRC_Default(self, command, prefix, args):
         self.log("IRC_%s %s %s" % (command, prefix, str(args)))
 
-    def onCTCP_Default(self, ev):
-        self.log("CTCP_%s %s %s '%s'" % (ev.cmd, ev.sender, ev.target, ev.msg))
-
-    def onDCC_Default(self, ev):
-        self.log("DCC_%s %s %s '%s'" % (ev.cmd, ev.sender, ev.target, ev.msg))
+    def onDefault(self, ev):
+        self.log("%s_%s %s %s '%s'" % (ev.type, ev.cmd, ev.sender, ev.target, ev.msg))
 
     def onCmd(self, ev):
         self.log('> [%.2f][%d] %s S: %s C: %s T: %s M: %s' % (ev.stamp, ev.id, ev.type.ljust(5), ev.sender.ljust(25), ev.cmd.ljust(15), ev.target, ev.msg))

@@ -1,5 +1,3 @@
-from Queue import Empty
-
 from irc_lib.protocols.event import Event
 from commands import NickServCommands
 from rawevents import NickServRawEvents
@@ -13,30 +11,17 @@ class NickServProtocol(NickServCommands, NickServRawEvents):
         self.bot = _bot
         self.locks = _locks
 
-        self.bot.threadpool.add_task(self.msg_loop, _threadname='NickServHandler')
-
     def log(self, msg):
         self.bot.log(msg)
 
-    def msg_loop(self):
-        while not self.bot.exit:
-            try:
-                msg = self.in_msg.get(True, 1)
-            except Empty:
-                continue
-            self.in_msg.task_done()
-            self.process_msg(msg)
+    def process_msg(self, prefix, target, msg):
+        split_msg = msg.split()
+        if len(split_msg) > 1 and split_msg[1] in ['ACC']:
+            cmd = split_msg[1]
+        else:
+            cmd = 'Unknown'
 
-    def process_msg(self, msg):
-        msg = msg.strip()
-        if not msg:
-            return
-
-        msg = msg.split()
-
-        if len(msg) < 5:
-            msg.append(' ')
-        ev = Event(msg[0], msg[4], msg[2], ' '.join([msg[3], msg[5]]), 'NSERV')
+        ev = Event(prefix, cmd, target, msg, 'NSERV')
         self.bot.loggingq.put(ev)
 
         if hasattr(self, 'onNSERV_%s' % ev.cmd):

@@ -1,6 +1,3 @@
-import socket
-
-from irc_lib.utils.irc_name import get_nick
 from irc_lib.protocols.event import Event
 
 

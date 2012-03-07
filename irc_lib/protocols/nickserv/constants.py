@@ -1,1 +1,1 @@
-#
+NICKSERV = 'NickServ'

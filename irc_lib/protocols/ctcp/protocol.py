@@ -28,8 +28,7 @@ class CTCPProtocol(CTCPCommands, CTCPRawEvents):
         self.bot.loggingq.put(ev)
 
         cmd_func = getattr(self, 'onCTCP_%s' % ev.cmd, self.onCTCP_Default)
-        self.bot.threadpool.add_task(cmd_func, ev)
+        cmd_func(ev)
 
-        cmd_func = getattr(self.bot, 'onCTCP_%s' % ev.cmd, getattr(self.bot, 'onCTCP_Default' % ev.cmd,
-                                                                   self.bot.onDefault))
-        self.bot.threadpool.add_task(cmd_func, ev)
+        cmd_func = getattr(self.bot, 'onCTCP_%s' % ev.cmd, getattr(self.bot, 'onCTCP_Default', self.bot.onDefault))
+        cmd_func(ev)

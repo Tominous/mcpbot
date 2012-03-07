@@ -25,7 +25,7 @@ class NickServProtocol(NickServCommands, NickServRawEvents):
         self.bot.loggingq.put(ev)
 
         cmd_func = getattr(self, 'onNSERV_%s' % ev.cmd, self.onNSERV_Default)
-        self.bot.threadpool.add_task(cmd_func, ev)
+        cmd_func(ev)
 
         cmd_func = getattr(self.bot, 'onNSERV_%s' % ev.cmd, getattr(self.bot, 'onNSERV_Default', self.bot.onDefault))
-        self.bot.threadpool.add_task(cmd_func, ev)
+        cmd_func(ev)

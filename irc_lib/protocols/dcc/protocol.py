@@ -59,10 +59,10 @@ class DCCProtocol(DCCCommands, DCCRawEvents):
         self.bot.loggingq.put(ev)
 
         cmd_func = getattr(self, 'onDCC_%s' % dcccmd, self.onDCC_Default)
-        self.bot.threadpool.add_task(cmd_func, ev)
+        cmd_func(ev)
 
         cmd_func = getattr(self.bot, 'onDCC_%s' % dcccmd, getattr(self.bot, 'onDCC_Default', self.bot.onDefault))
-        self.bot.threadpool.add_task(cmd_func, ev)
+        cmd_func(ev)
 
     def conv_ip_long_std(self, longip):
         hexip = hex(longip)[2:-1]
@@ -132,14 +132,12 @@ class DCCProtocol(DCCCommands, DCCRawEvents):
                         # We push all the msg beside the last one (in case it is truncated)
                         for msg in msg_list:
                             ev = Event(s.nick, 'DCCMSG', self.cnick, msg.strip(), 'DCCMSG')
-
                             self.bot.loggingq.put(ev)
 
                             self.bot.threadpool.add_task(self.onRawDCCMsg, ev)
-                            if hasattr(self.bot, 'onDCCMsg'):
-                                self.bot.threadpool.add_task(self.bot.onDCCMsg, ev)
-                            else:
-                                self.bot.threadpool.add_task(self.bot.onDefault, ev)
+
+                            cmd_func = getattr(self.bot, 'onDCCMsg', self.bot.onDefault)
+                            self.bot.threadpool.add_task(cmd_func, ev)
 
                         s.buffer = ''
                     else:

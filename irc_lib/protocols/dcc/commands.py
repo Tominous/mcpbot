@@ -26,7 +26,7 @@ class DCCCommands(object):
                 isGone = True
             except socket.error as exc:
                 self.log('*** DCC.say: socket.error: %s %s' % (repr(nick), exc))
-                continue
+                break
             except KeyError:
                 self.log('*** DCC.say: unknown nick: %s' % repr(nick))
                 break

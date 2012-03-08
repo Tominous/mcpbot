@@ -38,7 +38,6 @@ class DCCCommands(object):
 
         if nick in self.sockets and self.sockets[nick] is not None:
             self.log('*** DCC.dcc: closed old socket: %s' % repr(nick))
-            self.sockets[nick].socket.close()
             del self.sockets[nick]
         self.sockets[nick] = None
 

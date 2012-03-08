@@ -22,8 +22,6 @@ class Event(object):
             print '*** Event: cmd stripped: %s' % repr(cmd)
         if target != target.strip():
             print '*** Event: target stripped: %s' % repr(target)
-        if msg != msg.strip():
-            print '*** Event: msg stripped: %s' % repr(msg)
         self.sender, self.senderuser, self.senderhost = split_prefix(sender.strip())
         self.senderfull = sender.strip()
         self.cmd = cmd.strip()

@@ -55,11 +55,11 @@ class DCCProtocol(DCCCommands, DCCRawEvents):
     def eventlog(self, ev):
         self.bot.eventlog(ev)
 
-    def process_msg(self, ev):
-        dcccmd, _, dccargs = ev.msg.partition(' ')
+    def process_msg(self, sender, target, msg):
+        dcccmd, _, dccargs = msg.partition(' ')
 
         # regenerate event with parsed dcc details
-        ev = Event(ev.senderfull, dcccmd, ev.target, dccargs, 'DCC')
+        ev = Event(sender, dcccmd, target, dccargs, 'DCC')
         self.eventlog(ev)
 
         cmd_func = getattr(self, 'onDCC_%s' % dcccmd, self.onDCC_Default)

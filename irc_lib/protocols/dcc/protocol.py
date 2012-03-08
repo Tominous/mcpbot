@@ -1,7 +1,6 @@
 import socket
 import urllib
 import select
-import sys
 
 from irc_lib.protocols.event import Event
 from irc_lib.IRCBotIO import LINESEP_REGEXP
@@ -78,7 +77,6 @@ class DCCProtocol(DCCCommands, DCCRawEvents):
         cmd_func = getattr(self.bot, 'onDCCMsg', self.bot.onDefault)
         self.bot.threadpool.add_task(cmd_func, ev)
 
-
     def conv_ip_long_std(self, longip):
         try:
             ip = long(longip)
@@ -142,13 +140,10 @@ class DCCProtocol(DCCCommands, DCCRawEvents):
                             self.log('*** DCC.inbound_loop: socket.error: %s %s' % (s.nick, exc))
                         continue
                     if not new_data:
-                        try:
-                            self.log('*** DCC.inbound_loop: [No data] Connection closed: %s' % s.nick)
-                            del self.sockets[s.nick]
-                            s.socket.close()
-                            inp.remove(s)
-                        except Exception as exc:
-                            self.log('*** DCC.inbound_loop: Error closing socket: %s %s' % (s.nick, exc))
+                        self.log('*** DCC.inbound_loop: [No data] Connection closed: %s' % s.nick)
+                        del self.sockets[s.nick]
+                        s.socket.close()
+                        inp.remove(s)
                         continue
 
                     msg_list = LINESEP_REGEXP.split(s.buffer + new_data)

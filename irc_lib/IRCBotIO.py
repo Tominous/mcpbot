@@ -48,7 +48,6 @@ class IRCBotIO(object):
             allowed_chars -= len(out_line)
             self.out_msg.task_done()
 
-
     def inbound_loop(self):
         """Incoming message thread. Check for new data on the socket and send the data to the irc protocol handler."""
         buf = ''
@@ -99,4 +98,3 @@ class IRCBotIO(object):
                     (None, ev.type, ev.cmd, ev.sender, ev.target, ev.msg, int(time.time())))
                 db.commit()
                 self.loggingq.task_done()
-

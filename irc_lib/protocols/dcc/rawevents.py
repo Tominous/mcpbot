@@ -21,7 +21,5 @@ class DCCRawEvents(object):
 
 #
 
-#
-
     def onDCC_Default(self, ev):
         self.log('RAW DCC EVENT: %s %s %s %s' % (ev.sender, ev.target, ev.cmd, repr(ev.msg)))

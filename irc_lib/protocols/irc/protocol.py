@@ -1,5 +1,3 @@
-from Queue import Empty
-
 from irc_lib.protocols.nickserv.protocol import NickServProtocol
 from irc_lib.protocols.ctcp.protocol import CTCPProtocol
 from irc_lib.protocols.event import Event

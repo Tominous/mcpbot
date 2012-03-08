@@ -25,12 +25,14 @@ class IRCBotIO(object):
             start_time = time.time()
 
             if not self.irc_socket:
+                self.log('outbound_loop: no socket')
                 continue
+
             try:
                 msg = self.out_msg.get(True, 1)
             except Empty:
                 continue
-            self.out_msg.task_done()
+
             if self.rawmsg:
                 self.log('> %s' % repr(msg))
             out_line = msg + '\r\n'
@@ -38,11 +40,14 @@ class IRCBotIO(object):
                 time.sleep((len(out_line) * 1.25) / (self.floodprotec / 30.0))
             try:
                 self.irc_socket.send(out_line)
-                allowed_chars -= len(out_line)
             except socket.timeout:
                 self.log('outbound_loop: socket.timeout')
                 self.out_msg.put(msg)
+                self.out_msg.task_done()
                 continue
+            allowed_chars -= len(out_line)
+            self.out_msg.task_done()
+
 
     def inbound_loop(self):
         """Incoming message thread. Check for new data on the socket and send the data to the irc protocol handler."""
@@ -78,8 +83,8 @@ class IRCBotIO(object):
                 msg = self.printq.get(True, 1)
             except Empty:
                 continue
-            self.printq.task_done()
             print msg
+            self.printq.task_done()
 
     def logging_loop(self):
         with sqlite3.connect(self.dbconf) as db:
@@ -93,3 +98,5 @@ class IRCBotIO(object):
                 db.execute("""INSERT INTO logs VALUES (?, ?, ?, ?, ?, ?, ?)""",
                     (None, ev.type, ev.cmd, ev.sender, ev.target, ev.msg, int(time.time())))
                 db.commit()
+                self.loggingq.task_done()
+

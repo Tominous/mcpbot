@@ -77,12 +77,10 @@ class IRCBotBase(IRCBotAdvMtd, IRCBotIO):
                 ev = self.commandq.get(True, 1)
             except Empty:
                 continue
-            self.commandq.task_done()
-
             self.eventlog(ev)
-
             cmd_func = getattr(self, 'onCmd', self.onDefault)
             self.threadpool.add_task(cmd_func, ev)
+            self.commandq.task_done()
 
     def connect(self, server, port=6667, password=None):
         """Connect to a server, handle authentification and start the communication threads."""

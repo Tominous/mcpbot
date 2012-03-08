@@ -16,7 +16,6 @@ class DCCRawEvents(object):
             else:
                 outmsg = ' '.join(ev.msg.split()[1:])
             outev = Event(ev.sender, ev.msg.split()[0], self.cnick, outmsg, 'CMD')
-
             self.bot.commandq.put(outev)
 
     def onDCC_CHAT(self, ev):

@@ -4,7 +4,7 @@ from irc_lib.protocols.user import User
 class NickServRawEvents(object):
     def onNSERV_ACC(self, ev):
         msg = ev.msg.split()
-        if len(msg) != 3:
+        if len(msg) < 3:
             self.log('*** NSERV.onNSERV_ACC: INVALID: %s %s %s' % (ev.sender, ev.target, repr(ev.msg)))
             return
 

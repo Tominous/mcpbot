@@ -4,6 +4,7 @@ import select
 import sys
 
 from irc_lib.protocols.event import Event
+from irc_lib.IRCBotIO import LINESEP_REGEXP
 from commands import DCCCommands
 from rawevents import DCCRawEvents
 
@@ -68,6 +69,16 @@ class DCCProtocol(DCCCommands, DCCRawEvents):
         cmd_func = getattr(self.bot, 'onDCC_%s' % dcccmd, getattr(self.bot, 'onDCC_Default', self.bot.onDefault))
         cmd_func(ev)
 
+    def process_DCCmsg(self, sender, msg):
+        ev = Event(sender, 'DCCMSG', self.cnick, msg, 'DCCMSG')
+        self.eventlog(ev)
+
+        self.bot.threadpool.add_task(self.onRawDCCMsg, ev)
+
+        cmd_func = getattr(self.bot, 'onDCCMsg', self.bot.onDefault)
+        self.bot.threadpool.add_task(cmd_func, ev)
+
+
     def conv_ip_long_std(self, longip):
         try:
             ip = long(longip)
@@ -119,9 +130,8 @@ class DCCProtocol(DCCCommands, DCCRawEvents):
                         self.log('*** DCC.inbound_loop: connect from unknown ip: %s' % ip)
                 else:
                     # handle all other sockets
-                    data = None
                     try:
-                        data = s.socket.recv(512)
+                        new_data = s.socket.recv(512)
                     except socket.error as exc:
                         if 'Connection reset by peer' in exc:
                             self.log('*** DCC.inbound_loop: connection closed: %s' % s.nick)
@@ -131,31 +141,7 @@ class DCCProtocol(DCCCommands, DCCRawEvents):
                         else:
                             self.log('*** DCC.inbound_loop: socket.error: %s %s' % (s.nick, exc))
                         continue
-
-                    if data:
-                        s.buffer += data
-
-                        if self.bot.rawmsg:
-                            self.log('< ' + s.buffer)
-
-                        if not s.buffer.strip():
-                            s.buffer = ''
-                            continue
-
-                        msg_list = s.buffer.splitlines()
-
-                        # We push all the msg beside the last one (in case it is truncated)
-                        for msg in msg_list:
-                            ev = Event(s.nick, 'DCCMSG', self.cnick, msg.strip(), 'DCCMSG')
-                            self.eventlog(ev)
-
-                            self.bot.threadpool.add_task(self.onRawDCCMsg, ev)
-
-                            cmd_func = getattr(self.bot, 'onDCCMsg', self.bot.onDefault)
-                            self.bot.threadpool.add_task(cmd_func, ev)
-
-                        s.buffer = ''
-                    else:
+                    if not new_data:
                         try:
                             self.log('*** DCC.inbound_loop: [No data] Connection closed: %s' % s.nick)
                             del self.sockets[s.nick]
@@ -163,3 +149,14 @@ class DCCProtocol(DCCCommands, DCCRawEvents):
                             inp.remove(s)
                         except Exception as exc:
                             self.log('*** DCC.inbound_loop: Error closing socket: %s %s' % (s.nick, exc))
+                        continue
+
+                    msg_list = LINESEP_REGEXP.split(s.buffer + new_data)
+
+                    # Push last line back into buffer in case its truncated
+                    s.buffer = msg_list.pop()
+
+                    for msg in msg_list:
+                        if self.bot.rawmsg:
+                            self.log('< %s' % repr(msg))
+                        self.process_DCCMsg(s.nick, msg)

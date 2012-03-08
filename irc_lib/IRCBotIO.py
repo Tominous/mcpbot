@@ -5,7 +5,7 @@ import sqlite3
 from Queue import Empty
 
 
-_LINESEP_REGEXP = re.compile(r'\r?\n')
+LINESEP_REGEXP = re.compile(r'\r?\n')
 
 
 class IRCBotIO(object):
@@ -66,7 +66,7 @@ class IRCBotIO(object):
                 self.log('*** IRCBotIO.inbound_loop: no data')
                 continue
 
-            msg_list = _LINESEP_REGEXP.split(buf + new_data)
+            msg_list = LINESEP_REGEXP.split(buf + new_data)
 
             # Push last line back into buffer in case its truncated
             buf = msg_list.pop()

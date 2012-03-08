@@ -4,6 +4,7 @@ import re
 import threading
 
 from irc_lib.utils.restricted import restricted
+from irc_lib.utils.ThreadPool import Worker
 from database import database
 
 
@@ -865,23 +866,15 @@ class MCPBotCmds(object):
     @restricted(4)
     def cmd_listthreads(self, sender, chan, cmd, msg, *args, **kwargs):
         threads = threading.enumerate()
-        threads.pop(0)
         self.say(sender, "$B[ THREADS ]")
-        threads = sorted(threads, cmp=lambda a, b: cmp(a.ncalls, b.ncalls))
         maxthreadname = max([len(i.name) for i in threads])
 
-        displayorder = zip(range(0, len(threads), 2), range(1, len(threads), 2))
-
-        for i, j in displayorder:
-            it = threads[i]
-            jt = threads[j]
-            self.say(sender, '%2d %s %4d %4d %4d | %2d %s %4d %4d %4d' %
-            (i, it.name.ljust(maxthreadname), it.ncalls, it.nscalls, it.nfcalls,
-             j, jt.name.ljust(maxthreadname), jt.ncalls, jt.nscalls, jt.nfcalls))
-
-        if len(threads) % 2 == 1:
-            i = threads[-1]
-            self.say(sender, '%2d %s %4d %4d %4d' % (len(threads) - 1, i.name.ljust(maxthreadname), i.ncalls, i.nscalls, i.nfcalls))
+        for t in threads:
+            if isinstance(t, Worker):
+                line = '%s %4d %4d %4d' % (t.name.ljust(maxthreadname), t.ncalls, t.nscalls, t.nfcalls)
+            else:
+                line = '%s %4d %4d %4d' % (t.name.ljust(maxthreadname), 0, 0, 0)
+            self.say(sender, line)
 
     @restricted(4)
     def cmd_listdcc(self, sender, chan, cmd, msg, *args, **kwargs):

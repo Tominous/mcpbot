@@ -23,16 +23,21 @@ class DCCCommands(object):
             try:
                 self.sockets[nick].socket.send(msg.strip() + '\r\n')
                 isGone = True
-            except socket.error:
-                self.log('Socket error !')
+            except socket.error as exc:
+                self.log('*** DCC.say: socket.error: %s %s' % (repr(nick), exc))
                 raise
             except KeyError:
-                self.log('[DCCCommands.say] Nick not found in socket table : %s' % nick)
+                self.log('*** DCC.say: unknown nick: %s' % repr(nick))
 
     def dcc(self, nick):
+        if not self.inip:
+            self.bot.say(nick, '$BDCC currently disabled')
+            return
+
         target_ip = self.bot.getIP(nick)
 
         if nick in self.sockets and self.sockets[nick] is not None:
+            self.log('*** DCC.dcc: closed old socket: %s' % repr(nick))
             self.sockets[nick].socket.close()
             del self.sockets[nick]
         self.sockets[nick] = None

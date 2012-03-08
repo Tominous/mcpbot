@@ -7,7 +7,9 @@ class DCCRawEvents(object):
             return
         self.eventlog(ev)
 
-        ev.msg = ev.msg.strip()
+        if ev.msg != ev.msg.strip():
+            self.log('*** DCC.onRawDCCMsg: stripped: %s' % repr(ev.msg))
+            ev.msg = ev.msg.strip()
         if len(ev.msg) > 1:
             if ev.msg[0] == self.bot.controlchar:
                 ev.msg = ev.msg[1:]
@@ -22,15 +24,15 @@ class DCCRawEvents(object):
         nick = ev.sender
         args = ev.msg.split()
         if len(args) != 3:
-            self.log("INVALID DCC CHAT: %s %s '%s'" % (ev.sender, ev.target, ev.msg))
+            self.log('*** DCC.onDCC_CHAT: INVALID: %s %s %s' % (ev.sender, ev.target, repr(ev.msg)))
             return
         dccprot = args[0]
         dccip = self.conv_ip_long_std(args[1])
         dccport = int(args[2])
 
-        self.log("onDCC_CHAT: %s '%s' | IP:%s Port:%s" % (ev.sender, ev.msg, dccip, dccport))
+        self.log("onDCC_CHAT: %s %s | IP:%s Port:%s" % (ev.sender, repr(ev.msg), dccip, dccport))
 
 #
 
     def onDCC_Default(self, ev):
-        self.log("RAW DCC EVENT: %s %s %s '%s'" % (ev.sender, ev.target, ev.cmd, ev.msg))
+        self.log('RAW DCC EVENT: %s %s %s %s' % (ev.sender, ev.target, ev.cmd, repr(ev.msg)))

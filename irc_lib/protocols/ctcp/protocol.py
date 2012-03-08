@@ -25,6 +25,7 @@ class CTCPProtocol(CTCPCommands, CTCPRawEvents):
         if msg[-1] == CTCP_DELIMITER:
             msg = msg[1:-1]
         else:
+            self.log('*** CTCP.process_msg: no trailing delim: %s' % repr(msg))
             msg = msg[1:]
 
         cmd, _, data = msg.partition(' ')

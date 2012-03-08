@@ -11,10 +11,10 @@ class MCPBot(IRCBotBase, MCPBotCmds):
         self.rawmsg = True
 
     def onIRC_Default(self, cmd, prefix, args):
-        self.log("IRC_%s %s %s" % (cmd, prefix, str(args)))
+        self.log('IRC_%s %s %s' % (cmd, prefix, str(args)))
 
     def onDefault(self, ev):
-        self.log("%s_%s %s %s '%s'" % (ev.type, ev.cmd, ev.sender, ev.target, ev.msg))
+        self.log('%s_%s %s %s %s' % (ev.type, ev.cmd, ev.sender, ev.target, repr(ev.msg)))
 
     def onCmd(self, ev):
         self.log('> [%.2f][%d] %s S: %s C: %s T: %s M: %s' % (ev.stamp, ev.id, ev.type.ljust(5), ev.sender.ljust(25), ev.cmd.ljust(15), ev.target, ev.msg))
@@ -23,7 +23,7 @@ class MCPBot(IRCBotBase, MCPBotCmds):
         cmd_func(ev.sender, ev.chan, ev.cmd, ev.msg)
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     if len(sys.argv) < 2:
         print 'No password given. Try python feshbot.py <password>.'
         sys.exit(0)

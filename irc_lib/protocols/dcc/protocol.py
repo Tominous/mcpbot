@@ -27,6 +27,8 @@ class DCCProtocol(DCCCommands, DCCRawEvents):
 
         self.sockets = {}
         self.ip2nick = {}
+        self.inip = None
+        self.inport = None
 
         listenhost = ''
         listenport = 0
@@ -35,15 +37,15 @@ class DCCProtocol(DCCCommands, DCCRawEvents):
             self.insocket.bind((listenhost, listenport))
             self.insocket.listen(5)
             listenhost, listenport = self.insocket.getsockname()
-        except socket.error:
-            self.log("DCC insocket failed")
-            raise
+        except socket.error as exc:
+            self.log('*** DCC: insocket failed: %s' % exc)
+            return
 
         externalip = urllib.urlopen('http://automation.whatismyip.com/n09230945.asp').readlines()[0]
         self.inip = self.conv_ip_std_long(externalip)
         self.inport = listenport
 
-        self.log("DCC listening on %s:%d %s '%d %d'" % (listenhost, listenport, externalip, self.inip, self.inport))
+        self.log('DCC listening on %s:%d %s (%d %d)' % (listenhost, listenport, externalip, self.inip, self.inport))
 
         self.bot.threadpool.add_task(self.inbound_loop, _threadname='DCCInLoop')
 
@@ -70,10 +72,10 @@ class DCCProtocol(DCCCommands, DCCRawEvents):
         try:
             ip = long(longip)
         except ValueError:
-            self.log("Invalid DCC IP '%s'" % longip)
+            self.log('*** DCC.conv_ip_long_std: invalid: %s' % repr(longip))
             return '0.0.0.0'
         if ip >= 2 ** 32:
-            self.log("Invalid DCC IP '%s'" % longip)
+            self.log('*** DCC.conv_ip_long_std: invalid: %s' % repr(longip))
             return '0.0.0.0'
         address = [str(ip >> shift & 0xFF) for shift in [24, 16, 8, 0]]
         return '.'.join(address)
@@ -81,17 +83,17 @@ class DCCProtocol(DCCCommands, DCCRawEvents):
     def conv_ip_std_long(self, stdip):
         address = stdip.split('.')
         if len(address) != 4:
-            self.log("Invalid IP '%s'" % stdip)
+            self.log('*** DCC.conv_ip_std_long: invalid: %s' % repr(stdip))
             return 0
         longip = 0
         for part, shift in zip(address, [24, 16, 8, 0]):
             try:
                 ip_part = int(part)
             except ValueError:
-                self.log("Invalid IP '%s'" % stdip)
+                self.log('*** DCC.conv_ip_std_long: invalid: %s' % repr(stdip))
                 return 0
             if ip_part >= 2 ** 8:
-                self.log("Invalid IP '%s'" % stdip)
+                self.log('*** DCC.conv_ip_std_long: invalid: %s' % repr(stdip))
                 return 0
             longip += ip_part << shift
         return longip
@@ -106,33 +108,36 @@ class DCCProtocol(DCCCommands, DCCRawEvents):
                     self.log('> Received connection request')
                     # handle the server socket
                     buffsocket, buffip = self.insocket.accept()
-                    if buffip[0] in self.ip2nick:
-                        self.log('> User identified as : %s %s' % (self.ip2nick[buffip[0]], buffip[0]))
-                        self.sockets[self.ip2nick[buffip[0]]] = DCCSocket(buffsocket, self.ip2nick[buffip[0]])
-                        self.say(self.ip2nick[buffip[0]], 'Connection with user %s established.\r\n' % self.ip2nick[buffip[0]])
-                        inp.append(self.sockets[self.ip2nick[buffip[0]]])
+                    ip = buffip[0]
+                    if ip in self.ip2nick:
+                        nick = self.ip2nick[ip]
+                        self.log('> User identified as: %s %s' % (nick, ip))
+                        self.sockets[nick] = DCCSocket(buffsocket, nick)
+                        self.say(nick, 'Connection with user %s established' % nick)
+                        inp.append(self.sockets[nick])
                     else:
-                        # TODO: Check if something should be done here
-                        pass
+                        self.log('*** DCC.inbound_loop: connect from unknown ip: %s' % ip)
                 else:
                     # handle all other sockets
                     data = None
                     try:
                         data = s.socket.recv(512)
-                    except socket.error as msg:
-                        if 'Connection reset by peer' in msg:
-                            self.log('> [Connection reset] Connection closed with : %s' % s.nick)
+                    except socket.error as exc:
+                        if 'Connection reset by peer' in exc:
+                            self.log('*** DCC.inbound_loop: connection closed: %s' % s.nick)
                             del self.sockets[s.nick]
                             s.socket.close()
                             inp.remove(s)
-                            continue
+                        else:
+                            self.log('*** DCC.inbound_loop: socket.error: %s %s' % (s.nick, exc))
+                        continue
+
                     if data:
                         s.buffer += data
 
                         if self.bot.rawmsg:
                             self.log('< ' + s.buffer)
 
-                        self.log(r'>%s<' % s.buffer)
                         if not s.buffer.strip():
                             s.buffer = ''
                             continue
@@ -152,11 +157,9 @@ class DCCProtocol(DCCCommands, DCCRawEvents):
                         s.buffer = ''
                     else:
                         try:
-                            self.log('> [No data] Connection closed with : %s' % s.nick)
+                            self.log('*** DCC.inbound_loop: [No data] Connection closed: %s' % s.nick)
                             del self.sockets[s.nick]
                             s.socket.close()
                             inp.remove(s)
-                        except Exception:
-                            # TODO : Specialized error handling. General except is BAD !
-                            self.log("> Unexpected error while closing the socket: %s" % sys.exc_info()[0])
-                            raise
+                        except Exception as exc:
+                            self.log('*** DCC.inbound_loop: Error closing socket: %s %s' % (s.nick, exc))

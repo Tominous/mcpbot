@@ -62,6 +62,7 @@ class IRCProtocol(IRCCommands, IRCRawEvents):
     def add_user(self, nick, chan=None):
         nick_status = '-'
         if nick[0] == ':':
+            self.log('*** IRC.add_user: : in nick: %s' % repr(nick))
             nick = nick[1:]
         snick = nick
         if nick[0] in ['@', '+']:
@@ -76,10 +77,11 @@ class IRCProtocol(IRCCommands, IRCRawEvents):
 
     def rm_user(self, nick, chan=None):
         if nick[0] == ':':
+            self.log('*** IRC.rm_user: : in nick: %s' % repr(nick))
             nick = nick[1:]
 
         if not nick in self.bot.users:
-            self.log('WARNING : Tried to remove an inexisting user : %s.' % nick)
+            self.log('*** IRC.rm_user: unknown: %s' % nick)
             return
 
         if not chan:

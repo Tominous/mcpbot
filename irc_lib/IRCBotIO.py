@@ -25,7 +25,7 @@ class IRCBotIO(object):
             start_time = time.time()
 
             if not self.irc_socket:
-                self.log('outbound_loop: no socket')
+                self.log('*** IRCBotIO.outbound_loop: no socket')
                 continue
 
             try:
@@ -40,8 +40,8 @@ class IRCBotIO(object):
                 time.sleep((len(out_line) * 1.25) / (self.floodprotec / 30.0))
             try:
                 self.irc_socket.send(out_line)
-            except socket.timeout:
-                self.log('outbound_loop: socket.timeout')
+            except socket.timeout as exc:
+                self.log('*** IRCBotIO.outbound_loop: socket.timeout: %s' % exc)
                 self.out_msg.put(msg)
                 self.out_msg.task_done()
                 continue
@@ -54,16 +54,16 @@ class IRCBotIO(object):
         buf = ''
         while not self.exit:
             if not self.irc_socket:
-                self.log('inbound_loop: no socket')
+                self.log('*** IRCBotIO.inbound_loop: no socket')
                 continue
 
             # breaks with error: [Errno 104] Connection reset by peer
             try:
                 new_data = self.irc_socket.recv(512)
-            except socket.timeout:
+            except socket.timeout as exc:
                 continue
             if not new_data:
-                self.log('inbound_loop: no data')
+                self.log('*** IRCBotIO.inbound_loop: no data')
                 continue
 
             msg_list = _LINESEP_REGEXP.split(buf + new_data)

@@ -24,7 +24,7 @@ class MCPBot(IRCBotBase, MCPBotCmds):
         cmd_func(ev.sender, ev.chan, ev.cmd, ev.msg)
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     if len(sys.argv) < 2:
         print 'No password given. Try python mcpbot.py <password>.'
         sys.exit(0)

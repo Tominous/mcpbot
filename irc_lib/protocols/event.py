@@ -8,11 +8,22 @@ class Event(object):
 
     def __init__(self, sender, cmd, target, msg, etype):
         if msg and msg[0] == ':':
+            print '*** Event: : in msg: %s' % repr(msg)
             msg = msg[1:]
         if sender and sender[0] == ':':
+            print '*** Event: : in sender: %s' % repr(sender)
             sender = sender[1:]
         if target and target[0] == ':':
+            print '*** Event: : in target: %s' % repr(target)
             target = target[1:]
+        if sender != sender.strip():
+            print '*** Event: sender stripped: %s' % repr(target)
+        if cmd != cmd.strip():
+            print '*** Event: cmd stripped: %s' % repr(cmd)
+        if target != target.strip():
+            print '*** Event: target stripped: %s' % repr(target)
+        if msg != msg.strip():
+            print '*** Event: msg stripped: %s' % repr(msg)
         self.sender, self.senderuser, self.senderhost = split_prefix(sender.strip())
         self.senderfull = sender.strip()
         self.cmd = cmd.strip()

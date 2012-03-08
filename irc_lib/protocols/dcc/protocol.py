@@ -159,4 +159,4 @@ class DCCProtocol(DCCCommands, DCCRawEvents):
                     for msg in msg_list:
                         if self.bot.rawmsg:
                             self.log('< %s' % repr(msg))
-                        self.process_DCCMsg(s.nick, msg)
+                        self.process_DCCmsg(s.nick, msg)

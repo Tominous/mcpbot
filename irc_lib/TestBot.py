@@ -11,14 +11,14 @@ class TestBot(IRCBotBase):
         self.whitelist['ProfMobius'] = 5
 
     def onIRC_Default(self, cmd, prefix, args):
-        self.logger.debug('IRC_%s %s %s', cmd, prefix, str(args))
+        self.logger.debug('? IRC_%s %s %s', cmd, prefix, str(args))
 
     def onDefault(self, ev):
-        self.logger.debug('%s_%s %s %s %s', ev.type, ev.cmd, ev.sender, ev.target, repr(ev.msg))
+        self.logger.debug('? %s_%s %s %s %s', ev.type, ev.cmd, ev.sender, ev.target, repr(ev.msg))
 
     def onCmd(self, ev):
-        self.logger.info('%s S: %s C: %s T: %s M: %s', ev.type.ljust(4), ev.sender.ljust(20), ev.cmd.ljust(15),
-                         ev.target, ev.msg)
+        self.logger.info('! [%d] %s S: %s C: %s T: %s M: %s', ev.id, ev.type.ljust(4), ev.sender.ljust(20),
+                         ev.cmd.ljust(15), ev.target, ev.msg)
 
         if ev.cmd == 'listusers':
             for key, user in self.users.items():
@@ -82,7 +82,7 @@ class TestBot(IRCBotBase):
             self.logger.info(cmd)
             exec cmd in self.globaldic, self.localdic
         except Exception as exc:
-            self.logger.exception('ERROR')
+            self.logger.exception('ERROR in exec')
             self.say(sender, 'ERROR : %s' % exc)
 
 

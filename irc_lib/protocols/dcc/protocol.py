@@ -47,7 +47,7 @@ class DCCProtocol(DCCCommands, DCCRawEvents):
         self.inip = self.conv_ip_std_long(externalip)
         self.inport = listenport
 
-        self.logger.info('DCC listening on %s:%d %s', listenhost, listenport, externalip)
+        self.logger.info('# DCC listening on %s:%d %s', listenhost, listenport, externalip)
 
         self.bot.threadpool.add_task(self.inbound_loop, _threadname='DCCInLoop')
 
@@ -113,13 +113,13 @@ class DCCProtocol(DCCCommands, DCCRawEvents):
 
             for s in inputready:
                 if s == self.insocket:
-                    self.logger.info('> Received connection request')
+                    self.logger.info('# Received connection request')
                     # handle the server socket
                     buffsocket, buffip = self.insocket.accept()
                     ip = buffip[0]
                     if ip in self.ip2nick:
                         nick = self.ip2nick[ip]
-                        self.logger.info('> User identified as: %s %s', nick, ip)
+                        self.logger.info('# User identified as: %s %s', nick, ip)
                         self.sockets[nick] = DCCSocket(buffsocket, nick)
                         self.say(nick, 'Connection with user %s established' % nick)
                         inp.append(self.sockets[nick])
@@ -134,13 +134,15 @@ class DCCProtocol(DCCCommands, DCCRawEvents):
                             self.logger.info('*** DCC.inbound_loop: Connection closed [reset]: %s', s.nick)
                         else:
                             self.logger.exception('*** DCC.inbound_loop: Connection closed [error]: %s', s.nick)
-                        del self.sockets[s.nick]
+                        if s.nick in self.sockets:
+                            del self.sockets[s.nick]
                         s.socket.close()
                         inp.remove(s)
                         continue
                     if not new_data:
                         self.logger.info('*** DCC.inbound_loop: Connection closed [no data]: %s', s.nick)
-                        del self.sockets[s.nick]
+                        if s.nick in self.sockets:
+                            del self.sockets[s.nick]
                         s.socket.close()
                         inp.remove(s)
                         continue
@@ -153,4 +155,4 @@ class DCCProtocol(DCCCommands, DCCRawEvents):
                     for msg in msg_list:
                         self.logger.debug('< %s %s', s.nick, repr(msg))
                         self.process_DCCmsg(s.nick, msg)
-        self.logger.error('*** DCC.inbound_loop: exited')
+        self.logger.info('*** DCC.inbound_loop: exited')

@@ -44,6 +44,7 @@ class ThreadPool(object):
 
     def wait_completion(self):
         """Wait for completion of all the tasks in the queue"""
+        self.logger.info('waiting for threads')
         self.tasks.join()
 
 if __name__ == '__main__':

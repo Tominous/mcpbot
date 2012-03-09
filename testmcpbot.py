@@ -13,13 +13,13 @@ class MCPBot(IRCBotBase, MCPBotCmds):
         self.whitelist['ProfMobius'] = 5
 
     def onIRC_Default(self, cmd, prefix, args):
-        self.logger.debug('IRC_%s %s %s', cmd, prefix, str(args))
+        self.logger.debug('? IRC_%s %s %s', cmd, prefix, str(args))
 
     def onDefault(self, ev):
-        self.logger.debug('%s_%s %s %s %s', ev.type, ev.cmd, ev.sender, ev.target, repr(ev.msg))
+        self.logger.debug('? %s_%s %s %s %s', ev.type, ev.cmd, ev.sender, ev.target, repr(ev.msg))
 
     def onCmd(self, ev):
-        self.logger.info('> [%d] %s S: %s C: %s T: %s M: %s', ev.id, ev.type.ljust(4), ev.sender.ljust(20),
+        self.logger.info('! [%d] %s S: %s C: %s T: %s M: %s', ev.id, ev.type.ljust(4), ev.sender.ljust(20),
                          ev.cmd.ljust(15), ev.target, ev.msg)
         cmd = ev.cmd.lower()
         cmd_func = getattr(self, 'cmd_%s' % cmd, self.cmdDefault)

@@ -16,8 +16,14 @@ class MCPBot(IRCBotBase, MCPBotCmds):
         self.whitelist['Ingis'] = 5
         self.whitelist['Fesh0r'] = 5
 
+    def onIRC_Default(self, cmd, prefix, args):
+        self.logger.debug('? IRC_%s %s %s', cmd, prefix, str(args))
+
+    def onDefault(self, ev):
+        self.logger.debug('? %s_%s %s %s %s', ev.type, ev.cmd, ev.sender, ev.target, repr(ev.msg))
+
     def onCmd(self, ev):
-        self.logger.info('> [%d] %s S: %s C: %s T: %s M: %s', ev.id, ev.type.ljust(4), ev.sender.ljust(20),
+        self.logger.info('! [%d] %s S: %s C: %s T: %s M: %s', ev.id, ev.type.ljust(4), ev.sender.ljust(20),
                          ev.cmd.ljust(15), ev.target, ev.msg)
         cmd = ev.cmd.lower()
         cmd_func = getattr(self, 'cmd_%s' % cmd, self.cmdDefault)
@@ -32,9 +38,9 @@ if __name__ == '__main__':
     bot = MCPBot('MCPBot', '!')
     bot.connect('irc.esper.net')
     bot.nickserv.identify(sys.argv[1])
-    bot.logger.info('plz wait')
+    bot.logger.info('# plz wait')
     time.sleep(15)
-    bot.logger.info('joining channels')
+    bot.logger.info('# joining channels')
     bot.irc.join('#test')
     bot.loadWhitelist()
     bot.start()

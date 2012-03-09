@@ -787,7 +787,7 @@ class MCPBotCmds(object):
             self.logger.info('EXEC: %s', msg)
             exec msg in self.globaldic, self.localdic
         except Exception as exc:
-            self.logger.exception('ERROR')
+            self.logger.exception('ERROR in exec')
             self.say(sender, 'ERROR: %s' % exc)
 
     def cmd_dcc(self, sender, chan, cmd, msg, *args, **kwargs):

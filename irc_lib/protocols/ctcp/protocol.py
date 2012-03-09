@@ -1,3 +1,5 @@
+import logging
+
 from irc_lib.protocols.dcc.protocol import DCCProtocol
 from irc_lib.protocols.event import Event
 from commands import CTCPCommands
@@ -7,15 +9,13 @@ from constants import CTCP_DELIMITER
 
 class CTCPProtocol(CTCPCommands, CTCPRawEvents):
     def __init__(self, _nick, _locks, _bot, _parent):
+        self.logger = logging.getLogger('IRCBot.CTCP')
         self.cnick = _nick
         self.locks = _locks
         self.bot = _bot
         self.irc = _parent
 
         self.dcc = DCCProtocol(self.cnick, self.locks, self.bot, self)
-
-    def log(self, msg):
-        self.bot.log(msg)
 
     def eventlog(self, ev):
         self.bot.eventlog(ev)
@@ -25,7 +25,7 @@ class CTCPProtocol(CTCPCommands, CTCPRawEvents):
         if msg[-1] == CTCP_DELIMITER:
             msg = msg[1:-1]
         else:
-            self.log('*** CTCP.process_msg: no trailing delim: %s' % repr(msg))
+            self.logger.warn('*** CTCP.process_msg: no trailing delim: %s', repr(msg))
             msg = msg[1:]
 
         cmd, _, data = msg.partition(' ')

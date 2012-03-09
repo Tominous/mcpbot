@@ -2,10 +2,10 @@ from irc_lib.protocols.user import User
 
 
 class NickServRawEvents(object):
-    def onNSERV_ACC(self, ev):
+    def onNSRV_ACC(self, ev):
         msg = ev.msg.split()
         if len(msg) < 3:
-            self.log('*** NSERV.onNSERV_ACC: INVALID: %s %s %s' % (ev.sender, ev.target, repr(ev.msg)))
+            self.logger.error('*** NSRV.onNSRV_ACC: INVALID: %s %s %s', ev.sender, ev.target, repr(ev.msg))
             return
 
         snick = msg[0]
@@ -18,5 +18,5 @@ class NickServRawEvents(object):
         self.locks['NSStatus'].notifyAll()
         self.locks['NSStatus'].release()
 
-    def onNSERV_Default(self, ev):
-        self.log('UNKNOWN NSERV EVENT: %s %s %s %s' % (ev.sender, ev.target, ev.cmd, repr(ev.msg)))
+    def onNSRV_Default(self, ev):
+        self.logger.info('UNKNOWN NSRV EVENT: %s %s %s %s', ev.sender, ev.target, ev.cmd, repr(ev.msg))

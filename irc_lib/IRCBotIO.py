@@ -25,7 +25,7 @@ class IRCBotIO(object):
             start_time = time.time()
 
             if not self.irc_socket:
-                self.log('*** IRCBotIO.outbound_loop: no socket')
+                self.logger.error('*** IRCBotIO.outbound_loop: no socket')
                 continue
 
             try:
@@ -33,15 +33,14 @@ class IRCBotIO(object):
             except Empty:
                 continue
 
-            if self.rawmsg:
-                self.log('> %s' % repr(msg))
+            self.logger.debug('> %s', repr(msg))
             out_line = msg + '\r\n'
             if len(out_line) > int(allowed_chars):
                 time.sleep((len(out_line) * 1.25) / (self.floodprotec / 30.0))
             try:
                 self.irc_socket.send(out_line)
-            except socket.timeout as exc:
-                self.log('*** IRCBotIO.outbound_loop: socket.timeout: %s' % exc)
+            except socket.timeout:
+                self.logger.exception('*** IRCBotIO.outbound_loop: socket.timeout')
                 self.out_msg.put(msg)
                 self.out_msg.task_done()
                 continue
@@ -53,16 +52,16 @@ class IRCBotIO(object):
         buf = ''
         while not self.exit:
             if not self.irc_socket:
-                self.log('*** IRCBotIO.inbound_loop: no socket')
+                self.logger.error('*** IRCBotIO.inbound_loop: no socket')
                 continue
 
             # breaks with error: [Errno 104] Connection reset by peer
             try:
                 new_data = self.irc_socket.recv(512)
-            except socket.timeout as exc:
+            except socket.timeout:
                 continue
             if not new_data:
-                self.log('*** IRCBotIO.inbound_loop: no data')
+                self.logger.error('*** IRCBotIO.inbound_loop: no data')
                 continue
 
             msg_list = LINESEP_REGEXP.split(buf + new_data)
@@ -71,19 +70,8 @@ class IRCBotIO(object):
             buf = msg_list.pop()
 
             for msg in msg_list:
-                if self.rawmsg:
-                    self.log('< %s' % repr(msg))
+                self.logger.debug('< %s', repr(msg))
                 self.irc.process_msg(msg)
-
-    def print_loop(self):
-        """Loop to handle console output. Only way to have coherent output in a threaded environement."""
-        while not self.exit:
-            try:
-                msg = self.printq.get(True, 1)
-            except Empty:
-                continue
-            print msg
-            self.printq.task_done()
 
     def logging_loop(self):
         with sqlite3.connect(self.dbconf) as db:

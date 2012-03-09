@@ -1,5 +1,7 @@
+import sys
 import socket
 import time
+import logging
 from threading import Condition
 from Queue import Queue, Empty
 
@@ -16,6 +18,9 @@ class IRCBotBase(IRCBotAdvMtd, IRCBotIO):
     and access to all the procotols through self.<protocol> (irc, ctcp, dcc, and nickserv)"""
 
     def __init__(self, _nick='IRCBotLib', _char=':', _flood=1000, _dbconf='ircbot.sqlite'):
+        self.log_config()
+        self.logger = logging.getLogger('IRCBot')
+
         self.whitelist = {}
 
         self.controlchar = _char
@@ -25,8 +30,6 @@ class IRCBotBase(IRCBotAdvMtd, IRCBotIO):
         self.cnick = _nick
 
         self.dbconf = _dbconf
-
-        self.rawmsg = False
 
         self.locks = {
             'WhoIs': Condition(),
@@ -45,7 +48,6 @@ class IRCBotBase(IRCBotAdvMtd, IRCBotIO):
         # Outbound msgs
         self.out_msg = Queue()
 
-        self.printq = Queue()
         self.loggingq = Queue()
         self.commandq = Queue()
 
@@ -61,12 +63,11 @@ class IRCBotBase(IRCBotAdvMtd, IRCBotIO):
         self.irc_status = {'Server': None, 'Registered': False, 'Channels': set()}
         self.users = {}
 
-        self.threadpool.add_task(self.print_loop, _threadname='PrintLoop')
         self.threadpool.add_task(self.logging_loop, _threadname='LoggingLoop')
         self.threadpool.add_task(self.command_loop, _threadname='CommandLoop')
 
-    def log(self, msg):
-        self.printq.put(msg)
+    def log_config(self):
+        logging.basicConfig(format='%(asctime)s %(message)s', level=logging.WARN)
 
     def eventlog(self, ev):
         self.loggingq.put(ev)
@@ -86,6 +87,7 @@ class IRCBotBase(IRCBotAdvMtd, IRCBotIO):
         """Connect to a server, handle authentification and start the communication threads."""
         if self.irc_socket:
             raise IRCBotError('Socket already existing, can not complete the connect command')
+        self.logger.info('> Connecting to %s:%d', server, port)
         self.irc_socket = socket.socket()
         self.irc_socket.connect((server, port))
         self.irc_socket.settimeout(1)
@@ -107,7 +109,7 @@ class IRCBotBase(IRCBotAdvMtd, IRCBotIO):
             try:
                 time.sleep(2)
             except (KeyboardInterrupt, SystemExit):
-                print 'EXIT REQUESTED. SHUTTING DOWN THE BOT'
+                self.logger.error('EXIT REQUESTED. SHUTTING DOWN THE BOT')
                 self.exit = True
                 self.threadpool.wait_completion()
-                raise
+                sys.exit()

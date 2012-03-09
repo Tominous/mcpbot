@@ -1,3 +1,5 @@
+import logging
+
 from utils.restricted import restricted
 from IRCBotBase import IRCBotBase
 
@@ -5,17 +7,22 @@ from IRCBotBase import IRCBotBase
 class TestBot(IRCBotBase):
     def __init__(self, nick='DevBot'):
         IRCBotBase.__init__(self, nick)
+        self.logger.setLevel(logging.DEBUG)
         self.whitelist['ProfMobius'] = 5
 
+    def onIRC_Default(self, cmd, prefix, args):
+        self.logger.debug('IRC_%s %s %s', cmd, prefix, str(args))
+
     def onDefault(self, ev):
-        self.log('%s S: %s C: %s T: %s M: %s' % (ev.type.ljust(5), ev.sender.ljust(25), ev.cmd.ljust(15), ev.target.ljust(10), ev.msg))
+        self.logger.debug('%s_%s %s %s %s', ev.type, ev.cmd, ev.sender, ev.target, repr(ev.msg))
 
     def onCmd(self, ev):
-        self.log('%s S: %s C: %s T: %s M: %s' % (ev.type.ljust(5), ev.sender.ljust(25), ev.cmd.ljust(15), ev.target, ev.msg))
+        self.logger.info('%s S: %s C: %s T: %s M: %s', ev.type.ljust(4), ev.sender.ljust(20), ev.cmd.ljust(15),
+                         ev.target, ev.msg)
 
         if ev.cmd == 'listusers':
             for key, user in self.users.items():
-                self.log(user.get_string())
+                self.logger.info(user.get_string())
 
         if ev.cmd == 'ip':
             nick = ev.msg.split()[0].strip()
@@ -72,11 +79,11 @@ class TestBot(IRCBotBase):
     @restricted()
     def cmdExec(self, sender, channel, cmd):
         try:
-            self.log(cmd)
+            self.logger.info(cmd)
             exec cmd in self.globaldic, self.localdic
-        except Exception as errormsg:
-            self.log('ERROR : %s' % errormsg)
-            self.say(sender, 'ERROR : %s' % errormsg)
+        except Exception as exc:
+            self.logger.exception('ERROR')
+            self.say(sender, 'ERROR : %s' % exc)
 
 
 if __name__ == '__main__':

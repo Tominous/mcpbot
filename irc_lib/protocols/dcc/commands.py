@@ -16,7 +16,7 @@ class DCCCommands(object):
         if color:
             msg = conv_s2i(msg)
         if not nick in self.sockets:
-            self.log('*** DCC.say: unknown nick: %s' % repr(nick))
+            self.logger.error('*** DCC.say: unknown nick: %s', repr(nick))
             return
 
         isGone = False
@@ -24,11 +24,11 @@ class DCCCommands(object):
             try:
                 self.sockets[nick].socket.send(msg + '\r\n')
                 isGone = True
-            except socket.error as exc:
-                self.log('*** DCC.say: socket.error: %s %s' % (repr(nick), exc))
+            except socket.error:
+                self.logger.exception('*** DCC.say: socket.error: %s', repr(nick))
                 break
             except KeyError:
-                self.log('*** DCC.say: unknown nick: %s' % repr(nick))
+                self.logger.error('*** DCC.say: unknown nick: %s', repr(nick))
                 break
 
     def dcc(self, nick):
@@ -39,7 +39,7 @@ class DCCCommands(object):
         target_ip = self.bot.getIP(nick)
 
         if nick in self.sockets and self.sockets[nick] is not None:
-            self.log('*** DCC.dcc: closed old socket: %s' % repr(nick))
+            self.logger.warn('*** DCC.dcc: closed old socket: %s', repr(nick))
             # this is breaking the select loop in inbound_loop
             del self.sockets[nick]
         self.sockets[nick] = None

@@ -1,3 +1,5 @@
+import logging
+
 from irc_lib.protocols.nickserv.protocol import NickServProtocol
 from irc_lib.protocols.ctcp.protocol import CTCPProtocol
 from irc_lib.protocols.event import Event
@@ -9,6 +11,7 @@ from constants import IRC_REPLIES
 
 class IRCProtocol(IRCCommands, IRCRawEvents):
     def __init__(self, _nick, _locks, _bot, _parent):
+        self.logger = logging.getLogger('IRCBot.IRC')
         self.cnick = _nick
         self.locks = _locks
         self.bot = _bot
@@ -16,9 +19,6 @@ class IRCProtocol(IRCCommands, IRCRawEvents):
         self.nickserv = NickServProtocol(self.cnick, self.locks, self.bot, self)
         self.ctcp = CTCPProtocol(self.cnick, self.locks, self.bot, self)
         self.dcc = self.ctcp.dcc
-
-    def log(self, msg):
-        self.bot.log(msg)
 
     def eventlog(self, ev):
         self.bot.eventlog(ev)
@@ -59,7 +59,7 @@ class IRCProtocol(IRCCommands, IRCRawEvents):
     def add_user(self, nick, chan=None):
         nick_status = '-'
         if nick[0] == ':':
-            self.log('*** IRC.add_user: : in nick: %s' % repr(nick))
+            self.logger.warn('*** IRC.add_user: : in nick: %s', repr(nick))
             nick = nick[1:]
         snick = nick
         if nick[0] in ['@', '+']:
@@ -74,11 +74,11 @@ class IRCProtocol(IRCCommands, IRCRawEvents):
 
     def rm_user(self, nick, chan=None):
         if nick[0] == ':':
-            self.log('*** IRC.rm_user: : in nick: %s' % repr(nick))
+            self.logger.warn('*** IRC.rm_user: : in nick: %s', repr(nick))
             nick = nick[1:]
 
         if not nick in self.bot.users:
-            self.log('*** IRC.rm_user: unknown: %s' % nick)
+            self.logger.error('*** IRC.rm_user: unknown: %s', nick)
             return
 
         if not chan:

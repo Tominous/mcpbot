@@ -1,5 +1,4 @@
-import sys
-import traceback
+import logging
 from Queue import Queue
 from threading import Thread
 
@@ -12,6 +11,7 @@ class Worker(Thread):
         self.nscalls = 0
         self.nfcalls = 0
         self.tasks = tasks
+        self.logger = logging.getLogger('IRCBot.ThreadPool')
         self.daemon = True
         self.start()
 
@@ -24,15 +24,16 @@ class Worker(Thread):
             try:
                 func(*args, **kargs)
                 self.nscalls += 1
-            except Exception as e:
+            except Exception:
                 self.nfcalls += 1
-                traceback.print_exception(sys.exc_info()[0], e, sys.exc_info()[2])
+                self.logger.exception('ERROR in %s', self.name)
             self.tasks.task_done()
 
 
 class ThreadPool(object):
     """Pool of threads consuming tasks from a queue"""
     def __init__(self, num_threads):
+        self.logger = logging.getLogger('IRCBot.ThreadPool')
         self.tasks = Queue(num_threads)
         for _ in range(num_threads):
             Worker(self.tasks)

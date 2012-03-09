@@ -1,3 +1,5 @@
+import logging
+
 from irc_lib.protocols.event import Event
 from commands import NickServCommands
 from rawevents import NickServRawEvents
@@ -5,13 +7,11 @@ from rawevents import NickServRawEvents
 
 class NickServProtocol(NickServCommands, NickServRawEvents):
     def __init__(self, _nick, _locks, _bot, _parent):
+        self.logger = logging.getLogger('IRCBot.NSRV')
         self.cnick = _nick
         self.locks = _locks
         self.bot = _bot
         self.irc = _parent
-
-    def log(self, msg):
-        self.bot.log(msg)
 
     def eventlog(self, ev):
         self.bot.eventlog(ev)
@@ -23,11 +23,11 @@ class NickServProtocol(NickServCommands, NickServRawEvents):
         else:
             cmd = 'Unknown'
 
-        ev = Event(prefix, cmd, target, msg, 'NSERV')
+        ev = Event(prefix, cmd, target, msg, 'NSRV')
         self.eventlog(ev)
 
-        cmd_func = getattr(self, 'onNSERV_%s' % ev.cmd, self.onNSERV_Default)
+        cmd_func = getattr(self, 'onNSRV_%s' % ev.cmd, self.onNSRV_Default)
         cmd_func(ev)
 
-        cmd_func = getattr(self.bot, 'onNSERV_%s' % ev.cmd, getattr(self.bot, 'onNSERV_Default', self.bot.onDefault))
+        cmd_func = getattr(self.bot, 'onNSRV_%s' % ev.cmd, getattr(self.bot, 'onNSRV_Default', self.bot.onDefault))
         cmd_func(ev)

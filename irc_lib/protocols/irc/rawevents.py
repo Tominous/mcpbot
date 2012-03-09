@@ -59,6 +59,7 @@ class IRCRawEvents(object):
             key = None
         if sender == self.cnick:
             self.bot.irc_status['Channels'].add(chan)
+            self.logger.info('> Joined %s', chan)
         else:
             self.add_user(sender, chan)
 
@@ -87,7 +88,7 @@ class IRCRawEvents(object):
         else:
             msg = ''
         self.bot.irc_status['Server'] = server
-        self.log('> Connected to server %s' % server)
+        self.logger.info('> Connected to %s', server)
 
     def onIRC_RPL_MOTDSTART(self, cmd, prefix, args):
         server = prefix
@@ -98,7 +99,7 @@ class IRCRawEvents(object):
             self.bot.irc_status['Registered'] = True
             self.locks['ServReg'].notifyAll()
             self.locks['ServReg'].release()
-            self.log('> MOTD found. Registered with server.')
+            self.logger.info('> MOTD found. Registered with server.')
 
     def onIRC_RPL_NAMREPLY(self, cmd, prefix, args):
         server = prefix

@@ -19,10 +19,12 @@ class DCCCommands(object):
             self.logger.error('*** DCC.say: unknown nick: %s', repr(nick))
             return
 
+        self.logger.debug('> %s %s', nick, msg)
+        out_line = msg + '\r\n'
         isGone = False
         while not isGone:
             try:
-                self.sockets[nick].socket.send(msg + '\r\n')
+                self.sockets[nick].socket.send(out_line)
                 isGone = True
             except socket.error:
                 self.logger.exception('*** DCC.say: socket.error: %s', repr(nick))

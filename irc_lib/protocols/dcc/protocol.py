@@ -151,5 +151,5 @@ class DCCProtocol(DCCCommands, DCCRawEvents):
                     s.buffer = msg_list.pop()
 
                     for msg in msg_list:
-                        self.logger.debug('< %s', repr(msg))
+                        self.logger.debug('< %s %s', s.nick, repr(msg))
                         self.process_DCCmsg(s.nick, msg)

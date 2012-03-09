@@ -25,16 +25,15 @@ class IRCProtocol(IRCCommands, IRCRawEvents):
 
     def process_msg(self, msg):
         # parse the various fields out of the message
-        prefix = ''
-        trailing = []
         if msg[0] == ':':
-            prefix, msg = msg[1:].split(' ', 1)
-        if msg.find(' :') != -1:
-            msg, trailing = msg.split(' :', 1)
-            args = msg.split()
-            args.append(trailing)
+            prefix, _, msg = msg[1:].partition(' ')
         else:
-            args = msg.split()
+            prefix = ''
+        msg, _, trailing = msg.partition(' :')
+        args = msg.split()
+        if trailing:
+            args.append(trailing)
+
         # uppercase the command as mIRC is lame apparently, shouldn't matter as we are talking to a server anyway
         cmd = args.pop(0).upper()
 

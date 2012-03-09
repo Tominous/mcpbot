@@ -59,7 +59,7 @@ class IRCProtocol(IRCCommands, IRCRawEvents):
     def add_user(self, nick, chan=None):
         nick_status = '-'
         if nick[0] == ':':
-            self.logger.warn('*** IRC.add_user: : in nick: %s', repr(nick))
+            self.logger.warn('*** IRC.add_user: : in nick: %s', nick)
             nick = nick[1:]
         snick = nick
         if nick[0] in ['@', '+']:
@@ -74,7 +74,7 @@ class IRCProtocol(IRCCommands, IRCRawEvents):
 
     def rm_user(self, nick, chan=None):
         if nick[0] == ':':
-            self.logger.warn('*** IRC.rm_user: : in nick: %s', repr(nick))
+            self.logger.warn('*** IRC.rm_user: : in nick: %s', nick)
             nick = nick[1:]
 
         if not nick in self.bot.users:

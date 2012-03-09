@@ -5,7 +5,7 @@ import logging
 def get_nick(name):
     logger = logging.getLogger('IRCBot.irc_name')
     if name[0] == ':':
-        logger.warn('*** irc_name.get_nick: : in nick: %s', repr(name))
+        logger.warn('*** irc_name.get_nick: : in nick: %s', name)
         name = name[1:]
     nick, _, _ = split_prefix(name)
     return nick
@@ -21,7 +21,7 @@ def get_ip(host):
     try:
         return socket.gethostbyname(host)
     except socket.gaierror:
-        logger.exception('*** irc_name.get_ip: socket.gaierror: %s', repr(host))
+        logger.exception('*** irc_name.get_ip: socket.gaierror: %s', host)
         return '0.0.0.0'
 
 

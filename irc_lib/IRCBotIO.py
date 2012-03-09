@@ -38,14 +38,14 @@ class IRCBotIO(object):
             if len(out_line) > int(allowed_chars):
                 time.sleep((len(out_line) * 1.25) / (self.floodprotec / 30.0))
             try:
-                self.irc_socket.send(out_line)
-            except socket.timeout:
-                self.logger.exception('*** IRCBotIO.outbound_loop: socket.timeout')
-                self.out_msg.put(msg)
+                self.irc_socket.sendall(out_line)
+            except socket.error:
+                self.logger.exception('*** IRCBotIO.outbound_loop: socket.error')
                 self.out_msg.task_done()
-                continue
+                break
             allowed_chars -= len(out_line)
             self.out_msg.task_done()
+        self.logger.error('*** IRCBotIO.outbound_loop: exited')
 
     def inbound_loop(self):
         """Incoming message thread. Check for new data on the socket and send the data to the irc protocol handler."""
@@ -62,7 +62,7 @@ class IRCBotIO(object):
                 continue
             if not new_data:
                 self.logger.error('*** IRCBotIO.inbound_loop: no data')
-                continue
+                break
 
             msg_list = LINESEP_REGEXP.split(buf + new_data)
 
@@ -72,6 +72,7 @@ class IRCBotIO(object):
             for msg in msg_list:
                 self.logger.debug('< %s', repr(msg))
                 self.irc.process_msg(msg)
+        self.logger.error('*** IRCBotIO.inbound_loop: exited')
 
     def logging_loop(self):
         with sqlite3.connect(self.dbconf) as db:
@@ -86,3 +87,4 @@ class IRCBotIO(object):
                     (None, ev.type, ev.cmd, ev.sender, ev.target, ev.msg, int(time.time())))
                 db.commit()
                 self.loggingq.task_done()
+        self.logger.error('*** IRCBotIO.logging_loop: exited')

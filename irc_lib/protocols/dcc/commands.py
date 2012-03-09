@@ -21,17 +21,14 @@ class DCCCommands(object):
 
         self.logger.debug('> %s %s', nick, msg)
         out_line = msg + '\r\n'
-        isGone = False
-        while not isGone:
-            try:
-                self.sockets[nick].socket.send(out_line)
-                isGone = True
-            except socket.error:
-                self.logger.exception('*** DCC.say: socket.error: %s', repr(nick))
-                break
-            except KeyError:
-                self.logger.error('*** DCC.say: unknown nick: %s', repr(nick))
-                break
+        try:
+            self.sockets[nick].socket.sendall(out_line)
+        except socket.error:
+            self.logger.exception('*** DCC.say: socket.error: %s', repr(nick))
+            return
+        except KeyError:
+            self.logger.error('*** DCC.say: unknown nick: %s', repr(nick))
+            return
 
     def dcc(self, nick):
         if not self.inip:
@@ -41,7 +38,7 @@ class DCCCommands(object):
         target_ip = self.bot.getIP(nick)
 
         if nick in self.sockets and self.sockets[nick] is not None:
-            self.logger.warn('*** DCC.dcc: closed old socket: %s', repr(nick))
+            self.logger.warn('*** DCC.dcc: already connected: %s', repr(nick))
             # this is breaking the select loop in inbound_loop
             del self.sockets[nick]
         self.sockets[nick] = None

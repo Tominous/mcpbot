@@ -40,7 +40,7 @@ class DCCProtocol(DCCCommands, DCCRawEvents):
             self.insocket.listen(5)
             listenhost, listenport = self.insocket.getsockname()
         except socket.error:
-            self.logger.exception('*** DCC: insocket failed')
+            self.logger.exception('*** DCC: bind insocket failed')
             return
 
         externalip = urllib.urlopen('http://automation.whatismyip.com/n09230945.asp').readlines()[0]
@@ -132,11 +132,11 @@ class DCCProtocol(DCCCommands, DCCRawEvents):
                     except socket.error as exc:
                         if 'Connection reset by peer' in exc:
                             self.logger.info('*** DCC.inbound_loop: Connection closed [reset]: %s', s.nick)
-                            del self.sockets[s.nick]
-                            s.socket.close()
-                            inp.remove(s)
                         else:
-                            self.logger.exception('*** DCC.inbound_loop: socket.error: %s', s.nick)
+                            self.logger.exception('*** DCC.inbound_loop: Connection closed [error]: %s', s.nick)
+                        del self.sockets[s.nick]
+                        s.socket.close()
+                        inp.remove(s)
                         continue
                     if not new_data:
                         self.logger.info('*** DCC.inbound_loop: Connection closed [no data]: %s', s.nick)
@@ -153,3 +153,4 @@ class DCCProtocol(DCCCommands, DCCRawEvents):
                     for msg in msg_list:
                         self.logger.debug('< %s %s', s.nick, repr(msg))
                         self.process_DCCmsg(s.nick, msg)
+        self.logger.error('*** DCC.inbound_loop: exited')

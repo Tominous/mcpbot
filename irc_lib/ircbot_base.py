@@ -130,5 +130,5 @@ class IRCBotBase(IRCBotAdvMtd, IRCBotIO):
             except (KeyboardInterrupt, SystemExit):
                 self.logger.error('EXIT REQUESTED. SHUTTING DOWN THE BOT')
                 self.exit = True
-        self.logger.info('*** IRCBotIO.start: exited')
         self.threadpool.wait_completion()
+        self.logger.info('*** IRCBotIO.start: exited')

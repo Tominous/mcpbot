@@ -1,6 +1,6 @@
 import logging
 
-from irc_lib.protocols.nickserv.protocol import NickServProtocol
+from irc_lib.protocols.nickserv import NickServProtocol
 from irc_lib.protocols.ctcp import CTCPProtocol
 from irc_lib.event import Event
 from irc_lib.user import User

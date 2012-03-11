@@ -2,7 +2,7 @@ import time
 import logging
 
 from irc_lib.event import Event
-from irc_lib.protocols.dcc.protocol import DCCProtocol
+from irc_lib.protocols.dcc import DCCProtocol
 
 
 CTCP_DELIMITER = '\001'

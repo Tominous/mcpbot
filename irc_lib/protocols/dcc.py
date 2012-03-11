@@ -5,8 +5,7 @@ import logging
 
 from irc_lib.event import Event
 from irc_lib.ircbot_io import LINESEP_REGEXP
-from irc_lib.protocols.dcc.commands import DCCCommands
-from irc_lib.protocols.dcc.rawevents import DCCRawEvents
+from irc_lib.utils.colors import conv_s2i
 
 
 class DCCSocket(object):
@@ -19,7 +18,7 @@ class DCCSocket(object):
         return self.socket.fileno()
 
 
-class DCCProtocol(DCCCommands, DCCRawEvents):
+class DCCProtocol(object):
     def __init__(self, _nick, _locks, _bot, _parent):
         self.logger = logging.getLogger('IRCBot.DCC')
         self.cnick = _nick
@@ -160,3 +159,60 @@ class DCCProtocol(DCCCommands, DCCRawEvents):
                         self.logger.debug('< %s %s', s.nick, repr(msg))
                         self.process_DCCmsg(s.nick, msg)
         self.logger.info('*** DCC.inbound_loop: exited')
+
+    def onRawDCCMsg(self, ev):
+        if ev.msg != ev.msg.strip():
+            self.logger.warn('*** DCC.onRawDCCMsg: stripped: %s', repr(ev.msg))
+            ev.msg = ev.msg.strip()
+
+        if not ev.msg:
+            return
+
+        self.bot.process_msg(ev.sender, self.cnick, ev.msg)
+
+#
+
+    def onDCC_Default(self, ev):
+        self.logger.info('RAW DCC EVENT: %s %s %s %s', ev.sender, ev.target, ev.cmd, repr(ev.msg))
+
+    def dcc_privmsg(self, target, cmd, args):
+        msg = cmd + ' ' + args
+        self.ctcp.ctcp_privmsg(target, 'DCC', msg)
+
+    def dcc_notice(self, target, cmd, args):
+        msg = cmd + ' ' + args
+        self.ctcp.ctcp_notice(target, 'DCC', msg)
+
+    def say(self, nick, msg, color=True):
+        if color:
+            msg = conv_s2i(msg)
+        if not nick in self.sockets:
+            self.logger.error('*** DCC.say: unknown nick: %s', nick)
+            return
+
+        self.logger.debug('> %s %s', nick, repr(msg))
+        out_line = msg + '\r\n'
+        try:
+            self.sockets[nick].socket.sendall(out_line)
+        except socket.error:
+            self.logger.exception('*** DCC.say: socket.error: %s', nick)
+            return
+        except KeyError:
+            self.logger.error('*** DCC.say: unknown nick: %s', nick)
+            return
+
+    def dcc(self, nick):
+        if not self.inip:
+            self.bot.say(nick, '$BDCC currently disabled')
+            return
+
+        target_ip = self.bot.getIP(nick)
+
+        if nick in self.sockets and self.sockets[nick] is not None:
+            self.logger.warn('*** DCC.dcc: already connected: %s', nick)
+            # this is breaking the select loop in inbound_loop
+            del self.sockets[nick]
+        self.sockets[nick] = None
+
+        self.ip2nick[target_ip] = nick
+        self.dcc_privmsg(nick, 'CHAT', 'CHAT %s %s' % (self.inip, self.inport))

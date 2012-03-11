@@ -136,6 +136,8 @@ class DCCProtocol(DCCCommands, DCCRawEvents):
                             self.logger.exception('*** DCC.inbound_loop: Connection closed [error]: %s', s.nick)
                         if s.nick in self.sockets:
                             del self.sockets[s.nick]
+                        else:
+                            self.logger.info('*** DCC.inbound_loop: not in sockets: %s', s.nick)
                         s.socket.close()
                         inp.remove(s)
                         continue
@@ -143,6 +145,8 @@ class DCCProtocol(DCCCommands, DCCRawEvents):
                         self.logger.info('*** DCC.inbound_loop: Connection closed [no data]: %s', s.nick)
                         if s.nick in self.sockets:
                             del self.sockets[s.nick]
+                        else:
+                            self.logger.info('*** DCC.inbound_loop: not in sockets: %s', s.nick)
                         s.socket.close()
                         inp.remove(s)
                         continue

@@ -4,7 +4,7 @@ import logging
 from threading import Condition
 from Queue import Queue, Empty
 
-from irc_lib.protocols.event import Event
+from irc_lib.event import Event
 from irc_lib.protocols.irc.protocol import IRCProtocol
 from irc_lib.utils.ThreadPool import ThreadPool
 from irc_lib.ircbot_error import IRCBotError

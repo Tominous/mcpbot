@@ -1,6 +1,6 @@
 import logging
 
-from irc_lib.protocols.event import Event
+from irc_lib.event import Event
 from irc_lib.protocols.nickserv.commands import NickServCommands
 from irc_lib.protocols.nickserv.rawevents import NickServRawEvents
 

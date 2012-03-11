@@ -101,7 +101,7 @@ class IRCBotBase(IRCBotAdvMtd, IRCBotIO):
             outmsg = ''
 
         evcmd = Event(sender, outcmd, target, outmsg, 'CMD')
-        self.bot.commandq.put(evcmd)
+        self.commandq.put(evcmd)
 
     def connect(self, server, port=6667, password=None):
         """Connect to a server, handle authentification and start the communication threads."""

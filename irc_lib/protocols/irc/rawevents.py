@@ -33,22 +33,7 @@ class IRCRawEvents(object):
             return
 
         if cmd == 'PRIVMSG':
-            ischan = target[0] in ['#', '&']
-            outcmd = None
-
-            if ischan and msg[0] == self.bot.controlchar:
-                outcmd = msg.split()[0][1:]
-
-            if target == self.cnick and msg[0] != self.bot.controlchar:
-                outcmd = msg.split()[0]
-
-            if outcmd:
-                if len(msg.split()) < 2:
-                    outmsg = ' '
-                else:
-                    outmsg = ' '.join(msg.split()[1:])
-                evcmd = Event(sender, outcmd, target, outmsg, 'CMD')
-                self.bot.commandq.put(evcmd)
+            self.bot.process_msg(sender, target, msg)
 
     def onIRC_JOIN(self, cmd, prefix, args):
         sender = get_nick(prefix)

@@ -5,6 +5,7 @@ import logging
 from threading import Condition
 from Queue import Queue, Empty
 
+from irc_lib.protocols.event import Event
 from irc_lib.protocols.irc.protocol import IRCProtocol
 from utils.ThreadPool import ThreadPool
 from IRCBotError import IRCBotError
@@ -82,6 +83,25 @@ class IRCBotBase(IRCBotAdvMtd, IRCBotIO):
             cmd_func = getattr(self, 'onCmd', self.onDefault)
             self.threadpool.add_task(cmd_func, ev)
             self.commandq.task_done()
+
+    def process_msg(self, sender, target, msg):
+        ischan = target[0] in ['#', '&']
+
+        if ischan and msg[0] != self.controlchar:
+            return
+
+        if msg[0] == self.controlchar:
+            msg = msg[1:]
+
+        msg_split = msg.split(None, 1)
+        outcmd = msg_split[0]
+        if len(msg_split) > 1:
+            outmsg = msg_split[1]
+        else:
+            outmsg = ''
+
+        evcmd = Event(sender, outcmd, target, outmsg, 'CMD')
+        self.bot.commandq.put(evcmd)
 
     def connect(self, server, port=6667, password=None):
         """Connect to a server, handle authentification and start the communication threads."""

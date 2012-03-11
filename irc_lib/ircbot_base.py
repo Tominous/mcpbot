@@ -7,9 +7,9 @@ from Queue import Queue, Empty
 from irc_lib.protocols.event import Event
 from irc_lib.protocols.irc.protocol import IRCProtocol
 from irc_lib.utils.ThreadPool import ThreadPool
-from irc_lib.IRCBotError import IRCBotError
-from irc_lib.IRCBotAdvMtd import IRCBotAdvMtd
-from irc_lib.IRCBotIO import IRCBotIO
+from irc_lib.ircbot_error import IRCBotError
+from irc_lib.ircbot_advmtd import IRCBotAdvMtd
+from irc_lib.ircbot_io import IRCBotIO
 
 
 class IRCBotBase(IRCBotAdvMtd, IRCBotIO):

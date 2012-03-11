@@ -4,7 +4,7 @@ import select
 import logging
 
 from irc_lib.protocols.event import Event
-from irc_lib.IRCBotIO import LINESEP_REGEXP
+from irc_lib.ircbot_io import LINESEP_REGEXP
 from irc_lib.protocols.dcc.commands import DCCCommands
 from irc_lib.protocols.dcc.rawevents import DCCRawEvents
 

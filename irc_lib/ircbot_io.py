@@ -4,7 +4,7 @@ import re
 import sqlite3
 from Queue import Empty
 
-from irc_lib.IRCBotError import IRCBotError
+from irc_lib.ircbot_error import IRCBotError
 
 
 LINESEP_REGEXP = re.compile(r'\r?\n')

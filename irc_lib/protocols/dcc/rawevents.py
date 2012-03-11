@@ -1,6 +1,3 @@
-from irc_lib.protocols.event import Event
-
-
 class DCCRawEvents(object):
     def onRawDCCMsg(self, ev):
         if ev.msg != ev.msg.strip():

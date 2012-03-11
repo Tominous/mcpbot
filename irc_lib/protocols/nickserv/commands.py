@@ -1,4 +1,4 @@
-from constants import NICKSERV
+from irc_lib.protocols.nickserv.constants import NICKSERV
 
 
 class NickServCommands(object):

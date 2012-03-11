@@ -2,9 +2,9 @@ import logging
 
 from irc_lib.protocols.dcc.protocol import DCCProtocol
 from irc_lib.protocols.event import Event
-from commands import CTCPCommands
-from rawevents import CTCPRawEvents
-from constants import CTCP_DELIMITER
+from irc_lib.protocols.ctcp.commands import CTCPCommands
+from irc_lib.protocols.ctcp.rawevents import CTCPRawEvents
+from irc_lib.protocols.ctcp.constants import CTCP_DELIMITER
 
 
 class CTCPProtocol(CTCPCommands, CTCPRawEvents):

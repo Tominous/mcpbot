@@ -1,7 +1,7 @@
 import logging
 
-from utils.restricted import restricted
-from IRCBotBase import IRCBotBase
+from irc_lib.utils.restricted import restricted
+from irc_lib.IRCBotBase import IRCBotBase
 
 
 class TestBot(IRCBotBase):

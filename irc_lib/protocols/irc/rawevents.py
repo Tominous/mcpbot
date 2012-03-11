@@ -1,5 +1,4 @@
 from irc_lib.utils.irc_name import get_nick, get_ip
-from irc_lib.protocols.event import Event
 from irc_lib.protocols.ctcp.constants import CTCP_DELIMITER
 from irc_lib.protocols.nickserv.constants import NICKSERV
 

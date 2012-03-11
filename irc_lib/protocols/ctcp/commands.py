@@ -1,5 +1,5 @@
 import time
-from constants import CTCP_DELIMITER
+from irc_lib.protocols.ctcp.constants import CTCP_DELIMITER
 
 
 class CTCPCommands(object):

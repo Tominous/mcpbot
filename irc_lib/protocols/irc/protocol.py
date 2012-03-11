@@ -4,9 +4,9 @@ from irc_lib.protocols.nickserv.protocol import NickServProtocol
 from irc_lib.protocols.ctcp.protocol import CTCPProtocol
 from irc_lib.protocols.event import Event
 from irc_lib.protocols.user import User
-from commands import IRCCommands
-from rawevents import IRCRawEvents
-from constants import IRC_REPLIES
+from irc_lib.protocols.irc.commands import IRCCommands
+from irc_lib.protocols.irc.rawevents import IRCRawEvents
+from irc_lib.protocols.irc.constants import IRC_REPLIES
 
 
 class IRCProtocol(IRCCommands, IRCRawEvents):

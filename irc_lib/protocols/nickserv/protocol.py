@@ -1,8 +1,8 @@
 import logging
 
 from irc_lib.protocols.event import Event
-from commands import NickServCommands
-from rawevents import NickServRawEvents
+from irc_lib.protocols.nickserv.commands import NickServCommands
+from irc_lib.protocols.nickserv.rawevents import NickServRawEvents
 
 
 class NickServProtocol(NickServCommands, NickServRawEvents):

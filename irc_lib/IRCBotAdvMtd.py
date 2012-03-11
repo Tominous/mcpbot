@@ -1,7 +1,7 @@
 import os
 import pickle
 
-from protocols.user import User
+from irc_lib.protocols.user import User
 
 
 class IRCBotAdvMtd(object):

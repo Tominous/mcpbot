@@ -5,8 +5,8 @@ import logging
 
 from irc_lib.protocols.event import Event
 from irc_lib.IRCBotIO import LINESEP_REGEXP
-from commands import DCCCommands
-from rawevents import DCCRawEvents
+from irc_lib.protocols.dcc.commands import DCCCommands
+from irc_lib.protocols.dcc.rawevents import DCCRawEvents
 
 
 class DCCSocket(object):

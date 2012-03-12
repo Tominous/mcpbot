@@ -2,20 +2,17 @@ import time
 import logging
 
 from irc_lib.event import Event
+from irc_lib.protocol import Protocol
 from irc_lib.protocols.dcc import DCCProtocol
 
 
 CTCP_DELIMITER = '\001'
 
 
-class CTCPProtocol(object):
+class CTCPProtocol(Protocol):
     def __init__(self, _nick, _locks, _bot, _parent):
-        self.logger = logging.getLogger('IRCBot.CTCP')
-        self.cnick = _nick
-        self.locks = _locks
-        self.bot = _bot
-        self.irc = _parent
-
+        Protocol.__init__(self, _nick, _locks, _bot, _parent, 'IRCBot.CTCP')
+        self.irc = self.parent
         self.dcc = DCCProtocol(self.cnick, self.locks, self.bot, self)
 
     def process_msg(self, prefix, target, msg):

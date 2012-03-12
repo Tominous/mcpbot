@@ -5,6 +5,7 @@ import logging
 
 from irc_lib.event import Event
 from irc_lib.utils.colors import conv_s2i
+from irc_lib.protocol import Protocol
 import irc_lib.ircbot
 
 
@@ -18,13 +19,10 @@ class DCCSocket(object):
         return self.socket.fileno()
 
 
-class DCCProtocol(object):
+class DCCProtocol(Protocol):
     def __init__(self, _nick, _locks, _bot, _parent):
-        self.logger = logging.getLogger('IRCBot.DCC')
-        self.cnick = _nick
-        self.locks = _locks
-        self.bot = _bot
-        self.ctcp = _parent
+        Protocol.__init__(self, _nick, _locks, _bot, _parent, 'IRCBot.DCC')
+        self.ctcp = self.parent
 
         self.sockets = {}
         self.ip2nick = {}
@@ -41,11 +39,9 @@ class DCCProtocol(object):
         except socket.error:
             self.logger.exception('*** DCC: bind insocket failed')
             return
-
         externalip = urllib.urlopen('http://automation.whatismyip.com/n09230945.asp').readlines()[0]
         self.inip = self.conv_ip_std_long(externalip)
         self.inport = listenport
-
         self.logger.info('# DCC listening on %s:%d %s', listenhost, listenport, externalip)
 
         self.bot.threadpool.add_task(self.inbound_loop, _threadname='DCCInLoop')

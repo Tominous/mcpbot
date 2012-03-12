@@ -4,17 +4,14 @@ from irc_lib.event import Event
 from irc_lib.user import User
 from irc_lib.utils.colors import conv_s2i
 from irc_lib.utils.irc_name import get_nick, get_ip
+from irc_lib.protocol import Protocol
 from irc_lib.protocols.ctcp import CTCPProtocol, CTCP_DELIMITER
 from irc_lib.protocols.nickserv import NickServProtocol, NICKSERV
 
 
-class IRCProtocol(object):
+class IRCProtocol(Protocol):
     def __init__(self, _nick, _locks, _bot, _parent):
-        self.logger = logging.getLogger('IRCBot.IRC')
-        self.cnick = _nick
-        self.locks = _locks
-        self.bot = _bot
-
+        Protocol.__init__(self, _nick, _locks, _bot, _parent, 'IRCBot.IRC')
         self.nickserv = NickServProtocol(self.cnick, self.locks, self.bot, self)
         self.ctcp = CTCPProtocol(self.cnick, self.locks, self.bot, self)
         self.dcc = self.ctcp.dcc

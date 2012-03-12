@@ -2,18 +2,16 @@ import logging
 
 from irc_lib.event import Event
 from irc_lib.user import User
+from irc_lib.protocol import Protocol
 
 
 NICKSERV = 'NickServ'
 
 
-class NickServProtocol(object):
+class NickServProtocol(Protocol):
     def __init__(self, _nick, _locks, _bot, _parent):
-        self.logger = logging.getLogger('IRCBot.NSRV')
-        self.cnick = _nick
-        self.locks = _locks
-        self.bot = _bot
-        self.irc = _parent
+        Protocol.__init__(self, _nick, _locks, _bot, _parent, 'IRCBot.NSRV')
+        self.irc = self.parent
 
     def process_msg(self, prefix, target, msg):
         split_msg = msg.split()

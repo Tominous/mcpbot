@@ -50,15 +50,11 @@ class DCCProtocol(object):
 
         self.bot.threadpool.add_task(self.inbound_loop, _threadname='DCCInLoop')
 
-    def eventlog(self, ev):
-        self.bot.eventlog(ev)
-
     def process_msg(self, sender, target, msg):
         dcccmd, _, dccargs = msg.partition(' ')
 
         # regenerate event with parsed dcc details
         ev = Event(sender, dcccmd, target, dccargs, 'DCC')
-        self.eventlog(ev)
 
         cmd_func = getattr(self, 'onDCC_%s' % dcccmd, self.onDCC_Default)
         cmd_func(ev)
@@ -68,7 +64,6 @@ class DCCProtocol(object):
 
     def process_DCCmsg(self, sender, msg):
         ev = Event(sender, 'DCCMSG', self.cnick, msg, 'DCC')
-        self.eventlog(ev)
 
         self.bot.threadpool.add_task(self.onRawDCCMsg, ev)
 

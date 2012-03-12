@@ -15,9 +15,6 @@ class NickServProtocol(object):
         self.bot = _bot
         self.irc = _parent
 
-    def eventlog(self, ev):
-        self.bot.eventlog(ev)
-
     def process_msg(self, prefix, target, msg):
         split_msg = msg.split()
         if len(split_msg) > 1 and split_msg[1] in ['ACC']:
@@ -26,7 +23,6 @@ class NickServProtocol(object):
             cmd = 'Unknown'
 
         ev = Event(prefix, cmd, target, msg, 'NSRV')
-        self.eventlog(ev)
 
         cmd_func = getattr(self, 'onNSRV_%s' % ev.cmd, self.onNSRV_Default)
         cmd_func(ev)

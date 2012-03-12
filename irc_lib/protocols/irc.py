@@ -19,9 +19,6 @@ class IRCProtocol(object):
         self.ctcp = CTCPProtocol(self.cnick, self.locks, self.bot, self)
         self.dcc = self.ctcp.dcc
 
-    def eventlog(self, ev):
-        self.bot.eventlog(ev)
-
     def process_msg(self, msg):
         # parse the various fields out of the message
         if msg[0] == ':':
@@ -39,10 +36,6 @@ class IRCProtocol(object):
         # If the reply is numerical, we change the cmd type to the correct type
         if cmd in _IRC_REPLIES:
             cmd = _IRC_REPLIES[cmd]
-
-        # fake event used for logging and onDefault, missing target
-        ev = Event(prefix, cmd, '', str(args), 'IRC')
-        self.eventlog(ev)
 
         # We call the corresponding raw event if it exist, or the rawDefault if not.
         cmd_func = getattr(self, 'onIRC_%s' % cmd, self.onIRC_Default)

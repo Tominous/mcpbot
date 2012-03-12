@@ -2,7 +2,6 @@ import socket
 import time
 import logging
 import re
-import sqlite3
 import os
 import pickle
 from threading import Condition
@@ -30,7 +29,7 @@ class IRCBotBase(object):
     Provides a threadpool to handle bot commands, a user list updated as information become available,
     and access to all the procotols through self.<protocol> (irc, ctcp, dcc, and nickserv)"""
 
-    def __init__(self, _nick='IRCBotLib', _char=':', _flood=1000, _dbconf='ircbot.sqlite'):
+    def __init__(self, _nick='IRCBotLib', _char=':', _flood=1000):
         self.log_config()
         self.logger = logging.getLogger('IRCBot')
 
@@ -41,8 +40,6 @@ class IRCBotBase(object):
         self.floodprotec = _flood
 
         self.cnick = _nick
-
-        self.dbconf = _dbconf
 
         self.locks = {
             'WhoIs': Condition(),
@@ -61,7 +58,6 @@ class IRCBotBase(object):
         # Outbound msgs
         self.out_msg = Queue()
 
-        self.loggingq = Queue()
         self.commandq = Queue()
 
         # IRC Protocol handler
@@ -76,14 +72,10 @@ class IRCBotBase(object):
         self.irc_status = {'Server': None, 'Registered': False, 'Channels': set()}
         self.users = {}
 
-        self.threadpool.add_task(self.logging_loop, _threadname='LoggingLoop')
         self.threadpool.add_task(self.command_loop, _threadname='CommandLoop')
 
     def log_config(self):
         logging.basicConfig(format='%(asctime)s %(message)s', level=logging.WARN)
-
-    def eventlog(self, ev):
-        self.loggingq.put(ev)
 
     def outbound_loop(self):
         """Outgoing messages thread. Check for new messages on the queue and push them to the socket if any."""
@@ -151,23 +143,6 @@ class IRCBotBase(object):
         finally:
             self.logger.info('*** IRCBot.inbound_loop: exited')
 
-    def logging_loop(self):
-        try:
-            with sqlite3.connect(self.dbconf) as db:
-                db.text_factory = str
-                while not self.exit:
-                    try:
-                        ev = self.loggingq.get(True, 1)
-                    except Empty:
-                        continue
-
-                    db.execute("""INSERT INTO logs VALUES (?, ?, ?, ?, ?, ?, ?)""",
-                        (None, ev.type, ev.cmd, ev.sender, ev.target, ev.msg, int(time.time())))
-                    db.commit()
-                    self.loggingq.task_done()
-        finally:
-            self.logger.info('*** IRCBot.logging_loop: exited')
-
     def command_loop(self):
         try:
             while not self.exit:
@@ -175,7 +150,6 @@ class IRCBotBase(object):
                     ev = self.commandq.get(True, 1)
                 except Empty:
                     continue
-                self.eventlog(ev)
                 cmd_func = getattr(self, 'onCmd', self.onDefault)
                 self.threadpool.add_task(cmd_func, ev)
                 self.commandq.task_done()

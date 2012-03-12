@@ -18,9 +18,6 @@ class CTCPProtocol(object):
 
         self.dcc = DCCProtocol(self.cnick, self.locks, self.bot, self)
 
-    def eventlog(self, ev):
-        self.bot.eventlog(ev)
-
     def process_msg(self, prefix, target, msg):
         # remove leading/trailing CTCP_DELIMITER
         if msg[-1] == CTCP_DELIMITER:
@@ -32,7 +29,6 @@ class CTCPProtocol(object):
         cmd, _, data = msg.partition(' ')
 
         ev = Event(prefix, cmd, target, data, 'CTCP')
-        self.eventlog(ev)
 
         cmd_func = getattr(self, 'onCTCP_%s' % ev.cmd, self.onCTCP_Default)
         cmd_func(ev)

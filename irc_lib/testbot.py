@@ -76,15 +76,6 @@ class TestBot(IRCBotBase):
         for i in range(number):
             self.irc.privmsg(msg.split()[0], ':%03d' % i)
 
-    @restricted()
-    def cmdExec(self, sender, channel, cmd):
-        try:
-            self.logger.info(cmd)
-            exec cmd in self.globaldic, self.localdic
-        except Exception as exc:
-            self.logger.exception('ERROR in exec')
-            self.say(sender, 'ERROR : %s' % exc)
-
 
 def main():
     bot = TestBot('PMDevBot')

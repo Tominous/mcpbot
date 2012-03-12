@@ -781,15 +781,6 @@ class MCPBotCmds(object):
     #===================================================================
 
     #====================== Misc commands ==============================
-    @restricted(5)
-    def cmd_exec(self, sender, chan, cmd, msg, *args, **kwargs):
-        try:
-            self.logger.info('EXEC: %s', msg)
-            exec msg in self.globaldic, self.localdic
-        except Exception as exc:
-            self.logger.exception('ERROR in exec')
-            self.say(sender, 'ERROR: %s' % exc)
-
     def cmd_dcc(self, sender, chan, cmd, msg, *args, **kwargs):
         """$Bdcc$N : Starts a dcc session. Faster and not under the flood protection."""
         self.dcc.dcc(sender)

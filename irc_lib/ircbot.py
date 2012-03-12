@@ -36,6 +36,7 @@ class IRCBotBase(object):
         self.whitelist = {}
 
         self.controlchar = _char
+
         # Flood protection. Number of char / 30 secs (It is the way it works on esper.net)
         self.floodprotec = _flood
 
@@ -46,9 +47,6 @@ class IRCBotBase(object):
             'ServReg': Condition(),
             'NSStatus': Condition()
         }
-
-        self.localdic = {}
-        self.globaldic = {'self': self}
 
         self.exit = False
 

@@ -93,85 +93,94 @@ class IRCBotBase(object):
         # If when we want to send the message and the number of chars is not enough, we sleep until we have enough chars in the bucket (in fact, a bit more, to replanish the bucket).
         # This way, everything slow down when we reach the flood limit, but after 30 seconds, the bucket is full again.
 
-        allowed_chars = self.floodprotec
-        start_time = time.time()
-        while not self.exit:
-            delta_time = time.time() - start_time
-            allowed_chars = min(allowed_chars + (self.floodprotec / 30.0) * delta_time, self.floodprotec)
+        try:
+            allowed_chars = self.floodprotec
             start_time = time.time()
-
-            if not self.irc_socket:
-                raise IRCBotError('no socket')
-
-            try:
-                msg = self.out_msg.get(True, 1)
-            except Empty:
-                continue
-
-            self.logger.debug('> %s', repr(msg))
-            out_line = msg + '\r\n'
-            if len(out_line) > int(allowed_chars):
-                time.sleep((len(out_line) * 1.25) / (self.floodprotec / 30.0))
-            try:
-                self.irc_socket.sendall(out_line)
-            except socket.error:
-                self.out_msg.task_done()
-                raise
-            allowed_chars -= len(out_line)
-            self.out_msg.task_done()
-        self.logger.info('*** IRCBotIO.outbound_loop: exited')
-
-    def inbound_loop(self):
-        """Incoming message thread. Check for new data on the socket and send the data to the irc protocol handler."""
-        buf = ''
-        while not self.exit:
-            if not self.irc_socket:
-                raise IRCBotError('no socket')
-
-            # breaks with error: [Errno 104] Connection reset by peer
-            try:
-                new_data = self.irc_socket.recv(512)
-            except socket.timeout:
-            #                self.logger.debug('*** IRCBotIO.inbound_loop: socket.timeout', exc_info=True)
-                continue
-            if not new_data:
-                raise IRCBotError('no data')
-
-            msg_list = LINESEP_REGEXP.split(buf + new_data)
-
-            # Push last line back into buffer in case its truncated
-            buf = msg_list.pop()
-
-            for msg in msg_list:
-                self.logger.debug('< %s', repr(msg))
-                self.irc.process_msg(msg)
-        self.logger.info('*** IRCBotIO.inbound_loop: exited')
-
-    def logging_loop(self):
-        with sqlite3.connect(self.dbconf) as db:
-            db.text_factory = str
             while not self.exit:
+                delta_time = time.time() - start_time
+                allowed_chars = min(allowed_chars + (self.floodprotec / 30.0) * delta_time, self.floodprotec)
+                start_time = time.time()
+
+                if not self.irc_socket:
+                    raise IRCBotError('no socket')
+
                 try:
-                    ev = self.loggingq.get(True, 1)
+                    msg = self.out_msg.get(True, 1)
                 except Empty:
                     continue
 
-                db.execute("""INSERT INTO logs VALUES (?, ?, ?, ?, ?, ?, ?)""",
-                    (None, ev.type, ev.cmd, ev.sender, ev.target, ev.msg, int(time.time())))
-                db.commit()
-                self.loggingq.task_done()
-        self.logger.info('*** IRCBotIO.logging_loop: exited')
+                self.logger.debug('> %s', repr(msg))
+                out_line = msg + '\r\n'
+                if len(out_line) > int(allowed_chars):
+                    time.sleep((len(out_line) * 1.25) / (self.floodprotec / 30.0))
+                try:
+                    self.irc_socket.sendall(out_line)
+                except socket.error:
+                    self.out_msg.task_done()
+                    raise
+                allowed_chars -= len(out_line)
+                self.out_msg.task_done()
+        finally:
+            self.logger.info('*** IRCBot.outbound_loop: exited')
+
+    def inbound_loop(self):
+        """Incoming message thread. Check for new data on the socket and send the data to the irc protocol handler."""
+        try:
+            buf = ''
+            while not self.exit:
+                if not self.irc_socket:
+                    raise IRCBotError('no socket')
+
+                # breaks with error: [Errno 104] Connection reset by peer
+                try:
+                    new_data = self.irc_socket.recv(512)
+                except socket.timeout:
+                #                self.logger.debug('*** IRCBotIO.inbound_loop: socket.timeout', exc_info=True)
+                    continue
+                if not new_data:
+                    raise IRCBotError('no data')
+
+                msg_list = LINESEP_REGEXP.split(buf + new_data)
+
+                # Push last line back into buffer in case its truncated
+                buf = msg_list.pop()
+
+                for msg in msg_list:
+                    self.logger.debug('< %s', repr(msg))
+                    self.irc.process_msg(msg)
+        finally:
+            self.logger.info('*** IRCBot.inbound_loop: exited')
+
+    def logging_loop(self):
+        try:
+            with sqlite3.connect(self.dbconf) as db:
+                db.text_factory = str
+                while not self.exit:
+                    try:
+                        ev = self.loggingq.get(True, 1)
+                    except Empty:
+                        continue
+
+                    db.execute("""INSERT INTO logs VALUES (?, ?, ?, ?, ?, ?, ?)""",
+                        (None, ev.type, ev.cmd, ev.sender, ev.target, ev.msg, int(time.time())))
+                    db.commit()
+                    self.loggingq.task_done()
+        finally:
+            self.logger.info('*** IRCBot.logging_loop: exited')
 
     def command_loop(self):
-        while not self.exit:
-            try:
-                ev = self.commandq.get(True, 1)
-            except Empty:
-                continue
-            self.eventlog(ev)
-            cmd_func = getattr(self, 'onCmd', self.onDefault)
-            self.threadpool.add_task(cmd_func, ev)
-            self.commandq.task_done()
+        try:
+            while not self.exit:
+                try:
+                    ev = self.commandq.get(True, 1)
+                except Empty:
+                    continue
+                self.eventlog(ev)
+                cmd_func = getattr(self, 'onCmd', self.onDefault)
+                self.threadpool.add_task(cmd_func, ev)
+                self.commandq.task_done()
+        finally:
+            self.logger.info('*** IRCBot.command_loop: exited')
 
     def process_msg(self, sender, target, msg):
         ischan = target[0] in ['#', '&']
@@ -270,11 +279,13 @@ class IRCBotBase(object):
 
     def start(self):
         """Start an infinite loop which can be exited by ctrl+c. Take care of cleaning the threads when exiting."""
-        while not self.exit:
-            try:
-                time.sleep(2)
-            except (KeyboardInterrupt, SystemExit):
-                self.logger.error('EXIT REQUESTED. SHUTTING DOWN THE BOT')
-                self.exit = True
-        self.threadpool.wait_completion()
-        self.logger.info('*** IRCBotIO.start: exited')
+        try:
+            while not self.exit:
+                try:
+                    time.sleep(2)
+                except (KeyboardInterrupt, SystemExit):
+                    self.logger.error('EXIT REQUESTED. SHUTTING DOWN THE BOT')
+                    self.exit = True
+            self.threadpool.wait_completion()
+        finally:
+            self.logger.info('*** IRCBot.start: exited')

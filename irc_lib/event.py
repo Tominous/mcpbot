@@ -1,5 +1,4 @@
 import time
-import logging
 
 from irc_lib.utils.irc_name import split_prefix
 
@@ -8,7 +7,6 @@ class Event(object):
     maxid = 0
 
     def __init__(self, sender, cmd, target, msg, etype):
-        logger = logging.getLogger('IRCBot.Event')
         self.sender, self.senderuser, self.senderhost = split_prefix(sender)
         self.senderfull = sender
         self.cmd = cmd

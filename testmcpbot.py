@@ -8,8 +8,7 @@ from mcpbotcmds import MCPBotCmds
 class MCPBot(IRCBotBase, MCPBotCmds):
 
     def __init__(self, nick='DevBot', char='!'):
-        IRCBotBase.__init__(self, nick, char)
-        self.logger.setLevel(logging.DEBUG)
+        IRCBotBase.__init__(self, nick, char, _log_level=logging.DEBUG)
         self.whitelist['ProfMobius'] = 5
 
     def onIRC_Default(self, cmd, prefix, args):

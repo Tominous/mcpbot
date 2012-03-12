@@ -29,8 +29,8 @@ class IRCBotBase(object):
     Provides a threadpool to handle bot commands, a user list updated as information become available,
     and access to all the procotols through self.<protocol> (irc, ctcp, dcc, and nickserv)"""
 
-    def __init__(self, _nick='IRCBotLib', _char=':', _flood=1000):
-        self.log_config()
+    def __init__(self, _nick='IRCBotLib', _char=':', _flood=1000, _log_level=logging.WARN):
+        self.log_config(_log_level)
         self.logger = logging.getLogger('IRCBot')
 
         self.whitelist = {}
@@ -72,8 +72,8 @@ class IRCBotBase(object):
 
         self.threadpool.add_task(self.command_loop, _threadname='CommandLoop')
 
-    def log_config(self):
-        logging.basicConfig(format='%(asctime)s %(message)s', level=logging.WARN)
+    def log_config(self, level=logging.WARN):
+        logging.basicConfig(format='%(asctime)s %(message)s', level=level)
 
     def outbound_loop(self):
         """Outgoing messages thread. Check for new messages on the queue and push them to the socket if any."""

@@ -86,8 +86,11 @@ class TestBot(IRCBotBase):
             self.say(sender, 'ERROR : %s' % exc)
 
 
-if __name__ == '__main__':
+def main():
     bot = TestBot('PMDevBot')
     bot.connect('irc.esper.net')
     bot.irc.join('#test')
     bot.start()
+
+if __name__ == '__main__':
+    main()

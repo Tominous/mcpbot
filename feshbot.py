@@ -26,17 +26,19 @@ class MCPBot(IRCBotBase, MCPBotCmds):
         cmd_func(ev.sender, ev.chan, ev.cmd, ev.msg)
 
 
-if __name__ == '__main__':
-    if len(sys.argv) < 2:
-        print 'No password given. Try python feshbot.py <password>.'
-        sys.exit(0)
-
+def main(password):
     bot = MCPBot('FeshBot', '^')
     bot.connect('irc.esper.net')
-    bot.nickserv.identify(sys.argv[1])
+    bot.nickserv.identify(password)
     bot.logger.info('# plz wait')
     time.sleep(5)
     bot.logger.info('# joining channels')
     bot.irc.join('#test')
     bot.loadWhitelist()
     bot.start()
+
+if __name__ == '__main__':
+    if len(sys.argv) < 2:
+        print 'No password given. Try python feshbot.py <password>.'
+        sys.exit(0)
+    main(sys.argv[1])

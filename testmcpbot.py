@@ -25,15 +25,17 @@ class MCPBot(IRCBotBase, MCPBotCmds):
         cmd_func = getattr(self, 'cmd_%s' % cmd, self.cmdDefault)
         cmd_func(ev.sender, ev.chan, ev.cmd, ev.msg)
 
+
+def main(password):
+    bot = MCPBot('MCPBot_NG', '$')
+    bot.connect('irc.esper.net')
+    bot.nickserv.identify(password)
+    bot.irc.join('#test')
+    bot.loadWhitelist()
+    bot.start()
+
 if __name__ == '__main__':
     if len(sys.argv) < 2:
         print 'No password given. Try python mcpbot.py <password>.'
         sys.exit(0)
-
-    bot = MCPBot('MCPBot_NG', '$')
-    bot.connect('irc.esper.net')
-    bot.nickserv.identify(sys.argv[1])
-    bot.irc.join('#test')
-    bot.loadWhitelist()
-
-    bot.start()
+    main(sys.argv[1])

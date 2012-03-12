@@ -52,7 +52,7 @@ class IRCBotBase(object):
 
         self.exit = False
 
-        self.nthreads = 15
+        self.nthreads = 10
         self.threadpool = ThreadPool(self.nthreads)
 
         # Outbound msgs

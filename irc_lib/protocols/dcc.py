@@ -4,8 +4,8 @@ import select
 import logging
 
 from irc_lib.event import Event
-from irc_lib.ircbot_io import LINESEP_REGEXP
 from irc_lib.utils.colors import conv_s2i
+import irc_lib.ircbot
 
 
 class DCCSocket(object):
@@ -150,7 +150,7 @@ class DCCProtocol(object):
                         inp.remove(s)
                         continue
 
-                    msg_list = LINESEP_REGEXP.split(s.buffer + new_data)
+                    msg_list = irc_lib.ircbot.LINESEP_REGEXP.split(s.buffer + new_data)
 
                     # Push last line back into buffer in case its truncated
                     s.buffer = msg_list.pop()

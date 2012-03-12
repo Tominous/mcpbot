@@ -2,7 +2,7 @@ import sys
 import time
 import logging
 
-from irc_lib.ircbot_base import IRCBotBase
+from irc_lib.ircbot import IRCBotBase
 from mcpbotcmds import MCPBotCmds
 
 

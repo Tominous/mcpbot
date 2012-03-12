@@ -1,7 +1,6 @@
 import socket
 import urllib
 import select
-import logging
 
 from irc_lib.event import Event
 from irc_lib.utils.colors import conv_s2i

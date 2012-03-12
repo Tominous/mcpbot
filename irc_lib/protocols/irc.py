@@ -1,5 +1,3 @@
-import logging
-
 from irc_lib.event import Event
 from irc_lib.user import User
 from irc_lib.utils.colors import conv_s2i
@@ -46,6 +44,8 @@ class IRCProtocol(Protocol):
         if cmd_func:
             self.bot.threadpool.add_task(cmd_func, cmd, prefix, args)
         else:
+            # fake event used for logging and onDefault, missing target
+            ev = Event(prefix, cmd, '', str(args), 'IRC')
             self.bot.threadpool.add_task(self.bot.onDefault, ev)
 
     def add_user(self, nick, chan=None):

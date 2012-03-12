@@ -1,5 +1,3 @@
-import logging
-
 from irc_lib.event import Event
 from irc_lib.user import User
 from irc_lib.protocol import Protocol

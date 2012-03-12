@@ -156,10 +156,6 @@ class DCCProtocol(object):
         self.logger.info('*** DCC.inbound_loop: exited')
 
     def onRawDCCMsg(self, ev):
-        if ev.msg != ev.msg.strip():
-            self.logger.warn('*** DCC.onRawDCCMsg: stripped: %s', repr(ev.msg))
-            ev.msg = ev.msg.strip()
-
         if not ev.msg:
             return
 

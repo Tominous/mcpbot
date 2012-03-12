@@ -20,6 +20,9 @@ class IRCProtocol(object):
         self.dcc = self.ctcp.dcc
 
     def process_msg(self, msg):
+        if not msg:
+            return
+
         # parse the various fields out of the message
         if msg[0] == ':':
             prefix, _, msg = msg[1:].partition(' ')
@@ -50,9 +53,6 @@ class IRCProtocol(object):
 
     def add_user(self, nick, chan=None):
         nick_status = '-'
-        if nick[0] == ':':
-            self.logger.warn('*** IRC.add_user: : in nick: %s', nick)
-            nick = nick[1:]
         snick = nick
         if nick[0] in ['@', '+']:
             snick = nick[1:]
@@ -65,10 +65,6 @@ class IRCProtocol(object):
         self.bot.users[snick].chans[chan] = nick_status
 
     def rm_user(self, nick, chan=None):
-        if nick[0] == ':':
-            self.logger.warn('*** IRC.rm_user: : in nick: %s', nick)
-            nick = nick[1:]
-
         if not nick in self.bot.users:
             self.logger.error('*** IRC.rm_user: unknown: %s', nick)
             return

@@ -26,6 +26,9 @@ class CTCPProtocol(object):
             self.logger.warn('*** CTCP.process_msg: no trailing delim: %s', repr(msg))
             msg = msg[1:]
 
+        if not msg:
+            return
+
         cmd, _, data = msg.partition(' ')
 
         ev = Event(prefix, cmd, target, data, 'CTCP')

@@ -9,26 +9,6 @@ class Event(object):
 
     def __init__(self, sender, cmd, target, msg, etype):
         logger = logging.getLogger('IRCBot.Event')
-        if msg and msg[0] == ':':
-            logger.warn('*** Event: : in msg: %s', repr(msg))
-            msg = msg[1:]
-        if sender and sender[0] == ':':
-            logger.warn('*** Event: : in sender: %s', repr(sender))
-            sender = sender[1:]
-        if target and target[0] == ':':
-            logger.warn('*** Event: : in target: %s', repr(target))
-            target = target[1:]
-        if sender != sender.strip():
-            logger.warn('*** Event: sender stripped: %s', repr(target))
-            sender = sender.strip()
-        if cmd != cmd.strip():
-            logger.warn('*** Event: cmd stripped: %s', repr(cmd))
-            cmd = cmd.strip()
-        if target != target.strip():
-            logger.warn('*** Event: target stripped: %s', repr(target))
-            target = target.strip()
-        if msg != msg.strip():
-            msg = msg.strip()
         self.sender, self.senderuser, self.senderhost = split_prefix(sender)
         self.senderfull = sender
         self.cmd = cmd

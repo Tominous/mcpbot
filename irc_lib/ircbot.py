@@ -127,7 +127,6 @@ class IRCBotBase(object):
                 try:
                     new_data = self.irc_socket.recv(512)
                 except socket.timeout:
-                #                self.logger.debug('*** IRCBotIO.inbound_loop: socket.timeout', exc_info=True)
                     continue
                 if not new_data:
                     raise IRCBotError('no data')
@@ -158,6 +157,11 @@ class IRCBotBase(object):
 
     def process_msg(self, sender, target, msg):
         ischan = target[0] in ['#', '&']
+
+        msg = msg.lstrip()
+
+        if not msg:
+            return
 
         if ischan and msg[0] != self.controlchar:
             return

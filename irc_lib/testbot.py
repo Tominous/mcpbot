@@ -49,9 +49,6 @@ class TestBot(IRCBotBase):
         if ev.cmd == 'flood':
             self.cmdFlood(ev.sender, ev.chan, ev.msg)
 
-        if ev.cmd == 'exec':
-            self.cmdExec(ev.sender, ev.chan, ev.msg)
-
         if ev.cmd == 'addwhite':
             self.cmdAddWhite(ev.sender, ev.chan, ev.msg)
 

@@ -1,6 +1,6 @@
 def restricted(level=4):
     def wrap(f):
-        def wrap_f(*args):
+        def wrap_f(*args, **kwargs):
             bot = args[0]
             sender = args[1]
             chan = args[2]
@@ -25,6 +25,6 @@ def restricted(level=4):
                 bot.say(sender, 'You do not have the rights to do that')
                 return
 
-            f(*args)
+            f(*args, **kwargs)
         return wrap_f
     return wrap

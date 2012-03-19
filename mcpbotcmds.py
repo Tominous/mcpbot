@@ -266,7 +266,6 @@ class MCPBotCmds(object):
         c = kwargs['cursor']
         idversion = kwargs['idvers']
 
-        type_lookup = {'method': 'func', 'field': 'field'}
         side_lookup = {'client': 0, 'server': 1}
 
         msg_split = msg.strip().split(None, 1)
@@ -278,10 +277,8 @@ class MCPBotCmds(object):
         results = {'classes': None, 'fields': None, 'methods': None}
 
         if sender in self.dcc.sockets and self.dcc.sockets[sender]:
-            lowlimit = 0
             highlimit = 100
         else:
-            lowlimit = 1
             highlimit = 10
 
         self.say(sender, "$B[ SEARCH RESULTS ]")
@@ -538,7 +535,6 @@ class MCPBotCmds(object):
             if msg_split[0] == 'full':
                 fulllog = True
 
-        type_lookup = {'methods': 'func', 'fields': 'field'}
         side_lookup = {'client': 0, 'server': 1}
 
         self.say(sender, "$B[ LOGS ]")
@@ -580,19 +576,17 @@ class MCPBotCmds(object):
     @restricted(3)
     def cmd_updatecsv(self, sender, chan, cmd, msg, *args, **kwargs):
         self.dbCommit(sender, chan, cmd, msg, pushforced=False)
-        self.updateCsv(sender, chan, cmd, msg, pushforced=False)
+        self.updateCsv(sender, chan, cmd, msg)
 
     @restricted(4)
     def cmd_fupdatecsv(self, sender, chan, cmd, msg, *args, **kwargs):
         self.dbCommit(sender, chan, cmd, msg, pushforced=True)
-        self.updateCsv(sender, chan, cmd, msg, pushforced=True)
+        self.updateCsv(sender, chan, cmd, msg)
 
     @database
     def updateCsv(self, sender, chan, cmd, msg, *args, **kwargs):
         c = kwargs['cursor']
         idversion = kwargs['idvers']
-
-        pushforced = kwargs['pushforced']
 
         if self.cnick == 'MCPBot':
             directory = '/home/mcpfiles/renamer_csv'
@@ -882,7 +876,6 @@ class MCPBotCmds(object):
         c = kwargs['cursor']
         idversion = kwargs['idvers']
 
-        type_lookup = {'methods': 'func', 'fields': 'field'}
         side_lookup = {'client': 0, 'server': 1}
 
         msg_split = msg.strip().split(None, 1)
@@ -953,7 +946,6 @@ class MCPBotCmds(object):
         c = kwargs['cursor']
         idversion = kwargs['idvers']
 
-        type_lookup = {'methods': 'func', 'fields': 'field'}
         side_lookup = {'client': 0, 'server': 1}
 
         msg_split = msg.strip().split(None, 1)

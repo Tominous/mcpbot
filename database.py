@@ -6,12 +6,21 @@ from contextlib import closing
 #====================== DB Decorator ===================================
 def database(f):
     def wrap_f(*args, **kwargs):
-        with sqlite3.connect('database.sqlite', timeout=30, isolation_level='DEFERRED') as con:
-            con.text_factory = sqlite3.OptimizedUnicode
-            with closing(con.cursor()) as cur:
-                (idversion,) = cur.execute("""SELECT value FROM config WHERE name='currentversion'""").fetchone()
+        if not 'DBLock' in globals():
+            globals()['DBLock'] = threading.Lock()
 
-                kwargs['cursor'] = cur
-                kwargs['idvers'] = idversion
-                f(*args, **kwargs)
+        try:
+            DBLock.acquire()
+            with sqlite3.connect('database.sqlite') as con:
+                con.text_factory = sqlite3.OptimizedUnicode
+                with closing(con.cursor()) as cur:
+                    (idversion,) = cur.execute("""SELECT value FROM config WHERE name='currentversion'""").fetchone()
+
+                    kwargs['cursor'] = cur
+                    kwargs['idvers'] = idversion
+                    f(*args, **kwargs)
+            DBLock.release()
+        except Exception:
+            DBLock.release()
+            raise
     return wrap_f

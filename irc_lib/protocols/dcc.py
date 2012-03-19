@@ -116,22 +116,23 @@ class DCCProtocol(Protocol):
                         self.logger.warn('*** DCC.inbound_loop: connect from unknown ip: %s', ip)
                 else:
                     # handle all other sockets
+                    new_data = None
+                    close_socket = False
                     try:
                         new_data = s.socket.recv(512)
-                    except socket.error as exc:
+                    except socket.timeout:
+                        self.logger.info('*** DCC.inbound_loop: Connection closed [timeout]: %s', s.nick)
+                        close_socket = True
+                    except socket.error:
                         if 'Connection reset by peer' in exc:
                             self.logger.info('*** DCC.inbound_loop: Connection closed [reset]: %s', s.nick)
                         else:
                             self.logger.exception('*** DCC.inbound_loop: Connection closed [error]: %s', s.nick)
-                        if s.nick in self.sockets:
-                            del self.sockets[s.nick]
-                        else:
-                            self.logger.info('*** DCC.inbound_loop: not in sockets: %s', s.nick)
-                        s.socket.close()
-                        inp.remove(s)
-                        continue
-                    if not new_data:
+                        close_socket = True
+                    if not close_socket and not new_data:
                         self.logger.info('*** DCC.inbound_loop: Connection closed [no data]: %s', s.nick)
+                        close_socket = True
+                    if close_socket:
                         if s.nick in self.sockets:
                             del self.sockets[s.nick]
                         else:
@@ -156,7 +157,17 @@ class DCCProtocol(Protocol):
 
         self.bot.process_msg(ev.sender, self.cnick, ev.msg)
 
-#
+    def onDCC_CHAT(self, ev):
+        nick = ev.sender
+        args = ev.msg.split()
+        if len(args) != 3:
+            self.logger.error('*** DCC.onDCC_CHAT: INVALID: %s %s %s', ev.sender, ev.target, repr(ev.msg))
+            return
+        dccprot = args[0]
+        dccip = self.conv_ip_long_std(args[1])
+        dccport = int(args[2])
+
+        self.logger.info('onDCC_CHAT: %s %s | IP:%s Port:%s', ev.sender, repr(ev.msg), dccip, dccport)
 
     def onDCC_Default(self, ev):
         self.logger.info('RAW DCC EVENT: %s %s %s %s', ev.sender, ev.target, ev.cmd, repr(ev.msg))

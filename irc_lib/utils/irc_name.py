@@ -17,7 +17,7 @@ def get_ip(host):
     try:
         return socket.gethostbyname(host)
     except socket.gaierror:
-        logger.exception('*** irc_name.get_ip: socket.gaierror: %s', host)
+        logger.warning('*** irc_name.get_ip: socket.gaierror: %s', host)
         return '0.0.0.0'
 
 

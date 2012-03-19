@@ -186,7 +186,7 @@ class IRCBotBase(object):
         self.logger.info('# Connecting to %s:%d', server, port)
         self.irc_socket = socket.socket()
         self.irc_socket.connect((server, port))
-        self.irc_socket.settimeout(1)
+        self.irc_socket.settimeout(5)
 
         self.irc.password(password)
         self.irc.nick()

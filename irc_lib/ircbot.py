@@ -168,7 +168,7 @@ class IRCBotBase(object):
             msg = msg[1:]
 
         msg_split = msg.split(None, 1)
-        if not msg_split:
+        if not len(msg_split):
             return
         outcmd = msg_split[0]
         if len(msg_split) > 1:

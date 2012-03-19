@@ -15,42 +15,67 @@ class MCPBotCmds(object):
     #================== Base chatting commands =========================
     @restricted(4)
     def cmd_say(self, sender, chan, cmd, msg, *args, **kwargs):
-        if not len(msg.split()) > 1:
+        msg_split = msg.strip().split(None, 1)
+        if len(msg_split) < 2:
+            self.say(sender, " Syntax error: $B%s <target> <message>$N" % cmd)
             return
-        self.say(msg.split()[0], ' '.join(msg.split()[1:]))
+        target = msg_split[0]
+        outmsg = msg_split[1]
+        self.say(target, outmsg)
 
     @restricted(4)
     def cmd_msg(self, sender, chan, cmd, msg, *args, **kwargs):
-        if not len(msg.split()) > 1:
+        msg_split = msg.strip().split(None, 1)
+        if len(msg_split) < 2:
+            self.say(sender, " Syntax error: $B%s <target> <message>$N" % cmd)
             return
-        self.irc.privmsg(msg.split()[0], ' '.join(msg.split()[1:]))
+        target = msg_split[0]
+        outmsg = msg_split[1]
+        self.irc.privmsg(target, outmsg)
 
     @restricted(4)
     def cmd_notice(self, sender, chan, cmd, msg, *args, **kwargs):
-        if not len(msg.split()) > 1:
+        msg_split = msg.strip().split(None, 1)
+        if len(msg_split) < 2:
+            self.say(sender, " Syntax error: $B%s <target> <message>$N" % cmd)
             return
-        self.irc.notice(msg.split()[0], ' '.join(msg.split()[1:]))
+        target = msg_split[0]
+        outmsg = msg_split[1]
+        self.irc.notice(target, outmsg)
 
     @restricted(4)
     def cmd_action(self, sender, chan, cmd, msg, *args, **kwargs):
-        if not len(msg.split()) > 1:
+        msg_split = msg.strip().split(None, 1)
+        if len(msg_split) < 2:
+            self.say(sender, " Syntax error: $B%s <target> <message>$N" % cmd)
             return
-        self.ctcp.action(msg.split()[0], ' '.join(msg.split()[1:]))
+        target = msg_split[0]
+        outmsg = msg_split[1]
+        self.ctcp.action(target, outmsg)
 
     @restricted(4)
     def cmd_pub(self, sender, chan, cmd, msg, *args, **kwargs):
-        cmd = msg.split()[0]
-        if len(msg.split()) > 1:
-            msg = ' '.join(msg.split()[1:])
+        msg = msg.lstrip()
+        if not msg:
+            return
+        if msg[0] == self.controlchar:
+            msg = msg[1:]
+        msg_split = msg.strip().split(None, 1)
+        if not len(msg_split):
+            self.say(sender, " Syntax error: $B%s <command>$N" % cmd)
+            return
+        outcmd = msg_split[0].lower()
+        if len(msg_split) > 1:
+            outmsg = msg_split[1]
+        else:
+            outmsg = ''
 
-        cmd = cmd.lower()
-
-        if cmd in ['ssf, ssm, scf, scm']:
+        if outcmd in ['ssf, ssm, scf, scm']:
             self.say(sender, 'No public setters !')
             return
 
-        cmd_func = getattr(self, 'cmd_%s' % cmd, self.cmdDefault)
-        cmd_func(chan, chan, cmd, msg)
+        cmd_func = getattr(self, 'cmd_%s' % outcmd, self.cmdDefault)
+        cmd_func(chan, chan, outcmd, outmsg)
 
     #===================================================================
 
@@ -71,20 +96,27 @@ class MCPBotCmds(object):
     def getClass(self, sender, chan, cmd, msg, side, *args, **kwargs):
         c = kwargs['cursor']
         idversion = kwargs['idvers']
+
         side_lookup = {'client': 0, 'server': 1}
-        msg = msg.strip()
-        c.execute("""SELECT name, notch, supername FROM vclasses WHERE (name = ? OR notch = ?) AND side = ? AND versionid = ?""", (msg, msg, side_lookup[side], idversion))
+
+        msg_split = msg.strip().split(None, 1)
+        if len(msg_split) != 1:
+            self.say(sender, " Syntax error: $B%s <classname>$N" % cmd)
+            return
+        search_class = msg_split[0]
+
+        c.execute("""SELECT name, notch, supername FROM vclasses WHERE (name = ? OR notch = ?) AND side = ? AND versionid = ?""", (search_class, search_class, side_lookup[side], idversion))
 
         classresults = c.fetchall()
 
         if not classresults:
             self.say(sender, "$B[ GET %s CLASS ]" % side.upper())
-            self.say(sender, " No results found for $B%s" % msg)
+            self.say(sender, " No results found for $B%s" % search_class)
 
         for classresult in classresults:
             name, notch, supername = classresult
 
-            c.execute("""SELECT sig, notchsig FROM vconstructors WHERE (name = ? OR notch = ?) AND side = ? AND versionid = ?""", (msg, msg, side_lookup[side], idversion))
+            c.execute("""SELECT sig, notchsig FROM vconstructors WHERE (name = ? OR notch = ?) AND side = ? AND versionid = ?""", (search_class, search_class, side_lookup[side], idversion))
             constructorsresult = c.fetchall()
 
             self.say(sender, "$B[ GET %s CLASS ]" % side.upper())
@@ -127,33 +159,29 @@ class MCPBotCmds(object):
     def outputMembers(self, sender, chan, cmd, msg, side, etype, *args, **kwargs):
         c = kwargs['cursor']
         idversion = kwargs['idvers']
+
         side_lookup = {'client': 0, 'server': 1}
         type_lookup = {'fields': 'field', 'methods': 'func'}
-        msg = msg.strip()
 
-        cname = ''
-        mname = ''
-        sname = ''
-        searchpattern = ''
-
-        tmpmsg = msg
-
-        if len(tmpmsg.split('.')) > 2 or len(tmpmsg.split()) > 2 or not tmpmsg:
-            self.say(sender, "$B[ GET %s %s ]" % (side.upper(), etype.upper()))
-            self.say(sender, " Syntax error. Use $B%s <membername>$N or $B%s <classname>.<membername>$N" % (cmd, cmd))
+        msg_split = msg.strip().split(None, 2)
+        if len(msg_split) < 1 or len(msg_split) > 2:
+            self.say(sender, " Syntax error: $B%s <membername> [signature]$N or $B%s <classname>.<membername> [signature]$N" % (cmd, cmd))
             return
-
-        # Do we have a signature to search for
-        if len(tmpmsg.split()) == 2:
-            sname = tmpmsg.split()[1]
-            tmpmsg = tmpmsg.split()[0]
-
-        if len(tmpmsg.split('.')) == 2:
-            cname = tmpmsg.split('.')[0]
-            mname = tmpmsg.split('.')[1]
-
+        member = msg_split[0]
+        sname = None
+        if len(msg_split) > 1:
+            sname = msg_split[1]
+        cname = None
+        mname = None
+        split_member = member.split('.', 2)
+        if len(split_member) > 2:
+            self.say(sender, " Syntax error: $B%s <membername> [signature]$N or $B%s <classname>.<membername> [signature]$N" % (cmd, cmd))
+            return
+        if len(split_member) > 1:
+            cname = split_member[0]
+            mname = split_member[1]
         else:
-            mname = tmpmsg
+            mname = split_member[0]
 
         if cname and sname:
             c.execute("""SELECT m.name, m.notch, m.searge, m.sig, m.notchsig, m.desc, m.classname, m.classnotch FROM v%s m
@@ -225,7 +253,7 @@ class MCPBotCmds(object):
                     self.say(sender, " Description : %s" % desc)
         else:
             self.say(sender, "$B[ GET %s %s ]" % (side.upper(), etype.upper()))
-            self.say(sender, " No result for %s" % msg)
+            self.say(sender, " No result for %s" % msg.strip())
             c.close()
             return
 
@@ -235,13 +263,17 @@ class MCPBotCmds(object):
     @database
     def cmd_search(self, sender, chan, cmd, msg, *args, **kwargs):
         """$Bsearch <pattern>$N  : Search for a pattern."""
-
         c = kwargs['cursor']
         idversion = kwargs['idvers']
 
-        msg.strip()
         type_lookup = {'method': 'func', 'field': 'field'}
         side_lookup = {'client': 0, 'server': 1}
+
+        msg_split = msg.strip().split(None, 1)
+        if len(msg_split) != 1:
+            self.say(sender, " Syntax error: $B%s <name>$N" % cmd)
+            return
+        search_str = msg_split[0]
 
         results = {'classes': None, 'fields': None, 'methods': None}
 
@@ -255,13 +287,13 @@ class MCPBotCmds(object):
         self.say(sender, "$B[ SEARCH RESULTS ]")
         for side in ['client', 'server']:
             c.execute("""SELECT c.name, c.notch FROM vclasses c WHERE (c.name LIKE ?) AND c.side = ? AND c.versionid = ?""",
-                ('%%%s%%' % msg, side_lookup[side], idversion))
+                ('%%%s%%' % search_str, side_lookup[side], idversion))
             results['classes'] = c.fetchall()
 
             for etype in ['fields', 'methods']:
                 c.execute("""SELECT m.name, m.notch, m.searge, m.sig, m.notchsig, m.desc, m.classname, m.classnotch FROM v%s m
                             WHERE (m.name LIKE ? ESCAPE '!') AND m.side = ? AND m.versionid = ?""" % etype,
-                            ('%%%s%%' % msg, side_lookup[side], idversion))
+                            ('%%%s%%' % search_str, side_lookup[side], idversion))
                 results[etype] = c.fetchall()
 
             if not results['classes']:
@@ -331,23 +363,22 @@ class MCPBotCmds(object):
     def setMember(self, sender, chan, cmd, msg, side, etype, *args, **kwargs):
         c = kwargs['cursor']
         idversion = kwargs['idvers']
+
         forced = kwargs['forced']
 
-        msg = msg.strip()
         type_lookup = {'methods': 'func', 'fields': 'field'}
         side_lookup = {'client': 0, 'server': 1}
 
-        if not msg or msg.split() < 2:
-            self.say(sender, "$B[ SET %s %s ]" % (side.upper(), etype.upper()))
-            self.say(sender, " Syntax error. Use $B%s <membername> <newname> [newdescription]$N" % cmd)
+        msg_split = msg.strip().split(None, 2)
+        if len(msg_split) < 2:
+            self.say(sender, " Syntax error: $B%s <membername> <newname> [newdescription]$N" % cmd)
             return
 
-        msg = msg.split()
-        oldname = msg[0]
-        newname = msg[1]
+        oldname = msg_split[0]
+        newname = msg_split[1]
         newdesc = None
-        if len(msg) > 2:
-            newdesc = ' '.join(msg[2:])
+        if len(msg_split) > 2:
+            newdesc = msg_split[2]
 
         self.say(sender, "$B[ SET %s %s ]" % (side.upper(), etype.upper()))
         if forced:
@@ -474,34 +505,38 @@ class MCPBotCmds(object):
         type_lookup = {'methods': 'func', 'fields': 'field'}
         side_lookup = {'client': 0, 'server': 1}
 
+        msg_split = msg.split(None, 1)
+        if len(msg_split) != 1:
+            self.say(sender, "Syntax error: $B%s <searge|index>" % cmd)
+            return
+        member = msg_split[0]
+
         self.say(sender, "$B[ REVERT %s %s ]" % (side.upper(), etype.upper()))
 
-        msg = msg.strip()
-        if len(msg.split()) > 1:
-            self.say(sender, "Syntax error : $B%s <searge|index>" % cmd)
-            return
-
         c.execute("""UPDATE %s SET dirtyid=0 WHERE ((searge LIKE ? ESCAPE '!') OR searge = ?) AND side = ? AND versionid = ?""" % etype,
-         ('%s!_%s!_%%' % (type_lookup[etype], msg), msg, side_lookup[side], idversion))
-        self.say(sender, " Reverting changes on $B%s$N is done." % msg)
+         ('%s!_%s!_%%' % (type_lookup[etype], member), member, side_lookup[side], idversion))
+        self.say(sender, " Reverting changes on $B%s$N is done." % member)
 
     #===================================================================
 
     #====================== Log Methods ================================
     @database
     def cmd_getlog(self, sender, chan, cmd, msg, *args, **kwargs):
+        c = kwargs['cursor']
+        idversion = kwargs['idvers']
+
         if sender not in self.dcc.sockets or not self.dcc.sockets[sender]:
             self.say(sender, "$BPlease use DCC for getlog")
             return
 
-        c = kwargs['cursor']
-        idversion = kwargs['idvers']
-
-        msg = msg.strip()
-        if msg == 'full':
-            fulllog = True
-        else:
-            fulllog = False
+        msg_split = msg.strip().split(None, 1)
+        if len(msg_split) > 1:
+            self.say(sender, "Syntax error: $B%s [full]" % cmd)
+            return
+        fulllog = False
+        if len(msg_split) == 1:
+            if msg_split[0] == 'full':
+                fulllog = True
 
         type_lookup = {'methods': 'func', 'fields': 'field'}
         side_lookup = {'client': 0, 'server': 1}
@@ -554,9 +589,9 @@ class MCPBotCmds(object):
 
     @database
     def updateCsv(self, sender, chan, cmd, msg, *args, **kwargs):
-
         c = kwargs['cursor']
         idversion = kwargs['idvers']
+
         pushforced = kwargs['pushforced']
 
         if self.cnick == 'MCPBot':
@@ -566,6 +601,11 @@ class MCPBotCmds(object):
 
         outfieldcsv = 'fields.csv'
         outmethodcsv = 'methods.csv'
+
+        msg_split = msg.strip().split(None, 1)
+        if len(msg_split):
+            self.say(sender, "Syntax error: $B%s" % cmd)
+            return
 
         ffmetho = open('%s/%s' % (directory, outmethodcsv), 'w')
         fffield = open('%s/%s' % (directory, outfieldcsv), 'w')
@@ -617,8 +657,13 @@ class MCPBotCmds(object):
         else:
             trgdir = 'devconf'
 
-        if len(msg.split()) == 1:
-            idversion = c.execute("""SELECT id FROM versions WHERE mcpversion = ?""", (msg.split()[0],)).fetchone()
+        msg_split = msg.strip().split(None, 1)
+        if len(msg_split) > 2:
+            self.say(sender, " Syntax error: $B%s [version]$N" % cmd)
+            return
+        if len(msg_split) == 1:
+            version = msg_split[0]
+            idversion = c.execute("""SELECT id FROM versions WHERE mcpversion = ?""", (version,)).fetchone()
             if not idversion:
                 self.say(sender, "Version not recognised.")
                 return
@@ -662,6 +707,11 @@ class MCPBotCmds(object):
         else:
             trgdir = 'devconf'
 
+        msg_split = msg.strip().split(None, 1)
+        if len(msg_split):
+            self.say(sender, "Syntax error: $B%s" % cmd)
+            return
+
         methodswriter = csv.writer(open('%s/methods.csv' % trgdir, 'wb'))
         c.execute("""SELECT DISTINCT searge, name, side, desc
                      FROM vmethods
@@ -690,7 +740,13 @@ class MCPBotCmds(object):
     def dbCommit(self, sender, chan, cmd, msg, *args, **kwargs):
         c = kwargs['cursor']
         idversion = kwargs['idvers']
+
         pushforced = kwargs['pushforced']
+
+        msg_split = msg.strip().split(None, 1)
+        if len(msg_split):
+            self.say(sender, "Syntax error: $B%s" % cmd)
+            return
 
         nentries = 0
         for etype in ['methods', 'fields']:
@@ -726,35 +782,36 @@ class MCPBotCmds(object):
     #====================== Whitelist Handling =========================
     @restricted(0)
     def cmd_addwhite(self, sender, chan, cmd, msg, *args, **kwargs):
-        msg = msg.strip().split()
-        if len(msg) == 1:
-            nick = msg[0]
+        msg_split = msg.strip().split(None, 2)
+        if len(msg_split) == 1:
+            nick = msg_split[0]
             level = 4
-            if level >= self.whitelist[sender]:
-                self.say(sender, "You don't have the rights to do that.")
-                return
-        elif len(msg) == 2:
-            nick = msg[0]
+        elif len(msg_split) == 2:
+            nick = msg_split[0]
             try:
-                level = int(msg[1])
+                level = int(msg_split[1])
             except ValueError:
-                self.say(sender, "Syntax error : $Baddwhite <nick> [level]")
-                return
-            if level > 4:
-                self.say(sender, "Max level is 4.")
-                return
-            if level >= self.whitelist[sender]:
-                self.say(sender, "You don't have the rights to do that.")
+                self.say(sender, "Syntax error: $B%s <nick> [level]" % cmd)
                 return
         else:
-            self.say(sender, "Syntax error : $Baddwhite <nick> [level]")
+            self.say(sender, "Syntax error: $B%s <nick> [level]" % cmd)
+            return
+        if level > 4:
+            self.say(sender, "Max level is 4.")
+            return
+        if level >= self.whitelist[sender]:
+            self.say(sender, "You don't have the rights to do that.")
             return
         self.addWhitelist(nick, level)
         self.say(sender, "Added %s with level %d to whitelist" % (nick, level))
 
     @restricted(0)
     def cmd_rmwhite(self, sender, chan, cmd, msg, *args, **kwargs):
-        nick = msg.strip()
+        msg_split = msg.strip().split(None, 1)
+        if len(msg_split) != 1:
+            self.say(sender, "Syntax error: $B%s <nick>" % cmd)
+            return
+        nick = msg_split[0]
 
         if nick in self.whitelist and self.whitelist[nick] >= self.whitelist[sender]:
             self.say(sender, "You don't have the rights to do that.")
@@ -769,36 +826,52 @@ class MCPBotCmds(object):
 
     @restricted(0)
     def cmd_getwhite(self, sender, chan, cmd, msg, *args, **kwargs):
+        msg_split = msg.strip().split(None, 1)
+        if len(msg_split):
+            self.say(sender, "Syntax error: $B%s" % cmd)
+            return
         self.say(sender, "Whitelist : %s" % self.whitelist)
 
     @restricted(4)
     def cmd_savewhite(self, sender, chan, cmd, msg, *args, **kwargs):
+        msg_split = msg.strip().split(None, 1)
+        if len(msg_split):
+            self.say(sender, "Syntax error: $B%s" % cmd)
+            return
         self.saveWhitelist()
 
     @restricted(4)
     def cmd_loadwhite(self, sender, chan, cmd, msg, *args, **kwargs):
+        msg_split = msg.strip().split(None, 1)
+        if len(msg_split):
+            self.say(sender, "Syntax error: $B%s" % cmd)
+            return
         self.loadWhitelist()
     #===================================================================
 
     #====================== Misc commands ==============================
     def cmd_dcc(self, sender, chan, cmd, msg, *args, **kwargs):
         """$Bdcc$N : Starts a dcc session. Faster and not under the flood protection."""
+        msg_split = msg.strip().split(None, 1)
+        if len(msg_split):
+            self.say(sender, "Syntax error: $B%s" % cmd)
+            return
         self.dcc.dcc(sender)
 
     @restricted(4)
     def cmd_kick(self, sender, chan, cmd, msg, *args, **kwargs):
-        msg = msg.strip()
-        msg = msg.split()
-        if not len(msg) >= 2:
+        msg_split = msg.strip().split(None, 2)
+        if len(msg_split) < 2:
+            self.say(sender, "Syntax error: $B%s <channel> <target> [message]" % cmd)
             return
-        if len(msg) == 2:
-            self.irc.kick(msg[0], msg[1])
-        if len(msg) > 2:
-            self.irc.kick(msg[0], msg[1], ' '.join(msg[2:]))
+        if len(msg_split) > 2:
+            self.irc.kick(msg_split[0], msg_split[1], msg_split[2])
+        else:
+            self.irc.kick(msg_split[0], msg_split[1])
 
     @restricted(5)
     def cmd_rawcmd(self, sender, chan, cmd, msg, *args, **kwargs):
-        self.irc.rawcmd(msg.strip())
+        self.irc.rawcmd(msg)
 
     def cmd_help(self, sender, chan, cmd, msg, *args, **kwargs):
         self.say(sender, "$B[ HELP ]")
@@ -809,25 +882,18 @@ class MCPBotCmds(object):
         c = kwargs['cursor']
         idversion = kwargs['idvers']
 
-        mcpversion, botversion, dbversion, clientversion, serverversion = c.execute("""
-            SELECT mcpversion, botversion, dbversion, clientversion, serverversion
-            FROM versions WHERE id = ?
-        """, (idversion,)).fetchone()
-
-        self.say(sender, "$B[ STATUS ]")
-        self.say(sender, " MCP    : $B%s" % mcpversion)
-        self.say(sender, " Bot    : $B%s" % botversion)
-        self.say(sender, " Client : $B%s" % clientversion)
-        self.say(sender, " Server : $B%s" % serverversion)
-
-    @database
-    def cmd_fullstatus(self, sender, chan, cmd, msg, *args, **kwargs):
-        c = kwargs['cursor']
-        idversion = kwargs['idvers']
-
         type_lookup = {'methods': 'func', 'fields': 'field'}
         side_lookup = {'client': 0, 'server': 1}
 
+        msg_split = msg.strip().split(None, 1)
+        if len(msg_split) > 1:
+            self.say(sender, "Syntax error: $B%s [full]" % cmd)
+            return
+        full_status = False
+        if len(msg_split) == 1:
+            if msg_split[0] == 'full':
+                full_status = True
+
         mcpversion, botversion, dbversion, clientversion, serverversion = c.execute("""
             SELECT mcpversion, botversion, dbversion, clientversion, serverversion
             FROM versions WHERE id = ?
@@ -839,14 +905,15 @@ class MCPBotCmds(object):
         self.say(sender, " Client : $B%s" % clientversion)
         self.say(sender, " Server : $B%s" % serverversion)
 
-        for side  in ['client', 'server']:
-            for etype in ['methods', 'fields']:
-                total, ren, urn = c.execute("""
-                    SELECT total(%st), total(%sr), total(%su)
-                    FROM vclassesstats WHERE side = ? AND versionid = ?
-                """ % (etype, etype, etype), (side_lookup[side], idversion)).fetchone()
+        if full_status:
+            for side in ['client', 'server']:
+                for etype in ['methods', 'fields']:
+                    total, ren, urn = c.execute("""
+                        SELECT total(%st), total(%sr), total(%su)
+                        FROM vclassesstats WHERE side = ? AND versionid = ?
+                    """ % (etype, etype, etype), (side_lookup[side], idversion)).fetchone()
 
-                self.say(sender, " [%s][%7s] : T $B%4d$N | R $B%4d$N | U $B%4d$N | $B%5.2f%%$N" % (side[0].upper(), etype.upper(), total, ren, urn, float(ren) / float(total) * 100))
+                    self.say(sender, " [%s][%7s] : T $B%4d$N | R $B%4d$N | U $B%4d$N | $B%5.2f%%$N" % (side[0].upper(), etype.upper(), total, ren, urn, float(ren) / float(total) * 100))
 
         nthreads = len(threading.enumerate())
         if nthreads == self.nthreads + 1:
@@ -856,6 +923,11 @@ class MCPBotCmds(object):
 
     @restricted(4)
     def cmd_listthreads(self, sender, chan, cmd, msg, *args, **kwargs):
+        msg_split = msg.strip().split(None, 1)
+        if len(msg_split):
+            self.say(sender, "Syntax error: $B%s" % cmd)
+            return
+
         threads = threading.enumerate()
         self.say(sender, "$B[ THREADS ]")
         maxthreadname = max([len(i.name) for i in threads])
@@ -869,6 +941,11 @@ class MCPBotCmds(object):
 
     @restricted(4)
     def cmd_listdcc(self, sender, chan, cmd, msg, *args, **kwargs):
+        msg_split = msg.strip().split(None, 1)
+        if len(msg_split):
+            self.say(sender, "Syntax error: $B%s" % cmd)
+            return
+
         self.say(sender, str(self.dcc.sockets.keys()))
 
     @database
@@ -879,15 +956,20 @@ class MCPBotCmds(object):
         type_lookup = {'methods': 'func', 'fields': 'field'}
         side_lookup = {'client': 0, 'server': 1}
 
-        if not msg in ['client', 'server']:
+        msg_split = msg.strip().split(None, 1)
+        if len(msg_split) != 1:
+            self.say(sender, "Syntax error: $B%s <client|server>" % cmd)
+            return
+        search_side = msg_split[0]
+        if search_side not in side_lookup:
             self.say(sender, "$Btodo <client|server>")
             return
 
         results = c.execute("""SELECT id, name, methodst + fieldst, methodsr  + fieldsr, methodsu  + fieldsu
                                 FROM vclassesstats WHERE side = ? AND versionid = ? ORDER BY methodsu + fieldsu DESC LIMIT 10""",
-                                (side_lookup[msg], idversion)).fetchall()
+                                (side_lookup[search_side], idversion)).fetchall()
 
-        self.say(sender, "$B[ TODO %s ]" % msg.upper())
+        self.say(sender, "$B[ TODO %s ]" % search_side.upper())
         for result in results:
             classid, name, memberst, membersr, membersu = result
             if not memberst:

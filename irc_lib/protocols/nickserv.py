@@ -23,6 +23,10 @@ class NickServProtocol(Protocol):
             cmd = 'ID_DONE'
         elif msg.startswith('Invalid password'):
             cmd = 'ERR_PASS'
+        elif msg.startswith('Last failed attempt from'):
+            cmd = 'ERR_LASTFAIL'
+        elif msg.endswith('since last login.'):
+            cmd = 'ERR_FAILCNT'
         else:
             cmd = 'Unknown'
 
@@ -48,6 +52,12 @@ class NickServProtocol(Protocol):
         self.logger.warning('*** Bad %s password for %s', NICKSERV, self.cnick)
         self.online = True
         self.locks['NSID'].set()
+
+    def onNSRV_ERR_LASTFAIL(self, ev):
+        self.logger.warning('*** %s %s', NICKSERV, ev.msg.replace('\x02', ''))
+
+    def onNSRV_ERR_FAILCNT(self, ev):
+        self.logger.warning('*** %s %s', NICKSERV, ev.msg.replace('\x02', ''))
 
     def onNSRV_ACC(self, ev):
         msg = ev.msg.split()

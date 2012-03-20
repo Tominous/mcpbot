@@ -52,11 +52,6 @@ class NickServProtocol(Protocol):
         self.irc.notice(NICKSERV, msg, color=False)
 
     def identify(self, password):
-        self.locks['ServReg'].acquire()
-        while not self.bot.irc_status['Registered']:
-            self.locks['ServReg'].wait()
-        self.locks['ServReg'].release()
-
         self.nserv_privmsg('IDENTIFY %s' % password)
 
     def status(self, nick):

@@ -113,7 +113,7 @@ class IRCProtocol(Protocol):
         else:
             key = None
         if sender == self.cnick:
-            self.bot.irc_status['Channels'].add(chan)
+            self.bot.channels.add(chan)
             self.logger.info('# Joined %s', chan)
         else:
             self.add_user(sender, chan)
@@ -142,19 +142,8 @@ class IRCProtocol(Protocol):
             msg = args[1]
         else:
             msg = ''
-        self.bot.irc_status['Server'] = server
+        self.locks['ServReg'].set()
         self.logger.info('# Connected to %s', server)
-
-    def onIRC_RPL_MOTDSTART(self, cmd, prefix, args):
-        server = prefix
-        target = args[0]
-        msg = args[1]
-        if server == self.bot.irc_status['Server']:
-            self.locks['ServReg'].acquire()
-            self.bot.irc_status['Registered'] = True
-            self.locks['ServReg'].notifyAll()
-            self.locks['ServReg'].release()
-            self.logger.info('# MOTD found. Registered with server.')
 
     def onIRC_RPL_NAMREPLY(self, cmd, prefix, args):
         server = prefix
@@ -253,11 +242,6 @@ class IRCProtocol(Protocol):
             self.rawcmd('PONG', [server1])
 
     def join(self, chan, key=None):
-        self.locks['ServReg'].acquire()
-        while not self.bot.irc_status['Registered']:
-            self.locks['ServReg'].wait()
-        self.locks['ServReg'].release()
-
         if key:
             self.rawcmd('JOIN', [chan, key])
         else:

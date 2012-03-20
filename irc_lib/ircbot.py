@@ -4,7 +4,7 @@ import logging
 import re
 import os
 import pickle
-from threading import Condition
+import threading
 from Queue import Queue, Empty
 
 from irc_lib.event import Event
@@ -43,9 +43,9 @@ class IRCBotBase(object):
         self.cnick = _nick
 
         self.locks = {
-            'WhoIs': Condition(),
-            'ServReg': Condition(),
-            'NSStatus': Condition()
+            'ServReg': threading.Event(),
+            'WhoIs': threading.Condition(),
+            'NSStatus': threading.Condition()
         }
 
         self.exit = False
@@ -67,7 +67,7 @@ class IRCBotBase(object):
         # The basic IRC socket. For dcc, we are going to use another set of sockets.
         self.irc_socket = None
 
-        self.irc_status = {'Server': None, 'Registered': False, 'Channels': set()}
+        self.channels = set()
         self.users = {}
 
         self.threadpool.add_task(self.command_loop, _threadname='CommandLoop')
@@ -188,12 +188,15 @@ class IRCBotBase(object):
         self.irc_socket.connect((server, port))
         self.irc_socket.settimeout(5)
 
+        self.threadpool.add_task(self.inbound_loop, _threadname='MainInLoop')
+        self.threadpool.add_task(self.outbound_loop, _threadname='MainOutLoop')
+
         self.irc.password(password)
         self.irc.nick()
         self.irc.user()
 
-        self.threadpool.add_task(self.inbound_loop, _threadname='MainInLoop')
-        self.threadpool.add_task(self.outbound_loop, _threadname='MainOutLoop')
+        # wait until we are connected before returning
+        self.locks['ServReg'].wait()
 
     def onDefault(self, ev):
         """Default event handler (do nothing)"""

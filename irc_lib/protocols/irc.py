@@ -164,13 +164,12 @@ class IRCProtocol(Protocol):
         host = args[3]
         real = args[4]
 
-        self.locks['WhoIs'].acquire()
-        if nick not in self.bot.users:
-            self.bot.users[nick] = User(nick)
-        self.bot.users[nick].host = host
-        self.bot.users[nick].ip = get_ip(host)
-        self.locks['WhoIs'].notifyAll()
-        self.locks['WhoIs'].release()
+        with self.locks['WhoIs']:
+            if nick not in self.bot.users:
+                self.bot.users[nick] = User(nick)
+            self.bot.users[nick].host = host
+            self.bot.users[nick].ip = get_ip(host)
+            self.locks['WhoIs'].notifyAll()
 
     def onIRC_NICK(self, cmd, prefix, args):
         sender = get_nick(prefix)

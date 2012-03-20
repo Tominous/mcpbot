@@ -206,20 +206,18 @@ class IRCBotBase(object):
         if nick not in self.users:
             self.users[nick] = User(nick)
         self.irc.whois(nick)
-        self.locks['WhoIs'].acquire()
-        while self.users[nick].ip is None:
-            self.locks['WhoIs'].wait()
-        self.locks['WhoIs'].release()
+        with self.locks['WhoIs']:
+            while self.users[nick].ip is None:
+                self.locks['WhoIs'].wait()
         return self.users[nick].ip
 
     def getStatus(self, nick):
         if nick not in self.users:
             self.users[nick] = User(nick)
         self.nickserv.status(nick)
-        self.locks['NSStatus'].acquire()
-        while self.users[nick].status is None:
-            self.locks['NSStatus'].wait()
-        self.locks['NSStatus'].release()
+        with self.locks['NSStatus']:
+            while self.users[nick].status is None:
+                self.locks['NSStatus'].wait()
         return self.users[nick].status
 
     def rawcmd(self, msg):

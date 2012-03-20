@@ -183,7 +183,7 @@ class DCCProtocol(Protocol):
     def say(self, nick, msg, color=True):
         if color:
             msg = conv_s2i(msg)
-        if not nick in self.sockets:
+        if nick not in self.sockets:
             self.logger.error('*** DCC.say: unknown nick: %s', nick)
             return
 

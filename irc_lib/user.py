@@ -1,9 +1,9 @@
 class User(object):
     def __init__(self, nick):
         self.nick = nick
-        self.status = -1
-        self.host = -1
-        self.ip = -1
+        self.status = None
+        self.host = None
+        self.ip = None
         self.chans = {}
         self.socket = None
 

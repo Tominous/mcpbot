@@ -55,14 +55,14 @@ class IRCProtocol(Protocol):
             snick = nick[1:]
             nick_status = nick[0]
 
-        if not snick in self.bot.users:
+        if snick not in self.bot.users:
             self.bot.users[snick] = User(snick)
         if not chan:
             return
         self.bot.users[snick].chans[chan] = nick_status
 
     def rm_user(self, nick, chan=None):
-        if not nick in self.bot.users:
+        if nick not in self.bot.users:
             self.logger.info('*** IRC.rm_user: unknown: %s', nick)
             return
 
@@ -165,9 +165,10 @@ class IRCProtocol(Protocol):
         real = args[4]
 
         self.locks['WhoIs'].acquire()
-        if nick in self.bot.users:
-            self.bot.users[nick].host = host
-            self.bot.users[nick].ip = get_ip(host)
+        if nick not in self.bot.users:
+            self.bot.users[nick] = User(nick)
+        self.bot.users[nick].host = host
+        self.bot.users[nick].ip = get_ip(host)
         self.locks['WhoIs'].notifyAll()
         self.locks['WhoIs'].release()
 

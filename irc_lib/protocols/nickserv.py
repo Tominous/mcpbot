@@ -36,7 +36,7 @@ class NickServProtocol(Protocol):
         status = int(msg[2])
 
         self.locks['NSStatus'].acquire()
-        if not snick in self.bot.users:
+        if snick not in self.bot.users:
             self.bot.users[snick] = User(snick)
         self.bot.users[snick].status = status
         self.locks['NSStatus'].notifyAll()

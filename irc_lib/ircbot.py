@@ -203,28 +203,22 @@ class IRCBotBase(object):
         pass
 
     def getIP(self, nick):
-        if not nick in self.users:
+        if nick not in self.users:
             self.users[nick] = User(nick)
-
         self.irc.whois(nick)
         self.locks['WhoIs'].acquire()
-
-        while self.users[nick].ip < 0:
+        while self.users[nick].ip is None:
             self.locks['WhoIs'].wait()
-
         self.locks['WhoIs'].release()
         return self.users[nick].ip
 
     def getStatus(self, nick):
-        if not nick in self.users:
+        if nick not in self.users:
             self.users[nick] = User(nick)
-
         self.nickserv.status(nick)
         self.locks['NSStatus'].acquire()
-
-        while self.users[nick].status < 0:
+        while self.users[nick].status is None:
             self.locks['NSStatus'].wait()
-
         self.locks['NSStatus'].release()
         return self.users[nick].status
 

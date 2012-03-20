@@ -63,7 +63,7 @@ class IRCProtocol(Protocol):
 
     def rm_user(self, nick, chan=None):
         if not nick in self.bot.users:
-            self.logger.error('*** IRC.rm_user: unknown: %s', nick)
+            self.logger.info('*** IRC.rm_user: unknown: %s', nick)
             return
 
         if not chan:
@@ -195,7 +195,19 @@ class IRCProtocol(Protocol):
         sender = get_nick(prefix)
         target = args[0]
         chan = args[1]
+        self.logger.info('# Invited to %s by %s', chan, sender)
         self.join(chan)
+
+    def onIRC_KICK(self, cmd, prefix, args):
+        sender = get_nick(prefix)
+        chan = args[0]
+        target = args[1]
+        reason = args[2]
+        if target == self.cnick:
+            self.logger.info('# Kicked from %s by %s %s', chan, sender, repr(reason))
+            self.bot.channels.discard(chan)
+        else:
+            self.rm_user(target, chan)
 
     def onIRC_Default(self, cmd, prefix, args):
         pass

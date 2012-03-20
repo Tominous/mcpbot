@@ -10,11 +10,19 @@ class NickServProtocol(Protocol):
     def __init__(self, _nick, _locks, _bot, _parent):
         Protocol.__init__(self, _nick, _locks, _bot, _parent, 'IRCBot.NSRV')
         self.irc = self.parent
+        self.online = False
+        self.identified = False
 
     def process_msg(self, prefix, target, msg):
         split_msg = msg.split()
         if len(split_msg) > 1 and split_msg[1] in ['ACC']:
             cmd = split_msg[1]
+        elif msg.startswith('This nickname is registered'):
+            cmd = 'NEED_ID'
+        elif msg.startswith('You are now identified'):
+            cmd = 'ID_DONE'
+        elif msg.startswith('Invalid password'):
+            cmd = 'ERR_PASS'
         else:
             cmd = 'Unknown'
 
@@ -25,6 +33,21 @@ class NickServProtocol(Protocol):
 
         cmd_func = getattr(self.bot, 'onNSRV_%s' % ev.cmd, getattr(self.bot, 'onNSRV_Default', self.bot.onDefault))
         cmd_func(ev)
+
+    def onNSRV_NEED_ID(self, ev):
+        pass
+
+    def onNSRV_ID_DONE(self, ev):
+        # logged in successfully
+        self.online = True
+        self.identified = True
+        self.locks['NSID'].set()
+
+    def onNSRV_ERR_PASS(self, ev):
+        # bad password
+        self.logger.warning('*** Bad %s password for %s', NICKSERV, self.cnick)
+        self.online = True
+        self.locks['NSID'].set()
 
     def onNSRV_ACC(self, ev):
         msg = ev.msg.split()
@@ -51,8 +74,19 @@ class NickServProtocol(Protocol):
         self.irc.notice(NICKSERV, msg, color=False)
 
     def identify(self, password):
+        # identify to nickserv, we don't return until we get a response from the server
         self.nserv_privmsg('IDENTIFY %s' % password)
+        self.locks['NSID'].wait()
+
+    def no_nickserv(self):
+        # called if there is no NickServ online
+        self.logger.warning('*** %s not online', NICKSERV)
+        self.locks['NSID'].set()
 
     def status(self, nick):
         # Yeah, I know, this is not the right command, but they changed the nickserv on esper, and status doesn't returns the right value anymore :(
         self.nserv_privmsg('ACC %s' % nick)
+
+    def ghost(self, nick, password):
+        self.nserv_privmsg('GHOST %s %s' % (nick, password))
+

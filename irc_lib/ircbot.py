@@ -45,6 +45,7 @@ class IRCBotBase(object):
         self.locks = {
             'ServReg': threading.Event(),
             'WhoIs': threading.Condition(),
+            'NSID': threading.Event(),
             'NSStatus': threading.Condition()
         }
 
@@ -214,10 +215,13 @@ class IRCBotBase(object):
     def getStatus(self, nick):
         if nick not in self.users:
             self.users[nick] = User(nick)
-        self.nickserv.status(nick)
-        with self.locks['NSStatus']:
-            while self.users[nick].status is None:
-                self.locks['NSStatus'].wait()
+        if self.nickserv.online:
+            self.nickserv.status(nick)
+            with self.locks['NSStatus']:
+                while self.users[nick].status is None:
+                    self.locks['NSStatus'].wait()
+        else:
+            self.users[nick].status = 3
         return self.users[nick].status
 
     def rawcmd(self, msg):

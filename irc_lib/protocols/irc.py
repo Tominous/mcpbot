@@ -198,6 +198,37 @@ class IRCProtocol(Protocol):
         else:
             self.rm_user(target, chan)
 
+    def onIRC_ERR_NOSUCHNICK(self, cmd, prefix, args):
+        server = prefix
+        target = args[0]
+        nick = args[1]
+        reason = args[2]
+        if nick == NICKSERV:
+            self.nickserv.no_nickserv()
+        else:
+            self.rm_user(nick)
+
+    def onIRC_ERR_NEEDREGGEDNICK(self, cmd, prefix, args):
+        server = prefix
+        nick = args[0]
+        chan = args[1]
+        reason = args[2]
+        self.logger.warning('*** Join to %s failed: not identified', chan)
+
+    def onIRC_ERR_INVITEONLYCHAN(self, cmd, prefix, args):
+        server = prefix
+        nick = args[0]
+        chan = args[1]
+        reason = args[2]
+        self.logger.warning('*** Join to %s failed: invite only', chan)
+
+    def onIRC_ERR_BANNEDFROMCHAN(self, cmd, prefix, args):
+        server = prefix
+        nick = args[0]
+        chan = args[1]
+        reason = args[2]
+        self.logger.warning('*** Join to %s failed: banned', chan)
+
     def onIRC_Default(self, cmd, prefix, args):
         pass
 
@@ -390,6 +421,7 @@ _IRC_REPLIES = {
     '473': 'ERR_INVITEONLYCHAN',
     '474': 'ERR_BANNEDFROMCHAN',
     '475': 'ERR_BADCHANNELKEY',
+    '477': 'ERR_NEEDREGGEDNICK',
     '481': 'ERR_NOPRIVILEGES',
     '482': 'ERR_CHANOPRIVSNEEDED',
     '483': 'ERR_CANTKILLSERVER',

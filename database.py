@@ -13,8 +13,12 @@ def database(f):
             with sqlite3.connect('database.sqlite') as con:
                 con.text_factory = sqlite3.OptimizedUnicode
                 with closing(con.cursor()) as cur:
-                    (idversion,) = cur.execute("""SELECT value FROM config WHERE name='currentversion'""").fetchone()
-
+                    result = cur.execute("""
+                            SELECT value
+                            FROM config
+                            WHERE name='currentversion'
+                        """).fetchone()
+                    (idversion,) = result
                     kwargs['cursor'] = cur
                     kwargs['idvers'] = idversion
                     f(*args, **kwargs)

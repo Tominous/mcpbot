@@ -126,6 +126,8 @@ class DCCProtocol(Protocol):
                     except socket.error as exc:
                         if 'Connection reset by peer' in exc:
                             self.logger.info('*** DCC.inbound_loop: Connection closed [reset]: %s', s.nick)
+                        elif 'Connection timed out' in exc:
+                            self.logger.info('*** DCC.inbound_loop: Connection closed [timeout]: %s', s.nick)
                         else:
                             self.logger.exception('*** DCC.inbound_loop: Connection closed [error]: %s', s.nick)
                         close_socket = True

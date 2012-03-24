@@ -258,7 +258,8 @@ class MCPBotCmds(object):
                 name, notch, searge, sig, notchsig, desc, classname, classnotch = result
                 fullcsv = '%s.%s' % (classname, name)
                 fullnotch = '[%s.%s]' % (classnotch, notch)
-                self.say(sender, " %s %s %s %s" % (fullcsv.ljust(maxlencsv + 2), fullnotch.ljust(maxlennotch + 2), sig, notchsig))
+                fullsearge = '[%s]' % (searge)
+                self.say(sender, " %s %s %s %s %s" % (fullsearge, fullcsv.ljust(maxlencsv + 2), fullnotch.ljust(maxlennotch + 2), sig, notchsig))
         elif lowlimit >= len(results) > 0:
             for result in results:
                 name, notch, searge, sig, notchsig, desc, classname, classnotch = result
@@ -522,6 +523,195 @@ class MCPBotCmds(object):
                 """ % etype,
                 (None, int(entryid), name, desc, newname, newdesc, int(time.time()), sender, forced, cmd))
             self.say(sender, "$BNew desc$N : %s" % newdesc)
+			
+    #===================================================================
+
+    #======================= Port mappings =============================
+	
+    def cmd_pcm(self, sender, chan, cmd, msg, *args, **kwargs):
+        """$Bscm [<id>|<searge>] <newname> [description]$N : Set Client Method."""
+        self.portMember(sender, chan, cmd, msg, 'client', 'methods', forced=False)
+
+    def cmd_pcf(self, sender, chan, cmd, msg, *args, **kwargs):
+        """$Bscf [<id>|<searge>] <newname> [description]$N : Set Server Method."""
+        self.portMember(sender, chan, cmd, msg, 'client', 'fields', forced=False)
+
+    def cmd_psm(self, sender, chan, cmd, msg, *args, **kwargs):
+        """$Bssm [<id>|<searge>] <newname> [description]$N : Set Client Field."""
+        self.portMember(sender, chan, cmd, msg, 'server', 'methods', forced=False)
+
+    def cmd_psf(self, sender, chan, cmd, msg, *args, **kwargs):
+        """$Bssf [<id>|<searge>] <newname> [description]$N : Set Server Field."""
+        self.portMember(sender, chan, cmd, msg, 'server', 'fields', forced=False)
+
+    def cmd_fpcm(self, sender, chan, cmd, msg, *args, **kwargs):
+        """$Bscm [<id>|<searge>] <newname> [description]$N : Set Client Method."""
+        self.portMember(sender, chan, cmd, msg, 'client', 'methods', forced=True)
+
+    def cmd_fpcf(self, sender, chan, cmd, msg, *args, **kwargs):
+        """$Bscf [<id>|<searge>] <newname> [description]$N : Set Server Method."""
+        self.portMember(sender, chan, cmd, msg, 'client', 'fields', forced=True)
+
+    def cmd_fpsm(self, sender, chan, cmd, msg, *args, **kwargs):
+        """$Bssm [<id>|<searge>] <newname> [description]$N : Set Client Field."""
+        self.portMember(sender, chan, cmd, msg, 'server', 'methods', forced=True)
+
+    def cmd_fpsf(self, sender, chan, cmd, msg, *args, **kwargs):
+        """$Bssf [<id>|<searge>] <newname> [description]$N : Set Server Field."""
+        self.portMember(sender, chan, cmd, msg, 'server', 'fields', forced=True)
+
+    @database
+    def portMember(self, sender, chan, cmd, msg, side, etype, *args, **kwargs):
+        c = kwargs['cursor']
+        idversion = kwargs['idvers']
+
+        forced = kwargs['forced']
+
+        type_lookup = {'methods': 'func', 'fields': 'field'}
+        side_lookup = {'client': 0, 'server': 1}
+        target_side_lookup = {'client': 1, 'server': 0}
+
+        msg_split = msg.strip().split(None, 2)
+        if len(msg_split) < 2:
+            self.say(sender, " Syntax error: $B%s <origin_member> <target_member>$N" % cmd)
+            return
+
+        origin = msg_split[0]
+        target = msg_split[1]
+
+        self.say(sender, "$B[ PORT %s %s ]" % (side.upper(), etype.upper()))
+        if forced:
+            self.say(sender, "$RCAREFUL, YOU ARE FORCING AN UPDATE !")
+
+        ## WE CHECK WE ONLY HAVE ONE RESULT ##
+        results = c.execute("""
+                SELECT m.id, m.name, m.notch, m.searge, m.sig, m.notchsig, m.desc, m.classname, m.classnotch, m.id
+                FROM v%s m
+                WHERE (m.searge LIKE ? ESCAPE '!' OR m.searge=?)
+                  AND m.side=? AND m.versionid=?
+            """ % etype,
+            ('%s!_%s!_%%' % (type_lookup[etype], origin), origin,
+             side_lookup[side], idversion)).fetchall()
+
+        if len(results) > 1:
+            self.say(sender, " Ambiguous request $R'%s'$N" % origin)
+            self.say(sender, " Found %s possible answers" % len(results))
+
+            maxlencsv = max([len('%s.%s' % (result[5], result[2])) for result in results])
+            maxlennotch = max([len('[%s.%s]' % (result[6], result[1])) for result in results])
+            for result in results:
+                name, notch, searge, sig, notchsig, desc, classname, classnotch, methodid = result
+                fullcsv = '%s.%s' % (classname, name)
+                fullnotch = '[%s.%s]' % (classnotch, notch)
+                self.say(sender, " %s %s %s" % (fullcsv.ljust(maxlencsv + 2), fullnotch.ljust(maxlennotch + 2), sig))
+            return
+        elif not len(results):
+            self.say(sender, " No result for %s" % origin)
+            return
+		
+        origin_id, origin_name, origin_notch, origin_searge, origin_sig, origin_notchsig, origin_desc, origin_classname, origin_classnotch, origin_methodid = results[0]
+		
+		# DO THE SAME FOR OTHER SIDE #
+        results_target = c.execute("""
+                SELECT m.id, m.name, m.notch, m.searge, m.sig, m.notchsig, m.desc, m.classname, m.classnotch, m.id
+                FROM v%s m
+                WHERE (m.searge LIKE ? ESCAPE '!' OR m.searge=?)
+                  AND m.side=? AND m.versionid=?
+            """ % etype,
+            ('%s!_%s!_%%' % (type_lookup[etype], target), target,
+             target_side_lookup[side], idversion)).fetchall()
+
+        if len(results_target) > 1:
+            self.say(sender, " Ambiguous request $R'%s'$N" % target)
+            self.say(sender, " Found %s possible answers" % len(results_target))
+
+            maxlencsv = max([len('%s.%s' % (result[5], result[2])) for result in results_target])
+            maxlennotch = max([len('[%s.%s]' % (result[6], result[1])) for result in results_target])
+            for result in results_target:
+                name, notch, searge, sig, notchsig, desc, classname, classnotch, methodid = result
+                fullcsv = '%s.%s' % (classname, name)
+                fullnotch = '[%s.%s]' % (classnotch, notch)
+                self.say(sender, " %s %s %s" % (fullcsv.ljust(maxlencsv + 2), fullnotch.ljust(maxlennotch + 2), sig))
+            return
+        elif not len(results_target):
+            self.say(sender, " No result for %s" % target)
+            return
+		
+        target_id, target_name, target_notch, target_searge, target_sig, target_notchsig, target_desc, target_classname, target_classnotch, target_methodid = results_target[0]
+		
+        ## WE CHECK IF WE ARE NOT CONFLICTING WITH A CLASS NAME ##
+        result = c.execute("""
+                SELECT m.name
+                FROM vclasses m
+                WHERE lower(m.name)=lower(?)
+                  AND m.side=? AND m.versionid=?
+            """,
+            (origin_name,
+             target_side_lookup[side], idversion)).fetchone()
+        if result:
+            self.say(sender, "$RIt is illegal to use class names for fields or methods !")
+            return
+
+        ## WE CHECK THAT WE HAVE A UNIQUE NAME
+        if not forced:
+            result = c.execute("""
+                    SELECT m.searge, m.name
+                    FROM vmethods m
+                    WHERE m.name=?
+                      AND m.side=? AND m.versionid=?
+                """,
+                (origin_name,
+                 target_side_lookup[side], idversion)).fetchone()
+            if result:
+                self.say(sender, "$RYou are conflicting with at least one other method: %s. Please use forced update only if you are certain !" % result[0])
+                return
+
+            result = c.execute("""
+                    SELECT m.searge, m.name
+                    FROM vfields m
+                    WHERE m.name=?
+                      AND m.side=? AND m.versionid=?
+                """,
+                (origin_name,
+                 target_side_lookup[side], idversion)).fetchone()
+            if result:
+                self.say(sender, "$RYou are conflicting with at least one other field: %s. Please use forced update only if you are certain !" % result[0])
+                return
+
+        if not forced:
+            result = c.execute("""
+                    SELECT m.searge, m.name
+                    FROM vmethods m
+                    WHERE (m.searge LIKE ? ESCAPE '!' OR m.searge=?)
+                      AND m.side=? AND m.versionid=?
+                """,
+                ('%s!_%s!_%%' % (type_lookup[etype], target), target,
+                 side_lookup[side], idversion)).fetchone()
+            if result and result[0] != result[1]:
+                self.say(sender, "$RYou are trying to rename an already named member. Please use forced update only if you are certain !")
+                return
+
+            result = c.execute("""
+                    SELECT m.searge, m.name
+                    FROM vfields m
+                    WHERE ((m.searge LIKE ? ESCAPE '!') OR m.searge=?)
+                      AND m.side=? AND m.versionid=?
+                """,
+                ('%s!_%s!_%%' % (type_lookup[etype], target), target,
+                 side_lookup[side], idversion)).fetchone()
+            if result and result[0] != result[1]:
+                self.say(sender, "$RYou are trying to rename an already named member. Please use forced update only if you are certain !")
+                return
+
+        if len(results_target) == 1:
+            id, name, notch, searge, sig, notchsig, desc, classname, classnotch, entryid = results_target[0]
+            self.say(sender, "%s     : $B%s => %s" % (side, origin, target))
+
+            c.execute("""
+                    INSERT INTO %shist
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """ % etype,
+                (None, int(entryid), name, desc, origin_name, origin_desc, int(time.time()), sender, forced, cmd))
 			
     #===================================================================
 

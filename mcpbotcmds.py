@@ -527,35 +527,35 @@ class MCPBotCmds(object):
     #===================================================================
 
     #======================= Port mappings =============================
-	
+    @restricted(2)
     def cmd_pcm(self, sender, chan, cmd, msg, *args, **kwargs):
         """$Bscm [<id>|<searge>] <newname> [description]$N : Set Client Method."""
         self.portMember(sender, chan, cmd, msg, 'client', 'methods', forced=False)
-
+    @restricted(2)
     def cmd_pcf(self, sender, chan, cmd, msg, *args, **kwargs):
         """$Bscf [<id>|<searge>] <newname> [description]$N : Set Server Method."""
         self.portMember(sender, chan, cmd, msg, 'client', 'fields', forced=False)
-
+    @restricted(2)
     def cmd_psm(self, sender, chan, cmd, msg, *args, **kwargs):
         """$Bssm [<id>|<searge>] <newname> [description]$N : Set Client Field."""
         self.portMember(sender, chan, cmd, msg, 'server', 'methods', forced=False)
-
+    @restricted(2)
     def cmd_psf(self, sender, chan, cmd, msg, *args, **kwargs):
         """$Bssf [<id>|<searge>] <newname> [description]$N : Set Server Field."""
         self.portMember(sender, chan, cmd, msg, 'server', 'fields', forced=False)
-
+    @restricted(2)
     def cmd_fpcm(self, sender, chan, cmd, msg, *args, **kwargs):
         """$Bscm [<id>|<searge>] <newname> [description]$N : Set Client Method."""
         self.portMember(sender, chan, cmd, msg, 'client', 'methods', forced=True)
-
+    @restricted(2)
     def cmd_fpcf(self, sender, chan, cmd, msg, *args, **kwargs):
         """$Bscf [<id>|<searge>] <newname> [description]$N : Set Server Method."""
         self.portMember(sender, chan, cmd, msg, 'client', 'fields', forced=True)
-
+    @restricted(2)
     def cmd_fpsm(self, sender, chan, cmd, msg, *args, **kwargs):
         """$Bssm [<id>|<searge>] <newname> [description]$N : Set Client Field."""
         self.portMember(sender, chan, cmd, msg, 'server', 'methods', forced=True)
-
+    @restricted(2)
     def cmd_fpsf(self, sender, chan, cmd, msg, *args, **kwargs):
         """$Bssf [<id>|<searge>] <newname> [description]$N : Set Server Field."""
         self.portMember(sender, chan, cmd, msg, 'server', 'fields', forced=True)

@@ -405,7 +405,7 @@ class MCPBotCmds(object):
 
         self.say(sender, "$B[ SET %s %s ]" % (side.upper(), etype.upper()))
         if forced:
-            self.say(sender, "$RCAREFULL, YOU ARE FORCING AN UPDATE !")
+            self.say(sender, "$RCAREFUL, YOU ARE FORCING AN UPDATE !")
 
         # DON'T ALLOW STRANGE CHARACTERS IN NAMES
         if re.search(r'[^A-Za-z0-9$_]', newname):
@@ -522,6 +522,60 @@ class MCPBotCmds(object):
                 """ % etype,
                 (None, int(entryid), name, desc, newname, newdesc, int(time.time()), sender, forced, cmd))
             self.say(sender, "$BNew desc$N : %s" % newdesc)
+			
+    #===================================================================
+
+    #======================= Mapping info ==============================
+	
+    @restricted(2)
+    def cmd_icm(self, sender, chan, cmd, msg, *args, **kwargs):
+        self.infoChanges(sender, chan, cmd, msg, 'client', 'methods')
+		
+    @restricted(2)
+    def cmd_icf(self, sender, chan, cmd, msg, *args, **kwargs):
+        self.infoChanges(sender, chan, cmd, msg, 'client', 'fields')
+
+    @restricted(2)
+    def cmd_ism(self, sender, chan, cmd, msg, *args, **kwargs):
+        self.infoChanges(sender, chan, cmd, msg, 'server', 'methods')
+
+    @restricted(2)
+    def cmd_isf(self, sender, chan, cmd, msg, *args, **kwargs):
+        self.infoChanges(sender, chan, cmd, msg, 'server', 'fields')
+
+    @database
+    def infoChanges(self, sender, chan, cmd, msg, side, etype, *args, **kwargs):
+        c = kwargs['cursor']
+        idversion = kwargs['idvers']
+
+        type_lookup = {'methods': 'func', 'fields': 'field'}
+        side_lookup = {'client': 0, 'server': 1}
+		
+        msg_split = msg.split(None, 1)
+        if len(msg_split) != 1:
+            self.say(sender, "Syntax error: $B%s <searge|index>" % cmd)
+            return
+        member = msg_split[0]
+			
+        results = c.execute("""
+                    SELECT mh.oldname, mh.olddesc, mh.newname, mh.newdesc, strftime('%s', mh.timestamp, 'unixepoch') AS timestamp, mh.nick, mh.forced, m.searge, v.mcpversion
+					FROM %shist mh, %s m, versions v
+					WHERE (m.searge LIKE ? ESCAPE '!' OR m.searge=? OR m.notch=? OR m.name=?)
+						AND mh.memberid = m.id
+						AND m.side = ?
+						AND v.id = m.versionid
+                """ % ('%m-%d %H:%M', etype, etype),
+                ('%s!_%s!_%%' % (type_lookup[etype], member), member, member, member,
+                 side_lookup[side])).fetchall()
+				 
+        if len(results) >= 1:
+            for result in results:
+                oldname, olddesc, newname, newdesc, timestamp, nick, forced, searge, version = result
+                self.say(sender, "[%s, %s] %s: %s -> %s" % (version, timestamp, nick, oldname, newname))
+        else:
+            self.say(sender, "$B[ GET CHANGES %s %s ]" % (side.upper(), etype.upper()))
+            self.say(sender, " No result for %s" % msg.strip())
+		
 
     #===================================================================
 

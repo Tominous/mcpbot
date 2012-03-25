@@ -99,4 +99,3 @@ class NickServProtocol(Protocol):
 
     def ghost(self, nick, password):
         self.nserv_privmsg('GHOST %s %s' % (nick, password))
-

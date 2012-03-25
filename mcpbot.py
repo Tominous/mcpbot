@@ -1,5 +1,4 @@
 import sys
-import time
 import logging
 
 from irc_lib.ircbot import IRCBotBase

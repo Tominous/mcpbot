@@ -258,7 +258,7 @@ class MCPBotCmds(object):
                 name, notch, searge, sig, notchsig, desc, classname, classnotch = result
                 fullcsv = '%s.%s' % (classname, name)
                 fullnotch = '[%s.%s]' % (classnotch, notch)
-                fullsearge = '[%s]' % (searge)
+                fullsearge = '[%s]' % searge
                 self.say(sender, " %s %s %s %s %s" % (fullsearge, fullcsv.ljust(maxlencsv + 2), fullnotch.ljust(maxlennotch + 2), sig, notchsig))
         elif lowlimit >= len(results) > 0:
             for result in results:
@@ -523,41 +523,41 @@ class MCPBotCmds(object):
                 """ % etype,
                 (None, int(entryid), name, desc, newname, newdesc, int(time.time()), sender, forced, cmd))
             self.say(sender, "$BNew desc$N : %s" % newdesc)
-			
+
     #===================================================================
 
     #======================= Port mappings =============================
+
     @restricted(2)
     def cmd_pcm(self, sender, chan, cmd, msg, *args, **kwargs):
-        """$Bscm [<id>|<searge>] <newname> [description]$N : Set Client Method."""
         self.portMember(sender, chan, cmd, msg, 'client', 'methods', forced=False)
+
     @restricted(2)
     def cmd_pcf(self, sender, chan, cmd, msg, *args, **kwargs):
-        """$Bscf [<id>|<searge>] <newname> [description]$N : Set Server Method."""
         self.portMember(sender, chan, cmd, msg, 'client', 'fields', forced=False)
+
     @restricted(2)
     def cmd_psm(self, sender, chan, cmd, msg, *args, **kwargs):
-        """$Bssm [<id>|<searge>] <newname> [description]$N : Set Client Field."""
         self.portMember(sender, chan, cmd, msg, 'server', 'methods', forced=False)
+
     @restricted(2)
     def cmd_psf(self, sender, chan, cmd, msg, *args, **kwargs):
-        """$Bssf [<id>|<searge>] <newname> [description]$N : Set Server Field."""
         self.portMember(sender, chan, cmd, msg, 'server', 'fields', forced=False)
+
     @restricted(2)
     def cmd_fpcm(self, sender, chan, cmd, msg, *args, **kwargs):
-        """$Bscm [<id>|<searge>] <newname> [description]$N : Set Client Method."""
         self.portMember(sender, chan, cmd, msg, 'client', 'methods', forced=True)
+
     @restricted(2)
     def cmd_fpcf(self, sender, chan, cmd, msg, *args, **kwargs):
-        """$Bscf [<id>|<searge>] <newname> [description]$N : Set Server Method."""
         self.portMember(sender, chan, cmd, msg, 'client', 'fields', forced=True)
+
     @restricted(2)
     def cmd_fpsm(self, sender, chan, cmd, msg, *args, **kwargs):
-        """$Bssm [<id>|<searge>] <newname> [description]$N : Set Client Field."""
         self.portMember(sender, chan, cmd, msg, 'server', 'methods', forced=True)
+
     @restricted(2)
     def cmd_fpsf(self, sender, chan, cmd, msg, *args, **kwargs):
-        """$Bssf [<id>|<searge>] <newname> [description]$N : Set Server Field."""
         self.portMember(sender, chan, cmd, msg, 'server', 'fields', forced=True)
 
     @database
@@ -608,10 +608,10 @@ class MCPBotCmds(object):
         elif not len(results):
             self.say(sender, " No result for %s" % origin)
             return
-		
+
         origin_id, origin_name, origin_notch, origin_searge, origin_sig, origin_notchsig, origin_desc, origin_classname, origin_classnotch, origin_methodid = results[0]
-		
-		# DO THE SAME FOR OTHER SIDE #
+
+        # DO THE SAME FOR OTHER SIDE #
         results_target = c.execute("""
                 SELECT m.id, m.name, m.notch, m.searge, m.sig, m.notchsig, m.desc, m.classname, m.classnotch, m.id
                 FROM v%s m
@@ -636,9 +636,9 @@ class MCPBotCmds(object):
         elif not len(results_target):
             self.say(sender, " No result for %s" % target)
             return
-		
+
         target_id, target_name, target_notch, target_searge, target_sig, target_notchsig, target_desc, target_classname, target_classnotch, target_methodid = results_target[0]
-		
+
         ## WE CHECK IF WE ARE NOT CONFLICTING WITH A CLASS NAME ##
         result = c.execute("""
                 SELECT m.name
@@ -704,7 +704,7 @@ class MCPBotCmds(object):
                 return
 
         if len(results_target) == 1:
-            id, name, notch, searge, sig, notchsig, desc, classname, classnotch, entryid = results_target[0]
+            memberid, name, notch, searge, sig, notchsig, desc, classname, classnotch, entryid = results_target[0]
             self.say(sender, "%s     : $B%s => %s" % (side, origin, target))
 
             c.execute("""
@@ -712,15 +712,15 @@ class MCPBotCmds(object):
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """ % etype,
                 (None, int(entryid), name, desc, origin_name, origin_desc, int(time.time()), sender, forced, cmd))
-			
+
     #===================================================================
 
     #======================= Mapping info ==============================
-	
+
     @restricted(2)
     def cmd_icm(self, sender, chan, cmd, msg, *args, **kwargs):
         self.infoChanges(sender, chan, cmd, msg, 'client', 'methods')
-		
+
     @restricted(2)
     def cmd_icf(self, sender, chan, cmd, msg, *args, **kwargs):
         self.infoChanges(sender, chan, cmd, msg, 'client', 'fields')
@@ -740,24 +740,25 @@ class MCPBotCmds(object):
 
         type_lookup = {'methods': 'func', 'fields': 'field'}
         side_lookup = {'client': 0, 'server': 1}
-		
+
         msg_split = msg.split(None, 1)
         if len(msg_split) != 1:
             self.say(sender, "Syntax error: $B%s <searge|index>" % cmd)
             return
         member = msg_split[0]
-			
+
         results = c.execute("""
-                    SELECT mh.oldname, mh.olddesc, mh.newname, mh.newdesc, strftime('%s', mh.timestamp, 'unixepoch') AS timestamp, mh.nick, mh.forced, m.searge, v.mcpversion
-					FROM %shist mh, %s m, versions v
-					WHERE (m.searge LIKE ? ESCAPE '!' OR m.searge=? OR m.notch=? OR m.name=?)
-						AND mh.memberid = m.id
-						AND m.side = ?
-						AND v.id = m.versionid
+                    SELECT mh.oldname, mh.olddesc, mh.newname, mh.newdesc,
+                      strftime('%s', mh.timestamp, 'unixepoch') AS timestamp, mh.nick, mh.forced, m.searge, v.mcpversion
+                    FROM %s m
+                      INNER JOIN versions v ON v.id=m.versionid
+                      INNER JOIN %shist mh ON mh.memberid=m.id
+                    WHERE (m.searge LIKE ? ESCAPE '!' OR m.searge=? OR m.notch=? OR m.name=?)
+                      AND m.side=?
                 """ % ('%m-%d %H:%M', etype, etype),
                 ('%s!_%s!_%%' % (type_lookup[etype], member), member, member, member,
                  side_lookup[side])).fetchall()
-				 
+
         if len(results) >= 1:
             for result in results:
                 oldname, olddesc, newname, newdesc, timestamp, nick, forced, searge, version = result
@@ -765,7 +766,6 @@ class MCPBotCmds(object):
         else:
             self.say(sender, "$B[ GET CHANGES %s %s ]" % (side.upper(), etype.upper()))
             self.say(sender, " No result for %s" % msg.strip())
-		
 
     #===================================================================
 

@@ -974,7 +974,7 @@ class MCPBotCmds(object):
         idversion = kwargs['idvers']
 
         if self.cnick == 'MCPBot':
-            trgdir = '/home/mcpfiles/mcprolling_6.0/mcp/conf'
+            trgdir = '/home/mcpfiles/mcprolling_6.1/mcp/conf'
         else:
             trgdir = 'devconf'
 

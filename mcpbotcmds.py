@@ -198,42 +198,42 @@ class MCPBotCmds(object):
         if cname and sname:
             results = c.execute("""
                     SELECT m.name, m.notch, m.searge, m.sig, m.notchsig, m.desc, m.classname, m.classnotch
-                    FROM v%s m
+                    FROM v{etype} m
                     WHERE (m.searge LIKE ? ESCAPE '!' OR m.searge=? OR m.notch=? OR m.name=?)
                       AND (m.classname=? OR m.classnotch=?)
                       AND (m.sig=? OR m.notchsig=?)
                       AND m.side=? AND m.versionid=?
-                """ % etype,
-                ('%s!_%s!_%%' % (type_lookup[etype], mname), mname, mname, mname, cname, cname, sname, sname,
+                """.format(etype=etype),
+                ('{0}!_{1}!_%'.format(type_lookup[etype], mname), mname, mname, mname, cname, cname, sname, sname,
                  side_lookup[side], idversion)).fetchall()
         elif cname and not sname:
             results = c.execute("""
                     SELECT m.name, m.notch, m.searge, m.sig, m.notchsig, m.desc, m.classname, m.classnotch
-                    FROM v%s m
+                    FROM v{etype} m
                     WHERE (m.searge LIKE ? ESCAPE '!' OR m.searge=? OR m.notch=? OR m.name=?)
                       AND (m.classname=? OR m.classnotch=?)
                       AND m.side=? AND m.versionid=?
-                """ % etype,
-                ('%s!_%s!_%%' % (type_lookup[etype], mname), mname, mname, mname, cname, cname,
+                """.format(etype=etype),
+                ('{0}!_{1}!_%'.format(type_lookup[etype], mname), mname, mname, mname, cname, cname,
                  side_lookup[side], idversion)).fetchall()
         elif not cname and sname:
             results = c.execute("""
                     SELECT m.name, m.notch, m.searge, m.sig, m.notchsig, m.desc, m.classname, m.classnotch
-                    FROM v%s m
+                    FROM v{etype} m
                     WHERE (m.searge LIKE ? ESCAPE '!' OR m.searge=? OR m.notch=? OR m.name=?)
                       AND (m.sig=? OR m.notchsig=?)
                       AND m.side=? AND m.versionid=?
-                """ % etype,
-                ('%s!_%s!_%%' % (type_lookup[etype], mname), mname, mname, mname, sname, sname,
+                """.format(etype=etype),
+                ('{0}!_{1}!_%'.format(type_lookup[etype], mname), mname, mname, mname, sname, sname,
                  side_lookup[side], idversion)).fetchall()
         else:
             results = c.execute("""
                     SELECT m.name, m.notch, m.searge, m.sig, m.notchsig, m.desc, m.classname, m.classnotch
-                    FROM v%s m
+                    FROM v{etype} m
                     WHERE (m.searge LIKE ? ESCAPE '!' OR m.searge=? OR m.notch=? OR m.name=?)
                       AND m.side=? AND m.versionid=?
-                """ % etype,
-                ('%s!_%s!_%%' % (type_lookup[etype], mname), mname, mname, mname,
+                """.format(etype=etype),
+                ('{0}!_{1}!_%'.format(type_lookup[etype], mname), mname, mname, mname,
                  side_lookup[side], idversion)).fetchall()
 
         if sender in self.dcc.sockets and self.dcc.sockets[sender]:
@@ -307,17 +307,17 @@ class MCPBotCmds(object):
                     WHERE c.name LIKE ? ESCAPE '!'
                       AND c.side=? AND c.versionid=?
                 """,
-                ('%%%s%%' % search_str,
+                ('%{0}%'.format(search_str),
                  side_lookup[side], idversion)).fetchall()
 
             for etype in ['fields', 'methods']:
                 results[etype] = c.execute("""
                         SELECT m.name, m.notch, m.searge, m.sig, m.notchsig, m.desc, m.classname, m.classnotch
-                        FROM v%s m
+                        FROM v{etype} m
                         WHERE m.name LIKE ? ESCAPE '!'
                           AND m.side=? AND m.versionid=?
-                    """ % etype,
-                    ('%%%s%%' % search_str,
+                    """.format(etype=etype),
+                    ('%{0}%'.format(search_str),
                      side_lookup[side], idversion)).fetchall()
 
             if not results['classes']:
@@ -429,11 +429,11 @@ class MCPBotCmds(object):
         ## WE CHECK WE ONLY HAVE ONE RESULT ##
         results = c.execute("""
                 SELECT m.name, m.notch, m.searge, m.sig, m.notchsig, m.desc, m.classname, m.classnotch, m.id
-                FROM v%s m
+                FROM v{etype} m
                 WHERE (m.searge LIKE ? ESCAPE '!' OR m.searge=?)
                   AND m.side=? AND m.versionid=?
-            """ % etype,
-            ('%s!_%s!_%%' % (type_lookup[etype], oldname), oldname,
+            """.format(etype=etype),
+            ('{0}!_{1}!_%'.format(type_lookup[etype], oldname), oldname,
              side_lookup[side], idversion)).fetchall()
 
         if len(results) > 1:
@@ -485,7 +485,7 @@ class MCPBotCmds(object):
                     WHERE (m.searge LIKE ? ESCAPE '!' OR m.searge=?)
                       AND m.side=? AND m.versionid=?
                 """,
-                ('%s!_%s!_%%' % (type_lookup[etype], oldname), oldname,
+                ('{0}!_{1}!_%'.format(type_lookup[etype], oldname), oldname,
                  side_lookup[side], idversion)).fetchone()
             if result and result[0] != result[1]:
                 self.say(sender, "$RYou are trying to rename an already named member. Please use forced update only if you are certain !")
@@ -494,10 +494,10 @@ class MCPBotCmds(object):
             result = c.execute("""
                     SELECT m.searge, m.name
                     FROM vfields m
-                    WHERE ((m.searge LIKE ? ESCAPE '!') OR m.searge=?)
+                    WHERE (m.searge LIKE ? ESCAPE '!' OR m.searge=?)
                       AND m.side=? AND m.versionid=?
                 """,
-                ('%s!_%s!_%%' % (type_lookup[etype], oldname), oldname,
+                ('{0}!_{1}!_%'.format(type_lookup[etype], oldname), oldname,
                  side_lookup[side], idversion)).fetchone()
             if result and result[0] != result[1]:
                 self.say(sender, "$RYou are trying to rename an already named member. Please use forced update only if you are certain !")
@@ -518,9 +518,9 @@ class MCPBotCmds(object):
                 newdesc = newdesc.replace('"', "'")
 
             c.execute("""
-                    INSERT INTO %shist
+                    INSERT INTO {etype}hist
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                """ % etype,
+                """.format(etype=etype),
                 (None, int(entryid), name, desc, newname, newdesc, int(time.time()), sender, forced, cmd))
             self.say(sender, "$BNew desc$N : %s" % newdesc)
 
@@ -586,11 +586,11 @@ class MCPBotCmds(object):
         ## WE CHECK WE ONLY HAVE ONE RESULT ##
         results = c.execute("""
                 SELECT m.id, m.name, m.notch, m.searge, m.sig, m.notchsig, m.desc, m.classname, m.classnotch, m.id
-                FROM v%s m
+                FROM v{etype} m
                 WHERE (m.searge LIKE ? ESCAPE '!' OR m.searge=?)
                   AND m.side=? AND m.versionid=?
-            """ % etype,
-            ('%s!_%s!_%%' % (type_lookup[etype], origin), origin,
+            """.format(etype=etype),
+            ('{0}!_{1}!_%'.format(type_lookup[etype], origin), origin,
              side_lookup[side], idversion)).fetchall()
 
         if len(results) > 1:
@@ -614,11 +614,11 @@ class MCPBotCmds(object):
         # DO THE SAME FOR OTHER SIDE #
         results_target = c.execute("""
                 SELECT m.id, m.name, m.notch, m.searge, m.sig, m.notchsig, m.desc, m.classname, m.classnotch, m.id
-                FROM v%s m
+                FROM v{etype} m
                 WHERE (m.searge LIKE ? ESCAPE '!' OR m.searge=?)
                   AND m.side=? AND m.versionid=?
-            """ % etype,
-            ('%s!_%s!_%%' % (type_lookup[etype], target), target,
+            """.format(etype=etype),
+            ('{0}!_{1}!_%'.format(type_lookup[etype], target), target,
              target_side_lookup[side], idversion)).fetchall()
 
         if len(results_target) > 1:
@@ -685,7 +685,7 @@ class MCPBotCmds(object):
                     WHERE (m.searge LIKE ? ESCAPE '!' OR m.searge=?)
                       AND m.side=? AND m.versionid=?
                 """,
-                ('%s!_%s!_%%' % (type_lookup[etype], target), target,
+                ('{0}!_{1}!_%'.format(type_lookup[etype], target), target,
                  side_lookup[side], idversion)).fetchone()
             if result and result[0] != result[1]:
                 self.say(sender, "$RYou are trying to rename an already named member. Please use forced update only if you are certain !")
@@ -694,10 +694,10 @@ class MCPBotCmds(object):
             result = c.execute("""
                     SELECT m.searge, m.name
                     FROM vfields m
-                    WHERE ((m.searge LIKE ? ESCAPE '!') OR m.searge=?)
+                    WHERE (m.searge LIKE ? ESCAPE '!' OR m.searge=?)
                       AND m.side=? AND m.versionid=?
                 """,
-                ('%s!_%s!_%%' % (type_lookup[etype], target), target,
+                ('{0}!_{1}!_%'.format(type_lookup[etype], target), target,
                  side_lookup[side], idversion)).fetchone()
             if result and result[0] != result[1]:
                 self.say(sender, "$RYou are trying to rename an already named member. Please use forced update only if you are certain !")
@@ -708,9 +708,9 @@ class MCPBotCmds(object):
             self.say(sender, "%s     : $B%s => %s" % (side, origin, target))
 
             c.execute("""
-                    INSERT INTO %shist
+                    INSERT INTO {etype}hist
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                """ % etype,
+                """.format(etype=etype),
                 (None, int(entryid), name, desc, origin_name, origin_desc, int(time.time()), sender, forced, cmd))
 
     #===================================================================
@@ -749,14 +749,15 @@ class MCPBotCmds(object):
 
         results = c.execute("""
                     SELECT mh.oldname, mh.olddesc, mh.newname, mh.newdesc,
-                      strftime('%s', mh.timestamp, 'unixepoch') AS timestamp, mh.nick, mh.forced, m.searge, v.mcpversion
-                    FROM %s m
+                      strftime('%m-%d %H:%M', mh.timestamp, 'unixepoch') AS timestamp, mh.nick, mh.forced, m.searge,
+                      v.mcpversion
+                    FROM {etype} m
                       INNER JOIN versions v ON v.id=m.versionid
-                      INNER JOIN %shist mh ON mh.memberid=m.id
+                      INNER JOIN {etype}hist mh ON mh.memberid=m.id
                     WHERE (m.searge LIKE ? ESCAPE '!' OR m.searge=? OR m.notch=? OR m.name=?)
                       AND m.side=?
-                """ % ('%m-%d %H:%M', etype, etype),
-                ('%s!_%s!_%%' % (type_lookup[etype], member), member, member, member,
+                """.format(etype=etype),
+                ('{0}!_{1}!_%'.format(type_lookup[etype], member), member, member, member,
                  side_lookup[side])).fetchall()
 
         if len(results) >= 1:
@@ -804,12 +805,12 @@ class MCPBotCmds(object):
         self.say(sender, "$B[ REVERT %s %s ]" % (side.upper(), etype.upper()))
 
         c.execute("""
-                UPDATE %s
+                UPDATE {etype}
                 SET dirtyid=0
                 WHERE (searge LIKE ? ESCAPE '!' OR searge=?)
                   AND side=? AND versionid=?
-            """ % etype,
-            ('%s!_%s!_%%' % (type_lookup[etype], member), member,
+            """.format(etype),
+            ('{0}!_{1}!_%'.format(type_lookup[etype], member), member,
              side_lookup[side], idversion))
         self.say(sender, " Reverting changes on $B%s$N is done." % member)
 
@@ -842,12 +843,12 @@ class MCPBotCmds(object):
             for etype in ['methods', 'fields']:
                 results = c.execute("""
                         SELECT m.name, m.searge, m.desc, h.newname, h.newdesc,
-                          strftime('%s', h.timestamp, 'unixepoch') AS htimestamp, h.nick, h.cmd, h.forced
-                        FROM %s m
-                          INNER JOIN %shist h ON h.id=m.dirtyid
+                          strftime('%m-%d %H:%M', h.timestamp, 'unixepoch') AS htimestamp, h.nick, h.cmd, h.forced
+                        FROM {etype} m
+                          INNER JOIN {etype}hist h ON h.id=m.dirtyid
                         WHERE m.side=? AND m.versionid=?
                         ORDER BY h.timestamp
-                    """ % ('%m-%d %H:%M', etype, etype),
+                    """.format(etype=etype),
                     (side_lookup[side], idversion)).fetchall()
 
                 if results:
@@ -1098,29 +1099,29 @@ class MCPBotCmds(object):
             if pushforced:
                 results = c.execute("""
                         SELECT m.id, h.id, h.newname, h.newdesc
-                        FROM %s m
-                          INNER JOIN %shist h ON h.id=m.dirtyid
+                        FROM {etype} m
+                          INNER JOIN {etype}hist h ON h.id=m.dirtyid
                         WHERE m.versionid=?
-                    """ % (etype, etype),
+                    """.format(etype=etype),
                     (idversion,)).fetchall()
             else:
                 results = c.execute("""
                         SELECT m.id, h.id, h.newname, h.newdesc
-                        FROM %s m
-                          INNER JOIN %shist h ON h.id=m.dirtyid
+                        FROM {etype} m
+                          INNER JOIN {etype}hist h ON h.id=m.dirtyid
                         WHERE NOT h.forced=1
                           AND m.versionid=?
-                    """ % (etype, etype),
+                    """.format(etype=etype),
                     (idversion,)).fetchall()
             nentries += len(results)
 
             for result in results:
                 mid, hid, hnewname, hnewdesc = result
                 c.execute("""
-                        UPDATE %s
+                        UPDATE {etype}
                         SET name=?, desc=?, dirtyid=0
                         WHERE id=?
-                    """ % etype,
+                    """.format(etype=etype),
                     (hnewname, hnewdesc, mid))
 
         if nentries:
@@ -1269,10 +1270,10 @@ class MCPBotCmds(object):
             for side in ['client', 'server']:
                 for etype in ['methods', 'fields']:
                     result = c.execute("""
-                            SELECT total(%st), total(%sr), total(%su)
+                            SELECT total({etype}t), total({etype}r), total({etype}u)
                             FROM vclassesstats
                             WHERE side=? AND versionid=?
-                        """ % (etype, etype, etype),
+                        """.format(etype=etype),
                         (side_lookup[side], idversion)).fetchone()
                     total, ren, urn = result
 

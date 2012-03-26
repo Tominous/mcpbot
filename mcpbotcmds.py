@@ -973,11 +973,6 @@ class MCPBotCmds(object):
         c = kwargs['cursor']
         idversion = kwargs['idvers']
 
-        if self.cnick == 'MCPBot':
-            trgdir = '/home/mcpfiles/mcprolling_6.1/mcp/conf'
-        else:
-            trgdir = 'devconf'
-
         msg_split = msg.strip().split(None, 1)
         if len(msg_split) > 2:
             self.say(sender, " Syntax error: $B%s [version]$N" % cmd)
@@ -1003,6 +998,11 @@ class MCPBotCmds(object):
             """,
             (idversion,)).fetchone()
         (mcpversion,) = result
+
+        if self.cnick == 'MCPBot':
+            trgdir = '/home/mcpfiles/mcprolling_%s/mcp/conf' % mcpversion
+        else:
+            trgdir = 'devconf'
 
         methodswriter = csv.writer(open('%s/methods.csv' % trgdir, 'wb'))
         results = c.execute("""

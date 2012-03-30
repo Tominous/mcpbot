@@ -395,6 +395,7 @@ class MCPBotProcess(object):
                         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                     """.format(etype=etype),
                     (None, int(entryid), name, desc, newname, newdesc, int(time.time()), sender, forced, cmd))
+                db_con.commit()
                 self.say(sender, "$BNew desc$N : %s" % newdesc)
 
     def portMember(self, sender, chan, cmd, msg, side, etype, forced=False):
@@ -554,6 +555,7 @@ class MCPBotProcess(object):
                         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                     """.format(etype=etype),
                     (None, int(entryid), name, desc, origin_name, origin_desc, int(time.time()), sender, forced, cmd))
+                db_con.commit()
 
     def infoChanges(self, sender, chan, cmd, msg, side, etype):
         with self.db.get_db() as db_con:
@@ -615,6 +617,7 @@ class MCPBotProcess(object):
                 """.format(etype=etype),
                 ('{0}!_{1}!_%'.format(type_lookup[etype], member), member,
                  side_lookup[side], idversion))
+            db_con.commit()
             self.say(sender, " Reverting changes on $B%s$N is done." % member)
 
     def getlog(self, sender, chan, cmd, msg):
@@ -804,6 +807,7 @@ class MCPBotProcess(object):
                         VALUES (?, ?, ?)
                     """,
                     (None, int(time.time()), sender))
+                db_con.commit()
                 self.say(sender, "$B[ COMMIT ]")
                 self.say(sender, " Committed %d new updates" % nentries)
             else:

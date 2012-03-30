@@ -607,7 +607,7 @@ class MCPBotProcess(object):
                     SET dirtyid=0
                     WHERE (searge LIKE ? ESCAPE '!' OR searge=?)
                       AND side=? AND versionid=?
-                """.format(etype),
+                """.format(etype=etype),
                 ('{0}!_{1}!_%'.format(type_lookup[etype], member), member,
                  side_lookup[side], idversion))
             self.say(sender, " Reverting changes on $B%s$N is done." % member)

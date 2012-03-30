@@ -1,7 +1,7 @@
 import sqlite3
 import threading
 
-from contextlib import contextmanager, closing
+from contextlib import contextmanager
 
 
 class DBConnection(object):
@@ -10,9 +10,8 @@ class DBConnection(object):
         self.db_name = db_name
 
     @contextmanager
-    def get_cursor(self):
+    def get_db(self):
         with self._db_lock:
             with sqlite3.connect(self.db_name) as con:
                 con.text_factory = sqlite3.OptimizedUnicode
-                with closing(con.cursor()) as cur:
-                    yield cur
+                yield con

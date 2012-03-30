@@ -11,7 +11,8 @@ class MCPBotProcess(object):
         self.db = DBConnection(db_name)
         self.say = self.bot.say
 
-    def get_version(self, c):
+    @staticmethod
+    def get_version(c):
         c.execute("""
                 SELECT value
                 FROM config
@@ -21,7 +22,7 @@ class MCPBotProcess(object):
         (idversion,) = result
         return idversion
 
-    def getClass(self, sender, chan, cmd, msg, side, *args, **kwargs):
+    def getClass(self, sender, chan, cmd, msg, side):
         with self.db.get_cursor() as c:
             idversion = self.get_version(c)
 
@@ -70,7 +71,7 @@ class MCPBotProcess(object):
                 for constructor in constructorsresult:
                     self.say(sender, " Constructor : $B%s$N | $B%s$N" % (constructor[0], constructor[1]))
 
-    def outputMembers(self, sender, chan, cmd, msg, side, etype, *args, **kwargs):
+    def outputMembers(self, sender, chan, cmd, msg, side, etype):
         with self.db.get_cursor() as c:
             idversion = self.get_version(c)
 
@@ -181,7 +182,7 @@ class MCPBotProcess(object):
                 self.say(sender, "$B[ GET %s %s ]" % (side.upper(), etype.upper()))
                 self.say(sender, " No result for %s" % msg.strip())
 
-    def search(self, sender, chan, cmd, msg, *args, **kwargs):
+    def search(self, sender, chan, cmd, msg):
         with self.db.get_cursor() as c:
             idversion = self.get_version(c)
 
@@ -250,11 +251,9 @@ class MCPBotProcess(object):
                                 fullnotch = '[%s.%s]' % (classnotch, notch)
                                 self.say(sender, " [%s][%7s] %s %s %s %s" % (side.upper(), etype.upper(), fullname.ljust(maxlenname + 2), fullnotch.ljust(maxlennotch + 2), sig, notchsig))
 
-    def setMember(self, sender, chan, cmd, msg, side, etype, *args, **kwargs):
+    def setMember(self, sender, chan, cmd, msg, side, etype, forced=False):
         with self.db.get_cursor() as c:
             idversion = self.get_version(c)
-
-            forced = kwargs['forced']
 
             type_lookup = {'methods': 'func', 'fields': 'field'}
             side_lookup = {'client': 0, 'server': 1}
@@ -396,11 +395,9 @@ class MCPBotProcess(object):
                     (None, int(entryid), name, desc, newname, newdesc, int(time.time()), sender, forced, cmd))
                 self.say(sender, "$BNew desc$N : %s" % newdesc)
 
-    def portMember(self, sender, chan, cmd, msg, side, etype, *args, **kwargs):
+    def portMember(self, sender, chan, cmd, msg, side, etype, forced=False):
         with self.db.get_cursor() as c:
             idversion = self.get_version(c)
-
-            forced = kwargs['forced']
 
             type_lookup = {'methods': 'func', 'fields': 'field'}
             side_lookup = {'client': 0, 'server': 1}
@@ -555,7 +552,7 @@ class MCPBotProcess(object):
                     """.format(etype=etype),
                     (None, int(entryid), name, desc, origin_name, origin_desc, int(time.time()), sender, forced, cmd))
 
-    def infoChanges(self, sender, chan, cmd, msg, side, etype, *args, **kwargs):
+    def infoChanges(self, sender, chan, cmd, msg, side, etype):
         with self.db.get_cursor() as c:
             idversion = self.get_version(c)
 
@@ -590,7 +587,7 @@ class MCPBotProcess(object):
                 self.say(sender, "$B[ GET CHANGES %s %s ]" % (side.upper(), etype.upper()))
                 self.say(sender, " No result for %s" % msg.strip())
 
-    def revertChanges(self, sender, chan, cmd, msg, side, etype, *args, **kwargs):
+    def revertChanges(self, sender, chan, cmd, msg, side, etype):
         with self.db.get_cursor() as c:
             idversion = self.get_version(c)
 
@@ -615,7 +612,7 @@ class MCPBotProcess(object):
                  side_lookup[side], idversion))
             self.say(sender, " Reverting changes on $B%s$N is done." % member)
 
-    def getlog(self, sender, chan, cmd, msg, *args, **kwargs):
+    def getlog(self, sender, chan, cmd, msg):
         with self.db.get_cursor() as c:
             idversion = self.get_version(c)
 
@@ -667,7 +664,7 @@ class MCPBotProcess(object):
                                         indexmember = re.search('[0-9]+', msearge).group()
                                         self.say(sender, "+ %s, %s [%s%s][%5s][%4s] %s => %s" % (htimestamp, hnick.ljust(maxlennick), side[0].upper(), etype[0].upper(), indexmember, hcmd, mname.ljust(maxlensearge), hname))
 
-    def updateCsv(self, sender, chan, cmd, msg, *args, **kwargs):
+    def updateCsv(self, sender, chan, cmd, msg):
         with self.db.get_cursor() as c:
             idversion = self.get_version(c)
 
@@ -751,11 +748,9 @@ class MCPBotProcess(object):
             ffmetho.close()
             fffield.close()
 
-    def dbCommit(self, sender, chan, cmd, msg, *args, **kwargs):
+    def dbCommit(self, sender, chan, cmd, msg, pushforced=False):
         with self.db.get_cursor() as c:
             idversion = self.get_version(c)
-
-            pushforced = kwargs['pushforced']
 
             msg_split = msg.strip().split(None, 1)
             if len(msg_split):
@@ -807,7 +802,7 @@ class MCPBotProcess(object):
                 self.say(sender, "$B[ COMMIT ]")
                 self.say(sender, " No new entries to commit")
 
-    def altCsv(self, sender, chan, cmd, msg, *args, **kwargs):
+    def altCsv(self, sender, chan, cmd, msg):
         with self.db.get_cursor() as c:
             idversion = self.get_version(c)
 
@@ -876,7 +871,7 @@ class MCPBotProcess(object):
 
             self.say(sender, "New CSVs exported")
 
-    def testCsv(self, sender, chan, cmd, msg, *args, **kwargs):
+    def testCsv(self, sender, chan, cmd, msg):
         with self.db.get_cursor() as c:
             idversion = self.get_version(c)
 
@@ -922,7 +917,7 @@ class MCPBotProcess(object):
 
             self.say(sender, "Test CSVs exported: http://mcp.ocean-labs.de/files/mcptest/")
 
-    def status(self, sender, chan, cmd, msg, *args, **kwargs):
+    def status(self, sender, chan, cmd, msg):
         with self.db.get_cursor() as c:
             idversion = self.get_version(c)
 
@@ -966,7 +961,7 @@ class MCPBotProcess(object):
 
                         self.say(sender, " [%s][%7s] : T $B%4d$N | R $B%4d$N | U $B%4d$N | $B%5.2f%%$N" % (side[0].upper(), etype.upper(), total, ren, urn, float(ren) / float(total) * 100))
 
-    def todo(self, sender, chan, cmd, msg, *args, **kwargs):
+    def todo(self, sender, chan, cmd, msg):
         with self.db.get_cursor() as c:
             idversion = self.get_version(c)
 

@@ -2,13 +2,11 @@ import csv
 import re
 import time
 
-from dbconnection import DBConnection
-
 
 class MCPBotProcess(object):
-    def __init__(self, bot, db_name):
+    def __init__(self, bot):
         self.bot = bot
-        self.db = DBConnection(db_name)
+        self.db = self.bot.db
         self.say = self.bot.say
 
     @staticmethod

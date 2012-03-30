@@ -1,7 +1,8 @@
 def restricted(level=4):
     def wrap(f):
         def wrap_f(*args, **kwargs):
-            bot = args[0]
+            commands = args[0]
+            bot = commands.bot
             sender = args[1]
             chan = args[2]
 

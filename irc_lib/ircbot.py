@@ -73,7 +73,8 @@ class IRCBotBase(object):
 
         self.threadpool.add_task(self.command_loop, _threadname='CommandLoop')
 
-    def log_config(self, level=logging.WARN):
+    @staticmethod
+    def log_config(level=logging.WARN):
         logging.basicConfig(format='%(asctime)s %(message)s', level=level)
 
     def outbound_loop(self):

@@ -6,9 +6,9 @@ from mcpbotcmds import MCPBotCmds
 
 
 class MCPBot(IRCBotBase):
-    def __init__(self, nick='DevBot', char='!'):
+    def __init__(self, nick='DevBot', char='!', db_name='database.sqlite'):
         IRCBotBase.__init__(self, nick, char, _log_level=logging.DEBUG)
-        self.commands = MCPBotCmds(self)
+        self.commands = MCPBotCmds(self, db_name)
         self.whitelist['Fesh0r'] = 5
 
     def onIRC_Default(self, cmd, prefix, args):

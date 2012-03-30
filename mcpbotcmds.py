@@ -6,9 +6,9 @@ from mcpbotprocess import MCPBotProcess
 
 
 class MCPBotCmds(object):
-    def __init__(self, bot):
+    def __init__(self, bot, db_name):
         self.bot = bot
-        self.process = MCPBotProcess(bot)
+        self.process = MCPBotProcess(bot, db_name)
         self.say = self.bot.say
 
     def cmdDefault(self, sender, chan, cmd, msg):

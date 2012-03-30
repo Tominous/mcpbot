@@ -5,10 +5,11 @@ from irc_lib.ircbot import IRCBotBase
 from mcpbotcmds import MCPBotCmds
 
 
-class MCPBot(IRCBotBase, MCPBotCmds):
+class MCPBot(IRCBotBase):
 
     def __init__(self, nick='DevBot', char='!'):
         IRCBotBase.__init__(self, nick, char, _log_level=logging.DEBUG)
+        self.commands = MCPBotCmds(self)
         self.whitelist['ProfMobius'] = 5
 
     def onIRC_Default(self, cmd, prefix, args):
@@ -21,7 +22,7 @@ class MCPBot(IRCBotBase, MCPBotCmds):
         self.logger.info('! [%d] %s S: %s C: %s T: %s M: %s', ev.id, ev.type.ljust(4), ev.sender.ljust(20),
                          ev.cmd.ljust(15), ev.target, ev.msg)
         cmd = ev.cmd.lower()
-        cmd_func = getattr(self, 'cmd_%s' % cmd, self.cmdDefault)
+        cmd_func = getattr(self.commands, 'cmd_%s' % cmd, self.commands.cmdDefault)
         cmd_func(ev.sender, ev.chan, ev.cmd, ev.msg)
 
 

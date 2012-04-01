@@ -1,5 +1,6 @@
 import threading
 
+from irc_lib.event import Event
 from irc_lib.utils.restricted import restricted
 from irc_lib.utils.ThreadPool import Worker
 from mcpbotprocess import MCPBotProcess
@@ -81,8 +82,13 @@ class MCPBotCmds(object):
             self.say(sender, 'No public setters !')
             return
 
-        cmd_func = getattr(self, 'cmd_%s' % outcmd, self.cmdDefault)
-        cmd_func(chan, chan, outcmd, outmsg)
+        if self.ev.chan is None:
+            sender = self.ev.senderfull
+        else:
+            sender = self.ev.chan
+
+        outev = Event(sender, outcmd, self.ev.chan, outmsg, 'CMD')
+        MCPBotCmds(self.bot, outev).process_cmd()
 
     #===================================================================
 

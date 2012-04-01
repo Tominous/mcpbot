@@ -6,10 +6,15 @@ from mcpbotprocess import MCPBotProcess
 
 
 class MCPBotCmds(object):
-    def __init__(self, bot):
+    def __init__(self, bot, ev):
         self.bot = bot
+        self.ev = ev
         self.process = MCPBotProcess(bot)
         self.say = self.bot.say
+
+    def process_cmd(self):
+        cmd_func = getattr(self, 'cmd_%s' % self.ev.cmd, self.cmdDefault)
+        cmd_func(self.ev.sender, self.ev.chan, self.ev.cmd, self.ev.msg)
 
     def cmdDefault(self, sender, chan, cmd, msg):
         pass

@@ -22,9 +22,9 @@ class Worker(Thread):
                 self.name = kargs.pop('_threadname')
             self.ncalls += 1
             try:
-                func(*args, **kargs)
+                func(*args, **kargs)  # pylint: disable-msg=W0142
                 self.nscalls += 1
-            except Exception:
+            except Exception:  # pylint: disable-msg=W0703
                 self.nfcalls += 1
                 self.logger.exception('ERROR in %s', self.name)
             self.tasks.task_done()

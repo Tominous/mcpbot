@@ -10,13 +10,16 @@ class MCPBotCmds(object):
     def __init__(self, bot, ev):
         self.bot = bot
         self.ev = ev
+        self.db = None
         self.process = MCPBotProcess(self)
 
     def reply(self, msg):
         self.bot.say(self.ev.sender, msg)
 
     def process_cmd(self):
-        getattr(self, 'cmd_%s' % self.ev.cmd, self.cmdDefault)()
+        with self.bot.db.get_db() as db:
+            self.db = db
+            getattr(self, 'cmd_%s' % self.ev.cmd, self.cmdDefault)()
 
     def cmdDefault(self):
         pass

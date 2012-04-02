@@ -4,7 +4,7 @@ import threading
 from contextlib import contextmanager
 
 
-class DBConnection(object):
+class DBHandler(object):
     def __init__(self, db_name):
         self._db_lock = threading.Lock()
         self.db_name = db_name

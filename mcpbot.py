@@ -2,14 +2,14 @@ import sys
 import logging
 
 from irc_lib.ircbot import IRCBotBase
-from dbconnection import DBConnection
+from dbhandler import DBHandler
 from mcpbotcmds import MCPBotCmds
 
 
 class MCPBot(IRCBotBase):
     def __init__(self, nick='DevBot', char='!', db_name='database.sqlite'):
         IRCBotBase.__init__(self, nick, char, _log_level=logging.INFO)
-        self.db = DBConnection(db_name)
+        self.db = DBHandler(db_name)
         self.whitelist['ProfMobius'] = 5
         self.whitelist['Searge'] = 5
         self.whitelist['ZeuX'] = 5

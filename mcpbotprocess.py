@@ -18,8 +18,8 @@ class MCPBotProcess(object):
                 FROM config
                 WHERE name='currentversion'
             """)
-        result = c.fetchone()
-        (idversion,) = result
+        row = c.fetchone()
+        idversion = row['value']
         return idversion
 
     def getClass(self, side):
@@ -43,15 +43,19 @@ class MCPBotProcess(object):
                 """,
                 (search_class, search_class,
                  side_lookup[side], idversion))
-            classresults = c.fetchall()
+            class_rows = c.fetchall()
 
-            if not classresults:
+            if not class_rows:
                 self.reply("$B[ GET %s CLASS ]" % side.upper())
                 self.reply(" No results found for $B%s" % search_class)
                 return
 
-            for classresult in classresults:
-                name, notch, supername = classresult
+            for class_row in class_rows:
+                self.reply("$B[ GET %s CLASS ]" % side.upper())
+                self.reply(" Side        : $B%s" % side)
+                self.reply(" Name        : $B%s" % class_row['name'])
+                self.reply(" Notch       : $B%s" % class_row['notch'])
+                self.reply(" Super       : $B%s" % class_row['supername'])
 
                 c.execute("""
                         SELECT sig, notchsig
@@ -61,89 +65,81 @@ class MCPBotProcess(object):
                     """,
                     (search_class, search_class,
                      side_lookup[side], idversion))
-                constructorsresult = c.fetchall()
+                const_rows = c.fetchall()
 
-                self.reply("$B[ GET %s CLASS ]" % side.upper())
-                self.reply(" Side        : $B%s" % side)
-                self.reply(" Name        : $B%s" % name)
-                self.reply(" Notch       : $B%s" % notch)
-                self.reply(" Super       : $B%s" % supername)
-
-                for constructor in constructorsresult:
-                    self.reply(" Constructor : $B%s$N | $B%s$N" % (constructor[0], constructor[1]))
+                for const_row in const_rows:
+                    self.reply(" Constructor : $B%s$N | $B%s$N" % (const_row['sig'], const_row['notchsig']))
 
     def outputMembers(self, side, etype):
+        side_lookup = {'client': 0, 'server': 1}
+        type_lookup = {'fields': 'field', 'methods': 'func'}
+
+        msg_split = self.ev.msg.strip().split(None, 2)
+        if len(msg_split) < 1 or len(msg_split) > 2:
+            self.reply(" Syntax error: $B%s <membername> [signature]$N or $B%s <classname>.<membername> [signature]$N" % (self.ev.cmd, self.ev.cmd))
+            return
+        member = msg_split[0]
+        sname = None
+        if len(msg_split) > 1:
+            sname = msg_split[1]
+        split_member = member.split('.', 2)
+        if len(split_member) > 2:
+            self.reply(" Syntax error: $B%s <membername> [signature]$N or $B%s <classname>.<membername> [signature]$N" % (self.ev.cmd, self.ev.cmd))
+            return
+        if len(split_member) > 1:
+            cname = split_member[0]
+            mname = split_member[1]
+        else:
+            cname = None
+            mname = split_member[0]
+
         with self.db.get_db() as db_con:
             c = db_con.cursor()
             idversion = self.get_version(c)
 
-            side_lookup = {'client': 0, 'server': 1}
-            type_lookup = {'fields': 'field', 'methods': 'func'}
-
-            msg_split = self.ev.msg.strip().split(None, 2)
-            if len(msg_split) < 1 or len(msg_split) > 2:
-                self.reply(" Syntax error: $B%s <membername> [signature]$N or $B%s <classname>.<membername> [signature]$N" % (self.ev.cmd, self.ev.cmd))
-                return
-            member = msg_split[0]
-            sname = None
-            if len(msg_split) > 1:
-                sname = msg_split[1]
-            cname = None
-            mname = None
-            split_member = member.split('.', 2)
-            if len(split_member) > 2:
-                self.reply(" Syntax error: $B%s <membername> [signature]$N or $B%s <classname>.<membername> [signature]$N" % (self.ev.cmd, self.ev.cmd))
-                return
-            if len(split_member) > 1:
-                cname = split_member[0]
-                mname = split_member[1]
-            else:
-                mname = split_member[0]
+            self.reply("$B[ GET %s %s ]" % (side.upper(), etype.upper()))
 
             if cname and sname:
                 c.execute("""
-                        SELECT m.name, m.notch, m.searge, m.sig, m.notchsig, m.desc, m.classname, m.classnotch
-                        FROM v{etype} m
-                        WHERE (m.searge LIKE ? ESCAPE '!' OR m.searge=? OR m.notch=? OR m.name=?)
-                          AND (m.classname=? OR m.classnotch=?)
-                          AND (m.sig=? OR m.notchsig=?)
-                          AND m.side=? AND m.versionid=?
+                        SELECT name, notch, searge, sig, notchsig, desc, classname, classnotch
+                        FROM v{etype}
+                        WHERE (searge LIKE ? ESCAPE '!' OR searge=? OR notch=? OR name=?)
+                          AND (classname=? OR classnotch=?)
+                          AND (sig=? OR notchsig=?)
+                          AND side=? AND versionid=?
                     """.format(etype=etype),
                     ('{0}!_{1}!_%'.format(type_lookup[etype], mname), mname, mname, mname, cname, cname, sname, sname,
                      side_lookup[side], idversion))
-                results = c.fetchall()
             elif cname and not sname:
                 c.execute("""
-                        SELECT m.name, m.notch, m.searge, m.sig, m.notchsig, m.desc, m.classname, m.classnotch
-                        FROM v{etype} m
-                        WHERE (m.searge LIKE ? ESCAPE '!' OR m.searge=? OR m.notch=? OR m.name=?)
-                          AND (m.classname=? OR m.classnotch=?)
-                          AND m.side=? AND m.versionid=?
+                        SELECT name, notch, searge, sig, notchsig, desc, classname, classnotch
+                        FROM v{etype}
+                        WHERE (searge LIKE ? ESCAPE '!' OR searge=? OR notch=? OR name=?)
+                          AND (classname=? OR classnotch=?)
+                          AND side=? AND versionid=?
                     """.format(etype=etype),
                     ('{0}!_{1}!_%'.format(type_lookup[etype], mname), mname, mname, mname, cname, cname,
                      side_lookup[side], idversion))
-                results = c.fetchall()
             elif not cname and sname:
                 c.execute("""
-                        SELECT m.name, m.notch, m.searge, m.sig, m.notchsig, m.desc, m.classname, m.classnotch
-                        FROM v{etype} m
-                        WHERE (m.searge LIKE ? ESCAPE '!' OR m.searge=? OR m.notch=? OR m.name=?)
-                          AND (m.sig=? OR m.notchsig=?)
-                          AND m.side=? AND m.versionid=?
+                        SELECT name, notch, searge, sig, notchsig, desc, classname, classnotch
+                        FROM v{etype}
+                        WHERE (searge LIKE ? ESCAPE '!' OR searge=? OR notch=? OR name=?)
+                          AND (sig=? OR notchsig=?)
+                          AND side=? AND versionid=?
                     """.format(etype=etype),
                     ('{0}!_{1}!_%'.format(type_lookup[etype], mname), mname, mname, mname, sname, sname,
                      side_lookup[side], idversion))
-                results = c.fetchall()
             else:
                 c.execute("""
-                        SELECT m.name, m.notch, m.searge, m.sig, m.notchsig, m.desc, m.classname, m.classnotch
-                        FROM v{etype} m
-                        WHERE (m.searge LIKE ? ESCAPE '!' OR m.searge=? OR m.notch=? OR m.name=?)
-                          AND m.side=? AND m.versionid=?
+                        SELECT name, notch, searge, sig, notchsig, desc, classname, classnotch
+                        FROM v{etype}
+                        WHERE (searge LIKE ? ESCAPE '!' OR searge=? OR notch=? OR name=?)
+                          AND side=? AND versionid=?
                     """.format(etype=etype),
                     ('{0}!_{1}!_%'.format(type_lookup[etype], mname), mname, mname, mname,
                      side_lookup[side], idversion))
-                results = c.fetchall()
+            rows = c.fetchall()
 
             if self.ev.sender in self.bot.dcc.sockets and self.bot.dcc.sockets[self.ev.sender]:
                 lowlimit = 10
@@ -152,126 +148,119 @@ class MCPBotProcess(object):
                 lowlimit = 1
                 highlimit = 10
 
-            if len(results) > highlimit:
-                self.reply("$B[ GET %s %s ]" % (side.upper(), etype.upper()))
+            if len(rows) > highlimit:
                 self.reply(" $BVERY$N ambiguous request $R'%s'$N" % self.ev.msg)
-                self.reply(" Found %s possible answers" % len(results))
+                self.reply(" Found %s possible answers" % len(rows))
                 self.reply(" Not displaying any !")
-            elif highlimit >= len(results) > lowlimit:
-                self.reply("$B[ GET %s %s ]" % (side.upper(), etype.upper()))
+            elif highlimit >= len(rows) > lowlimit:
                 self.reply(" Ambiguous request $R'%s'$N" % self.ev.msg)
-                self.reply(" Found %s possible answers" % len(results))
-                maxlencsv = max([len('%s.%s' % (result[6], result[0])) for result in results])
-                maxlennotch = max([len('[%s.%s]' % (result[7], result[1])) for result in results])
-                for result in results:
-                    name, notch, searge, sig, notchsig, desc, classname, classnotch = result
-                    fullcsv = '%s.%s' % (classname, name)
-                    fullnotch = '[%s.%s]' % (classnotch, notch)
-                    fullsearge = '[%s]' % searge
-                    self.reply(" %s %s %s %s %s" % (fullsearge, fullcsv.ljust(maxlencsv + 2), fullnotch.ljust(maxlennotch + 2), sig, notchsig))
-            elif lowlimit >= len(results) > 0:
-                for result in results:
-                    name, notch, searge, sig, notchsig, desc, classname, classnotch = result
-                    self.reply("$B[ GET %s %s ]" % (side.upper(), etype.upper()))
+                self.reply(" Found %s possible answers" % len(rows))
+                maxlencsv = max([len('%s.%s' % (row['classname'], row['name'])) for row in rows])
+                maxlennotch = max([len('[%s.%s]' % (row['classnotch'], row['notch'])) for row in rows])
+                for row in rows:
+                    fullcsv = '%s.%s' % (row['classname'], row['name'])
+                    fullnotch = '[%s.%s]' % (row['classnotch'], row['notch'])
+                    fullsearge = '[%s]' % row['searge']
+                    self.reply(" %s %s %s %s %s" % (fullsearge, fullcsv.ljust(maxlencsv + 2), fullnotch.ljust(maxlennotch + 2), row['sig'], row['notchsig']))
+            elif lowlimit >= len(rows) > 0:
+                for row in rows:
                     self.reply(" Side        : $B%s" % side)
-                    self.reply(" Name        : $B%s.%s" % (classname, name,))
-                    self.reply(" Notch       : $B%s.%s" % (classnotch, notch,))
-                    self.reply(" Searge      : $B%s" % searge)
-                    self.reply(" Type/Sig    : $B%s$N | $B%s$N" % (sig, notchsig))
-                    if desc:
-                        self.reply(" Description : %s" % desc)
+                    self.reply(" Name        : $B%s.%s" % (row['classname'], row['name']))
+                    self.reply(" Notch       : $B%s.%s" % (row['classnotch'], row['notch']))
+                    self.reply(" Searge      : $B%s" % row['searge'])
+                    self.reply(" Type/Sig    : $B%s$N | $B%s$N" % (row['sig'], row['notchsig']))
+                    if row['desc']:
+                        self.reply(" Description : %s" % row['desc'])
             else:
-                self.reply("$B[ GET %s %s ]" % (side.upper(), etype.upper()))
                 self.reply(" No result for %s" % self.ev.msg.strip())
 
     def search(self):
+        side_lookup = {'client': 0, 'server': 1}
+
+        msg_split = self.ev.msg.strip().split(None, 1)
+        if len(msg_split) != 1:
+            self.reply(" Syntax error: $B%s <name>$N" % self.ev.cmd)
+            return
+        search_str = msg_split[0]
+
+        if self.ev.sender in self.bot.dcc.sockets and self.bot.dcc.sockets[self.ev.sender]:
+            highlimit = 100
+        else:
+            highlimit = 10
+
         with self.db.get_db() as db_con:
             c = db_con.cursor()
             idversion = self.get_version(c)
 
-            side_lookup = {'client': 0, 'server': 1}
-
-            msg_split = self.ev.msg.strip().split(None, 1)
-            if len(msg_split) != 1:
-                self.reply(" Syntax error: $B%s <name>$N" % self.ev.cmd)
-                return
-            search_str = msg_split[0]
-
-            results = {'classes': None, 'fields': None, 'methods': None}
-
-            if self.ev.sender in self.bot.dcc.sockets and self.bot.dcc.sockets[self.ev.sender]:
-                highlimit = 100
-            else:
-                highlimit = 10
+            rows = {'classes': None, 'fields': None, 'methods': None}
 
             self.reply("$B[ SEARCH RESULTS ]")
+
             for side in ['client', 'server']:
                 c.execute("""
-                        SELECT c.name, c.notch
-                        FROM vclasses c
-                        WHERE c.name LIKE ? ESCAPE '!'
-                          AND c.side=? AND c.versionid=?
+                        SELECT name, notch
+                        FROM vclasses
+                        WHERE name LIKE ? ESCAPE '!'
+                          AND side=? AND versionid=?
                     """,
                     ('%{0}%'.format(search_str),
                      side_lookup[side], idversion))
-                results['classes'] = c.fetchall()
+                rows['classes'] = c.fetchall()
 
                 for etype in ['fields', 'methods']:
                     c.execute("""
-                            SELECT m.name, m.notch, m.searge, m.sig, m.notchsig, m.desc, m.classname, m.classnotch
-                            FROM v{etype} m
-                            WHERE m.name LIKE ? ESCAPE '!'
-                              AND m.side=? AND m.versionid=?
+                            SELECT name, notch, searge, sig, notchsig, desc, classname, classnotch
+                            FROM v{etype}
+                            WHERE name LIKE ? ESCAPE '!'
+                              AND side=? AND versionid=?
                         """.format(etype=etype),
                         ('%{0}%'.format(search_str),
                          side_lookup[side], idversion))
-                    results[etype] = c.fetchall()
+                    rows[etype] = c.fetchall()
 
-                if not results['classes']:
+                if not rows['classes']:
                     self.reply(" [%s][  CLASS] No results" % side.upper())
                 else:
-                    maxlenname = max([len(result[0]) for result in results['classes']])
-                    maxlennotch = max([len(result[1]) for result in results['classes']])
-                    if len(results['classes']) > highlimit:
-                        self.reply(" [%s][  CLASS] Too many results : %d" % (side.upper(), len(results['classes'])))
+                    if len(rows['classes']) > highlimit:
+                        self.reply(" [%s][  CLASS] Too many results : %d" % (side.upper(), len(rows['classes'])))
                     else:
-                        for result in results['classes']:
-                            name, notch = result
-                            self.reply(" [%s][  CLASS] %s %s" % (side.upper(), name.ljust(maxlenname + 2), notch.ljust(maxlennotch + 2)))
+                        maxlenname = max([len(row['name']) for row in rows['classes']])
+                        maxlennotch = max([len(row['notch']) for row in rows['classes']])
+                        for row in rows['classes']:
+                            self.reply(" [%s][  CLASS] %s %s" % (side.upper(), row['name'].ljust(maxlenname + 2), row['notch'].ljust(maxlennotch + 2)))
 
                 for etype in ['fields', 'methods']:
-                    if not results[etype]:
+                    if not rows[etype]:
                         self.reply(" [%s][%7s] No results" % (side.upper(), etype.upper()))
                     else:
-                        maxlenname = max([len('%s.%s' % (result[6], result[0])) for result in results[etype]])
-                        maxlennotch = max([len('[%s.%s]' % (result[7], result[1])) for result in results[etype]])
-                        if len(results[etype]) > highlimit:
-                            self.reply(" [%s][%7s] Too many results : %d" % (side.upper(), etype.upper(), len(results[etype])))
+                        if len(rows[etype]) > highlimit:
+                            self.reply(" [%s][%7s] Too many results : %d" % (side.upper(), etype.upper(), len(rows[etype])))
                         else:
-                            for result in results[etype]:
-                                name, notch, searge, sig, notchsig, desc, classname, classnotch = result
-                                fullname = '%s.%s' % (classname, name)
-                                fullnotch = '[%s.%s]' % (classnotch, notch)
-                                self.reply(" [%s][%7s] %s %s %s %s" % (side.upper(), etype.upper(), fullname.ljust(maxlenname + 2), fullnotch.ljust(maxlennotch + 2), sig, notchsig))
+                            maxlenname = max([len('%s.%s' % (row['classname'], row['name'])) for row in rows[etype]])
+                            maxlennotch = max([len('[%s.%s]' % (row['classnotch'], row['notch'])) for row in rows[etype]])
+                            for row in rows[etype]:
+                                fullname = '%s.%s' % (row['classname'], row['name'])
+                                fullnotch = '[%s.%s]' % (row['classnotch'], row['notch'])
+                                self.reply(" [%s][%7s] %s %s %s %s" % (side.upper(), etype.upper(), fullname.ljust(maxlenname + 2), fullnotch.ljust(maxlennotch + 2), row['sig'], row['notchsig']))
 
     def setMember(self, side, etype, forced=False):
+        type_lookup = {'methods': 'func', 'fields': 'field'}
+        side_lookup = {'client': 0, 'server': 1}
+
+        msg_split = self.ev.msg.strip().split(None, 2)
+        if len(msg_split) < 2:
+            self.reply(" Syntax error: $B%s <membername> <newname> [newdescription]$N" % self.ev.cmd)
+            return
+
+        oldname = msg_split[0]
+        newname = msg_split[1]
+        newdesc = None
+        if len(msg_split) > 2:
+            newdesc = msg_split[2]
+
         with self.db.get_db() as db_con:
             c = db_con.cursor()
             idversion = self.get_version(c)
-
-            type_lookup = {'methods': 'func', 'fields': 'field'}
-            side_lookup = {'client': 0, 'server': 1}
-
-            msg_split = self.ev.msg.strip().split(None, 2)
-            if len(msg_split) < 2:
-                self.reply(" Syntax error: $B%s <membername> <newname> [newdescription]$N" % self.ev.cmd)
-                return
-
-            oldname = msg_split[0]
-            newname = msg_split[1]
-            newdesc = None
-            if len(msg_split) > 2:
-                newdesc = msg_split[2]
 
             self.reply("$B[ SET %s %s ]" % (side.upper(), etype.upper()))
             if forced:
@@ -284,109 +273,108 @@ class MCPBotProcess(object):
 
             ## WE CHECK IF WE ARE NOT CONFLICTING WITH A CLASS NAME ##
             c.execute("""
-                    SELECT m.name
-                    FROM vclasses m
-                    WHERE lower(m.name)=lower(?)
-                      AND m.side=? AND m.versionid=?
+                    SELECT name
+                    FROM vclasses
+                    WHERE lower(name)=lower(?)
+                      AND side=? AND versionid=?
                 """,
                 (newname,
                  side_lookup[side], idversion))
-            result = c.fetchone()
-            if result:
+            row = c.fetchone()
+            if row:
                 self.reply("$RIt is illegal to use class names for fields or methods !")
                 return
 
             ## WE CHECK WE ONLY HAVE ONE RESULT ##
             c.execute("""
-                    SELECT m.name, m.notch, m.searge, m.sig, m.notchsig, m.desc, m.classname, m.classnotch, m.id
-                    FROM v{etype} m
-                    WHERE (m.searge LIKE ? ESCAPE '!' OR m.searge=?)
-                      AND m.side=? AND m.versionid=?
+                    SELECT name, notch, searge, sig, notchsig, desc, classname, classnotch, id
+                    FROM v{etype}
+                    WHERE (searge LIKE ? ESCAPE '!' OR searge=?)
+                      AND side=? AND versionid=?
                 """.format(etype=etype),
                 ('{0}!_{1}!_%'.format(type_lookup[etype], oldname), oldname,
                  side_lookup[side], idversion))
-            results = c.fetchall()
+            rows = c.fetchall()
 
-            if len(results) > 1:
+            if len(rows) > 1:
                 self.reply(" Ambiguous request $R'%s'$N" % oldname)
-                self.reply(" Found %s possible answers" % len(results))
+                self.reply(" Found %s possible answers" % len(rows))
 
-                maxlencsv = max([len('%s.%s' % (result[5], result[2])) for result in results])
-                maxlennotch = max([len('[%s.%s]' % (result[6], result[1])) for result in results])
-                for result in results:
-                    name, notch, searge, sig, notchsig, desc, classname, classnotch, methodid = result
-                    fullcsv = '%s.%s' % (classname, name)
-                    fullnotch = '[%s.%s]' % (classnotch, notch)
-                    self.reply(" %s %s %s" % (fullcsv.ljust(maxlencsv + 2), fullnotch.ljust(maxlennotch + 2), sig))
+                maxlencsv = max([len('%s.%s' % (row['classname'], row['name'])) for row in rows])
+                maxlennotch = max([len('[%s.%s]' % (row['classnotch'], row['notch'])) for row in rows])
+                for row in rows:
+                    fullcsv = '%s.%s' % (row['classname'], row['name'])
+                    fullnotch = '[%s.%s]' % (row['classnotch'], row['notch'])
+                    self.reply(" %s %s %s" % (fullcsv.ljust(maxlencsv + 2), fullnotch.ljust(maxlennotch + 2), row['sig']))
                 return
-            elif not len(results):
+            elif not len(rows):
                 self.reply(" No result for %s" % oldname)
                 return
 
             ## WE CHECK THAT WE HAVE A UNIQUE NAME
             if not forced:
                 c.execute("""
-                        SELECT m.searge, m.name
-                        FROM vmethods m
-                        WHERE m.name=?
-                          AND m.side=? AND m.versionid=?
+                        SELECT searge, name
+                        FROM vmethods
+                        WHERE name=?
+                          AND side=? AND versionid=?
                     """,
                     (newname,
                      side_lookup[side], idversion))
-                result = c.fetchone()
-                if result:
-                    self.reply("$RYou are conflicting with at least one other method: %s. Please use forced update only if you are certain !" % result[0])
+                row = c.fetchone()
+                if row:
+                    self.reply("$RYou are conflicting with at least one other method: %s. Please use forced update only if you are certain !" % row['searge'])
                     return
 
                 c.execute("""
-                        SELECT m.searge, m.name
-                        FROM vfields m
-                        WHERE m.name=?
-                          AND m.side=? AND m.versionid=?
+                        SELECT searge, name
+                        FROM vfields
+                        WHERE name=?
+                          AND side=? AND versionid=?
                     """,
                     (newname,
                      side_lookup[side], idversion))
-                result = c.fetchone()
-                if result:
-                    self.reply("$RYou are conflicting with at least one other field: %s. Please use forced update only if you are certain !" % result[0])
+                row = c.fetchone()
+                if row:
+                    self.reply("$RYou are conflicting with at least one other field: %s. Please use forced update only if you are certain !" % row['searge'])
                     return
 
             if not forced:
                 c.execute("""
-                        SELECT m.searge, m.name
-                        FROM vmethods m
-                        WHERE (m.searge LIKE ? ESCAPE '!' OR m.searge=?)
-                          AND m.side=? AND m.versionid=?
+                        SELECT searge, name
+                        FROM vmethods
+                        WHERE (searge LIKE ? ESCAPE '!' OR searge=?)
+                          AND side=? AND versionid=?
                     """,
                     ('{0}!_{1}!_%'.format(type_lookup[etype], oldname), oldname,
                      side_lookup[side], idversion))
-                result = c.fetchone()
-                if result and result[0] != result[1]:
+                row = c.fetchone()
+                if row and row['searge'] != row['name']:
                     self.reply("$RYou are trying to rename an already named member. Please use forced update only if you are certain !")
                     return
 
                 c.execute("""
-                        SELECT m.searge, m.name
-                        FROM vfields m
-                        WHERE (m.searge LIKE ? ESCAPE '!' OR m.searge=?)
-                          AND m.side=? AND m.versionid=?
+                        SELECT searge, name
+                        FROM vfields
+                        WHERE (searge LIKE ? ESCAPE '!' OR searge=?)
+                          AND side=? AND versionid=?
                     """,
                     ('{0}!_{1}!_%'.format(type_lookup[etype], oldname), oldname,
                      side_lookup[side], idversion))
-                result = c.fetchone()
-                if result and result[0] != result[1]:
+                row = c.fetchone()
+                if row and row['searge'] != row['name']:
                     self.reply("$RYou are trying to rename an already named member. Please use forced update only if you are certain !")
                     return
 
-            if len(results) == 1:
-                name, notch, searge, sig, notchsig, desc, classname, classnotch, entryid = results[0]
-                self.reply("Name     : $B%s => %s" % (name, newname))
-                self.reply("$BOld desc$N : %s" % desc)
+            if len(rows) == 1:
+                row = rows[0]
+                self.reply("Name     : $B%s => %s" % (row['name'], row['newname']))
+                self.reply("$BOld desc$N : %s" % row['desc'])
 
-                if not newdesc and not desc:
+                if not newdesc and not row['desc']:
                     newdesc = None
                 elif not newdesc:
-                    newdesc = desc.replace('"', "'")
+                    newdesc = row['desc'].replace('"', "'")
                 elif newdesc == 'None':
                     newdesc = None
                 else:
@@ -396,26 +384,26 @@ class MCPBotProcess(object):
                         INSERT INTO {etype}hist
                         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                     """.format(etype=etype),
-                    (None, int(entryid), name, desc, newname, newdesc, int(time.time()), self.ev.sender, forced, self.ev.cmd))
+                    (None, int(row['id']), row['name'], row['desc'], newname, newdesc, int(time.time()), self.ev.sender, forced, self.ev.cmd))
                 db_con.commit()
                 self.reply("$BNew desc$N : %s" % newdesc)
 
     def portMember(self, side, etype, forced=False):
+        type_lookup = {'methods': 'func', 'fields': 'field'}
+        side_lookup = {'client': 0, 'server': 1}
+        target_side_lookup = {'client': 1, 'server': 0}
+
+        msg_split = self.ev.msg.strip().split(None, 2)
+        if len(msg_split) < 2:
+            self.reply(" Syntax error: $B%s <origin_member> <target_member>$N" % self.ev.cmd)
+            return
+
+        origin = msg_split[0]
+        target = msg_split[1]
+
         with self.db.get_db() as db_con:
             c = db_con.cursor()
             idversion = self.get_version(c)
-
-            type_lookup = {'methods': 'func', 'fields': 'field'}
-            side_lookup = {'client': 0, 'server': 1}
-            target_side_lookup = {'client': 1, 'server': 0}
-
-            msg_split = self.ev.msg.strip().split(None, 2)
-            if len(msg_split) < 2:
-                self.reply(" Syntax error: $B%s <origin_member> <target_member>$N" % self.ev.cmd)
-                return
-
-            origin = msg_split[0]
-            target = msg_split[1]
 
             self.reply("$B[ PORT %s %s ]" % (side.upper(), etype.upper()))
             if forced:
@@ -423,155 +411,149 @@ class MCPBotProcess(object):
 
             ## WE CHECK WE ONLY HAVE ONE RESULT ##
             c.execute("""
-                    SELECT m.id, m.name, m.notch, m.searge, m.sig, m.notchsig, m.desc, m.classname, m.classnotch, m.id
-                    FROM v{etype} m
-                    WHERE (m.searge LIKE ? ESCAPE '!' OR m.searge=?)
-                      AND m.side=? AND m.versionid=?
+                    SELECT name, notch, searge, sig, notchsig, desc, classname, classnotch, id
+                    FROM v{etype}
+                    WHERE (searge LIKE ? ESCAPE '!' OR searge=?)
+                      AND side=? AND versionid=?
                 """.format(etype=etype),
                 ('{0}!_{1}!_%'.format(type_lookup[etype], origin), origin,
                  side_lookup[side], idversion))
-            results = c.fetchall()
+            rows = c.fetchall()
 
-            if len(results) > 1:
+            if len(rows) > 1:
                 self.reply(" Ambiguous request $R'%s'$N" % origin)
-                self.reply(" Found %s possible answers" % len(results))
+                self.reply(" Found %s possible answers" % len(rows))
 
-                maxlencsv = max([len('%s.%s' % (result[5], result[2])) for result in results])
-                maxlennotch = max([len('[%s.%s]' % (result[6], result[1])) for result in results])
-                for result in results:
-                    name, notch, searge, sig, notchsig, desc, classname, classnotch, methodid = result
-                    fullcsv = '%s.%s' % (classname, name)
-                    fullnotch = '[%s.%s]' % (classnotch, notch)
-                    self.reply(" %s %s %s" % (fullcsv.ljust(maxlencsv + 2), fullnotch.ljust(maxlennotch + 2), sig))
+                maxlencsv = max([len('%s.%s' % (row['classname'], row['name'])) for row in rows])
+                maxlennotch = max([len('[%s.%s]' % (row['classnotch'], row['notch'])) for row in rows])
+                for row in rows:
+                    fullcsv = '%s.%s' % (row['classname'], row['name'])
+                    fullnotch = '[%s.%s]' % (row['classnotch'], row['notch'])
+                    self.reply(" %s %s %s" % (fullcsv.ljust(maxlencsv + 2), fullnotch.ljust(maxlennotch + 2), row['sig']))
                 return
-            elif not len(results):
+            elif not len(rows):
                 self.reply(" No result for %s" % origin)
                 return
-
-            origin_id, origin_name, origin_notch, origin_searge, origin_sig, origin_notchsig, origin_desc, origin_classname, origin_classnotch, origin_methodid = results[0]
+            src_row = rows[0]
 
             # DO THE SAME FOR OTHER SIDE #
             c.execute("""
-                    SELECT m.id, m.name, m.notch, m.searge, m.sig, m.notchsig, m.desc, m.classname, m.classnotch, m.id
-                    FROM v{etype} m
-                    WHERE (m.searge LIKE ? ESCAPE '!' OR m.searge=?)
-                      AND m.side=? AND m.versionid=?
+                    SELECT name, notch, searge, sig, notchsig, desc, classname, classnotch, id
+                    FROM v{etype}
+                    WHERE (searge LIKE ? ESCAPE '!' OR searge=?)
+                      AND side=? AND versionid=?
                 """.format(etype=etype),
                 ('{0}!_{1}!_%'.format(type_lookup[etype], target), target,
                  target_side_lookup[side], idversion))
-            results_target = c.fetchall()
+            rows = c.fetchall()
 
-            if len(results_target) > 1:
+            if len(rows) > 1:
                 self.reply(" Ambiguous request $R'%s'$N" % target)
-                self.reply(" Found %s possible answers" % len(results_target))
+                self.reply(" Found %s possible answers" % len(rows))
 
-                maxlencsv = max([len('%s.%s' % (result[5], result[2])) for result in results_target])
-                maxlennotch = max([len('[%s.%s]' % (result[6], result[1])) for result in results_target])
-                for result in results_target:
-                    name, notch, searge, sig, notchsig, desc, classname, classnotch, methodid = result
-                    fullcsv = '%s.%s' % (classname, name)
-                    fullnotch = '[%s.%s]' % (classnotch, notch)
-                    self.reply(" %s %s %s" % (fullcsv.ljust(maxlencsv + 2), fullnotch.ljust(maxlennotch + 2), sig))
+                maxlencsv = max([len('%s.%s' % (row['classname'], row['name'])) for row in rows])
+                maxlennotch = max([len('[%s.%s]' % (row['classnotch'], row['notch'])) for row in rows])
+                for row in rows:
+                    fullcsv = '%s.%s' % (row['classname'], row['name'])
+                    fullnotch = '[%s.%s]' % (row['classnotch'], row['notch'])
+                    self.reply(" %s %s %s" % (fullcsv.ljust(maxlencsv + 2), fullnotch.ljust(maxlennotch + 2), row['sig']))
                 return
-            elif not len(results_target):
+            elif not len(rows):
                 self.reply(" No result for %s" % target)
                 return
-
-            target_id, target_name, target_notch, target_searge, target_sig, target_notchsig, target_desc, target_classname, target_classnotch, target_methodid = results_target[0]
+            tgt_row = rows[0]
 
             ## WE CHECK IF WE ARE NOT CONFLICTING WITH A CLASS NAME ##
             c.execute("""
-                    SELECT m.name
-                    FROM vclasses m
-                    WHERE lower(m.name)=lower(?)
-                      AND m.side=? AND m.versionid=?
+                    SELECT name
+                    FROM vclasses
+                    WHERE lower(name)=lower(?)
+                      AND side=? AND versionid=?
                 """,
-                (origin_name,
+                (src_row['name'],
                  target_side_lookup[side], idversion))
-            result = c.fetchone()
-            if result:
+            row = c.fetchone()
+            if row:
                 self.reply("$RIt is illegal to use class names for fields or methods !")
                 return
 
             ## WE CHECK THAT WE HAVE A UNIQUE NAME
             if not forced:
                 c.execute("""
-                        SELECT m.searge, m.name
-                        FROM vmethods m
-                        WHERE m.name=?
-                          AND m.side=? AND m.versionid=?
+                        SELECT searge, name
+                        FROM vmethods
+                        WHERE name=?
+                          AND side=? AND versionid=?
                     """,
-                    (origin_name,
+                    (src_row['name'],
                      target_side_lookup[side], idversion))
-                result = c.fetchone()
-                if result:
-                    self.reply("$RYou are conflicting with at least one other method: %s. Please use forced update only if you are certain !" % result[0])
+                row = c.fetchone()
+                if row:
+                    self.reply("$RYou are conflicting with at least one other method: %s. Please use forced update only if you are certain !" % row['searge'])
                     return
 
                 c.execute("""
-                        SELECT m.searge, m.name
-                        FROM vfields m
-                        WHERE m.name=?
-                          AND m.side=? AND m.versionid=?
+                        SELECT searge, name
+                        FROM vfields
+                        WHERE name=?
+                          AND side=? AND versionid=?
                     """,
-                    (origin_name,
+                    (src_row['name'],
                      target_side_lookup[side], idversion))
-                result = c.fetchone()
-                if result:
-                    self.reply("$RYou are conflicting with at least one other field: %s. Please use forced update only if you are certain !" % result[0])
+                row = c.fetchone()
+                if row:
+                    self.reply("$RYou are conflicting with at least one other field: %s. Please use forced update only if you are certain !" % row['searge'])
                     return
 
             if not forced:
                 c.execute("""
-                        SELECT m.searge, m.name
-                        FROM vmethods m
-                        WHERE (m.searge LIKE ? ESCAPE '!' OR m.searge=?)
-                          AND m.side=? AND m.versionid=?
+                        SELECT searge, name
+                        FROM vmethods
+                        WHERE (searge LIKE ? ESCAPE '!' OR searge=?)
+                          AND side=? AND versionid=?
                     """,
                     ('{0}!_{1}!_%'.format(type_lookup[etype], target), target,
                      side_lookup[side], idversion))
-                result = c.fetchone()
-                if result and result[0] != result[1]:
+                row = c.fetchone()
+                if row and row['searge'] != row['name']:
                     self.reply("$RYou are trying to rename an already named member. Please use forced update only if you are certain !")
                     return
 
                 c.execute("""
-                        SELECT m.searge, m.name
-                        FROM vfields m
-                        WHERE (m.searge LIKE ? ESCAPE '!' OR m.searge=?)
-                          AND m.side=? AND m.versionid=?
+                        SELECT searge, name
+                        FROM vfields
+                        WHERE (searge LIKE ? ESCAPE '!' OR searge=?)
+                          AND side=? AND versionid=?
                     """,
                     ('{0}!_{1}!_%'.format(type_lookup[etype], target), target,
                      side_lookup[side], idversion))
-                result = c.fetchone()
-                if result and result[0] != result[1]:
+                row = c.fetchone()
+                if row and row['searge'] != row['name']:
                     self.reply("$RYou are trying to rename an already named member. Please use forced update only if you are certain !")
                     return
 
-            if len(results_target) == 1:
-                memberid, name, notch, searge, sig, notchsig, desc, classname, classnotch, entryid = results_target[0]
-                self.reply("%s     : $B%s => %s" % (side, origin, target))
-
-                c.execute("""
-                        INSERT INTO {etype}hist
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                    """.format(etype=etype),
-                    (None, int(entryid), name, desc, origin_name, origin_desc, int(time.time()), self.ev.sender, forced, self.ev.cmd))
-                db_con.commit()
+            c.execute("""
+                    INSERT INTO {etype}hist
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """.format(etype=etype),
+                (None, int(tgt_row['id']), tgt_row['name'], tgt_row['desc'], src_row['name'], src_row['desc'], int(time.time()), self.ev.sender, forced, self.ev.cmd))
+            db_con.commit()
+            self.reply("%s     : $B%s => %s" % (side, origin, target))
 
     def infoChanges(self, side, etype):
+        type_lookup = {'methods': 'func', 'fields': 'field'}
+        side_lookup = {'client': 0, 'server': 1}
+
+        msg_split = self.ev.msg.split(None, 1)
+        if len(msg_split) != 1:
+            self.reply("Syntax error: $B%s <searge|index>" % self.ev.cmd)
+            return
+        member = msg_split[0]
+
         with self.db.get_db() as db_con:
             c = db_con.cursor()
-            idversion = self.get_version(c)
 
-            type_lookup = {'methods': 'func', 'fields': 'field'}
-            side_lookup = {'client': 0, 'server': 1}
-
-            msg_split = self.ev.msg.split(None, 1)
-            if len(msg_split) != 1:
-                self.reply("Syntax error: $B%s <searge|index>" % self.ev.cmd)
-                return
-            member = msg_split[0]
+            self.reply("$B[ GET CHANGES %s %s ]" % (side.upper(), etype.upper()))
 
             c.execute("""
                         SELECT mh.oldname, mh.olddesc, mh.newname, mh.newdesc,
@@ -585,29 +567,27 @@ class MCPBotProcess(object):
                     """.format(etype=etype),
                 ('{0}!_{1}!_%'.format(type_lookup[etype], member), member, member, member,
                  side_lookup[side]))
-            results = c.fetchall()
+            rows = c.fetchall()
 
-            if len(results) >= 1:
-                for result in results:
-                    oldname, olddesc, newname, newdesc, timestamp, nick, forced, searge, version = result
-                    self.reply("[%s, %s] %s: %s -> %s" % (version, timestamp, nick, oldname, newname))
+            if len(rows) >= 1:
+                for row in rows:
+                    self.reply("[%s, %s] %s: %s -> %s" % (row['v.mcpversion'], row['timestamp'], row['mh.nick'], row['mh.oldname'], row['mh.newname']))
             else:
-                self.reply("$B[ GET CHANGES %s %s ]" % (side.upper(), etype.upper()))
                 self.reply(" No result for %s" % self.ev.msg.strip())
 
     def revertChanges(self, side, etype):
+        type_lookup = {'methods': 'func', 'fields': 'field'}
+        side_lookup = {'client': 0, 'server': 1}
+
+        msg_split = self.ev.msg.split(None, 1)
+        if len(msg_split) != 1:
+            self.reply("Syntax error: $B%s <searge|index>" % self.ev.cmd)
+            return
+        member = msg_split[0]
+
         with self.db.get_db() as db_con:
             c = db_con.cursor()
             idversion = self.get_version(c)
-
-            type_lookup = {'methods': 'func', 'fields': 'field'}
-            side_lookup = {'client': 0, 'server': 1}
-
-            msg_split = self.ev.msg.split(None, 1)
-            if len(msg_split) != 1:
-                self.reply("Syntax error: $B%s <searge|index>" % self.ev.cmd)
-                return
-            member = msg_split[0]
 
             self.reply("$B[ REVERT %s %s ]" % (side.upper(), etype.upper()))
 
@@ -623,100 +603,98 @@ class MCPBotProcess(object):
             self.reply(" Reverting changes on $B%s$N is done." % member)
 
     def getlog(self):
+        side_lookup = {'client': 0, 'server': 1}
+
+        if self.bot.cnick == 'MCPBot':
+            if self.ev.sender not in self.bot.dcc.sockets or not self.bot.dcc.sockets[self.ev.sender]:
+                self.reply("$BPlease use DCC for getlog")
+                return
+
+        msg_split = self.ev.msg.strip().split(None, 1)
+        if len(msg_split) > 1:
+            self.reply("Syntax error: $B%s [full]" % self.ev.cmd)
+            return
+        fulllog = False
+        if len(msg_split) == 1:
+            if msg_split[0] == 'full':
+                fulllog = True
+
         with self.db.get_db() as db_con:
             c = db_con.cursor()
             idversion = self.get_version(c)
 
-            if self.bot.cnick == 'MCPBot':
-                if self.ev.sender not in self.bot.dcc.sockets or not self.bot.dcc.sockets[self.ev.sender]:
-                    self.reply("$BPlease use DCC for getlog")
-                    return
-
-            msg_split = self.ev.msg.strip().split(None, 1)
-            if len(msg_split) > 1:
-                self.reply("Syntax error: $B%s [full]" % self.ev.cmd)
-                return
-            fulllog = False
-            if len(msg_split) == 1:
-                if msg_split[0] == 'full':
-                    fulllog = True
-
-            side_lookup = {'client': 0, 'server': 1}
-
             self.reply("$B[ LOGS ]")
+
             for side in ['server', 'client']:
                 for etype in ['methods', 'fields']:
                     c.execute("""
                             SELECT m.name, m.searge, m.desc, h.newname, h.newdesc,
-                              strftime('%m-%d %H:%M', h.timestamp, 'unixepoch') AS htimestamp, h.nick, h.cmd, h.forced
+                              strftime('%m-%d %H:%M', h.timestamp, 'unixepoch') AS timestamp, h.nick, h.cmd, h.forced
                             FROM {etype} m
                               INNER JOIN {etype}hist h ON h.id=m.dirtyid
                             WHERE m.side=? AND m.versionid=?
                             ORDER BY h.timestamp
                         """.format(etype=etype),
                         (side_lookup[side], idversion))
-                    results = c.fetchall()
+                    rows = c.fetchall()
 
-                    if results:
-                        maxlennick = max([len(result[6]) for result in results])
-                        maxlensearge = max([len(result[1]) for result in results])
-                        maxlenmname = max([len(result[0]) for result in results])
+                    if rows:
+                        maxlennick = max([len(row['h.nick']) for row in rows])
+                        maxlensearge = max([len(row['m.searge']) for row in rows])
+                        maxlenmname = max([len(row['m.name']) for row in rows])
 
                         for forcedstatus in [0, 1]:
-                            for result in results:
-                                mname, msearge, mdesc, hname, hdesc, htimestamp, hnick, hcmd, hforced = result
-
-                                if hforced == forcedstatus:
+                            for row in rows:
+                                if row['forced'] == forcedstatus:
                                     if fulllog:
-                                        self.reply("+ %s, %s, %s" % (htimestamp, hnick, hcmd))
-                                        self.reply("  [%s%s][%s] %s => %s" % (side[0].upper(), etype[0].upper(), msearge.ljust(maxlensearge), mname.ljust(maxlenmname), hname))
-                                        self.reply("  [%s%s][%s] %s => %s" % (side[0].upper(), etype[0].upper(), msearge.ljust(maxlensearge), mdesc, hdesc))
+                                        self.reply("+ %s, %s, %s" % (row['timestamp'], row['h.nick'], row['h.cmd']))
+                                        self.reply("  [%s%s][%s] %s => %s" % (side[0].upper(), etype[0].upper(), row['searge'].ljust(maxlensearge), row['m.name'].ljust(maxlenmname), row['h.newname']))
+                                        self.reply("  [%s%s][%s] %s => %s" % (side[0].upper(), etype[0].upper(), row['searge'].ljust(maxlensearge), row['m.desc'], row['h.newdesc']))
                                     else:
-                                        indexmember = re.search('[0-9]+', msearge).group()
-                                        self.reply("+ %s, %s [%s%s][%5s][%4s] %s => %s" % (htimestamp, hnick.ljust(maxlennick), side[0].upper(), etype[0].upper(), indexmember, hcmd, mname.ljust(maxlensearge), hname))
+                                        indexmember = re.search('[0-9]+', row['m.searge']).group()
+                                        self.reply("+ %s, %s [%s%s][%5s][%4s] %s => %s" % (row['timestamp'], row['h.nick'].ljust(maxlennick), side[0].upper(), etype[0].upper(), indexmember, row['h.cmd'], row['m.name'].ljust(maxlensearge), row['h.newname']))
 
     def dbCommit(self, pushforced=False):
+        msg_split = self.ev.msg.strip().split(None, 1)
+        if len(msg_split):
+            self.reply("Syntax error: $B%s" % self.ev.cmd)
+            return
+
         with self.db.get_db() as db_con:
             c = db_con.cursor()
             idversion = self.get_version(c)
 
-            msg_split = self.ev.msg.strip().split(None, 1)
-            if len(msg_split):
-                self.reply("Syntax error: $B%s" % self.ev.cmd)
-                return
+            self.reply("$B[ COMMIT ]")
 
             nentries = 0
             for etype in ['methods', 'fields']:
-
                 if pushforced:
                     c.execute("""
-                            SELECT m.id, h.id, h.newname, h.newdesc
+                            SELECT m.id, h.newname, h.newdesc
                             FROM {etype} m
                               INNER JOIN {etype}hist h ON h.id=m.dirtyid
                             WHERE m.versionid=?
                         """.format(etype=etype),
                         (idversion,))
-                    results = c.fetchall()
                 else:
                     c.execute("""
-                            SELECT m.id, h.id, h.newname, h.newdesc
+                            SELECT m.id, h.newname, h.newdesc
                             FROM {etype} m
                               INNER JOIN {etype}hist h ON h.id=m.dirtyid
                             WHERE NOT h.forced=1
                               AND m.versionid=?
                         """.format(etype=etype),
                         (idversion,))
-                    results = c.fetchall()
-                nentries += len(results)
+                rows = c.fetchall()
+                nentries += len(rows)
 
-                for result in results:
-                    mid, hid, hnewname, hnewdesc = result
+                for row in rows:
                     c.execute("""
                             UPDATE {etype}
                             SET name=?, desc=?, dirtyid=0
                             WHERE id=?
                         """.format(etype=etype),
-                        (hnewname, hnewdesc, mid))
+                        (row['h.newname'], row['h.newdesc'], row['m.id']))
 
             if nentries:
                 c.execute("""
@@ -725,35 +703,37 @@ class MCPBotProcess(object):
                     """,
                     (None, int(time.time()), self.ev.sender))
                 db_con.commit()
-                self.reply("$B[ COMMIT ]")
                 self.reply(" Committed %d new updates" % nentries)
             else:
-                self.reply("$B[ COMMIT ]")
                 self.reply(" No new entries to commit")
 
     def altCsv(self):
+        msg_split = self.ev.msg.strip().split(None, 1)
+        if len(msg_split) > 2:
+            self.reply(" Syntax error: $B%s [version]$N" % self.ev.cmd)
+            return
+        if len(msg_split) == 1:
+            version = msg_split[0]
+        else:
+            version = None
+
         with self.db.get_db() as db_con:
             c = db_con.cursor()
             idversion = self.get_version(c)
 
-            msg_split = self.ev.msg.strip().split(None, 1)
-            if len(msg_split) > 2:
-                self.reply(" Syntax error: $B%s [version]$N" % self.ev.cmd)
-                return
-            if len(msg_split) == 1:
-                version = msg_split[0]
+            if version:
                 c.execute("""
                         SELECT id
                         FROM versions
                         WHERE mcpversion=?
                     """,
                     (version,))
-                result = c.fetchone()
-                if not result:
+                row = c.fetchone()
+                if not row:
                     self.reply("Version not recognised.")
                     return
                 else:
-                    (idversion,) = result
+                    idversion = row['id']
 
             c.execute("""
                     SELECT mcpversion
@@ -761,8 +741,8 @@ class MCPBotProcess(object):
                     WHERE id=?
                 """,
                 (idversion,))
-            result = c.fetchone()
-            (mcpversion,) = result
+            row = c.fetchone()
+            mcpversion = row['mcpversion']
 
             if self.bot.cnick == 'MCPBot':
                 trgdir = '/home/mcpfiles/mcprolling_%s/mcp/conf' % mcpversion
@@ -779,9 +759,9 @@ class MCPBotProcess(object):
                     ORDER BY side, searge
                 """,
                 (idversion,))
-            results = c.fetchall()
+            rows = c.fetchall()
             methodswriter.writerow(('searge', 'name', 'side', 'desc'))
-            for row in results:
+            for row in rows:
                 methodswriter.writerow(row)
 
             fieldswriter = csv.writer(open('%s/fields.csv' % trgdir, 'wb'))
@@ -794,27 +774,27 @@ class MCPBotProcess(object):
                     ORDER BY side, searge
                 """,
                 (idversion,))
-            results = c.fetchall()
+            rows = c.fetchall()
             fieldswriter.writerow(('searge', 'name', 'side', 'desc'))
-            for row in results:
+            for row in rows:
                 fieldswriter.writerow(row)
 
             self.reply("New CSVs exported")
 
     def testCsv(self):
+        msg_split = self.ev.msg.strip().split(None, 1)
+        if len(msg_split):
+            self.reply("Syntax error: $B%s" % self.ev.cmd)
+            return
+
+        if self.bot.cnick == 'MCPBot':
+            trgdir = '/home/mcpfiles/mcptest'
+        else:
+            trgdir = 'devconf'
+
         with self.db.get_db() as db_con:
             c = db_con.cursor()
             idversion = self.get_version(c)
-
-            if self.bot.cnick == 'MCPBot':
-                trgdir = '/home/mcpfiles/mcptest'
-            else:
-                trgdir = 'devconf'
-
-            msg_split = self.ev.msg.strip().split(None, 1)
-            if len(msg_split):
-                self.reply("Syntax error: $B%s" % self.ev.cmd)
-                return
 
             methodswriter = csv.writer(open('%s/methods.csv' % trgdir, 'wb'))
             c.execute("""
@@ -826,9 +806,9 @@ class MCPBotProcess(object):
                     ORDER BY side, searge
                 """,
                 (idversion,))
-            results = c.fetchall()
+            rows = c.fetchall()
             methodswriter.writerow(('searge', 'name', 'side', 'desc'))
-            for row in results:
+            for row in rows:
                 methodswriter.writerow(row)
 
             fieldswriter = csv.writer(open('%s/fields.csv' % trgdir, 'wb'))
@@ -841,28 +821,30 @@ class MCPBotProcess(object):
                     ORDER BY side, searge
                 """,
                 (idversion,))
-            results = c.fetchall()
+            rows = c.fetchall()
             fieldswriter.writerow(('searge', 'name', 'side', 'desc'))
-            for row in results:
+            for row in rows:
                 fieldswriter.writerow(row)
 
             self.reply("Test CSVs exported: http://mcp.ocean-labs.de/files/mcptest/")
 
     def status(self):
+        side_lookup = {'client': 0, 'server': 1}
+
+        msg_split = self.ev.msg.strip().split(None, 1)
+        if len(msg_split) > 1:
+            self.reply("Syntax error: $B%s [full]" % self.ev.cmd)
+            return
+        full_status = False
+        if len(msg_split) == 1:
+            if msg_split[0] == 'full':
+                full_status = True
+
         with self.db.get_db() as db_con:
             c = db_con.cursor()
             idversion = self.get_version(c)
 
-            side_lookup = {'client': 0, 'server': 1}
-
-            msg_split = self.ev.msg.strip().split(None, 1)
-            if len(msg_split) > 1:
-                self.reply("Syntax error: $B%s [full]" % self.ev.cmd)
-                return
-            full_status = False
-            if len(msg_split) == 1:
-                if msg_split[0] == 'full':
-                    full_status = True
+            self.reply("$B[ STATUS ]")
 
             c.execute("""
                     SELECT mcpversion, botversion, dbversion, clientversion, serverversion
@@ -870,66 +852,57 @@ class MCPBotProcess(object):
                     WHERE id=?
                 """,
                 (idversion,))
-            result = c.fetchone()
-            mcpversion, botversion, dbversion, clientversion, serverversion = result
+            row = c.fetchone()
 
-            self.reply("$B[ STATUS ]")
-            self.reply(" MCP    : $B%s" % mcpversion)
-            self.reply(" Bot    : $B%s" % botversion)
-            self.reply(" Client : $B%s" % clientversion)
-            self.reply(" Server : $B%s" % serverversion)
+            self.reply(" MCP    : $B%s" % row['mcpversion'])
+            self.reply(" Bot    : $B%s" % row['botversion'])
+            self.reply(" Client : $B%s" % row['clientversion'])
+            self.reply(" Server : $B%s" % row['serverversion'])
 
             if full_status:
                 for side in ['client', 'server']:
                     for etype in ['methods', 'fields']:
                         c.execute("""
-                                SELECT total({etype}t), total({etype}r), total({etype}u)
+                                SELECT total({etype}t) AS total, total({etype}r) AS ren, total({etype}u) AS urn
                                 FROM vclassesstats
                                 WHERE side=? AND versionid=?
                             """.format(etype=etype),
                             (side_lookup[side], idversion))
-                        result = c.fetchone()
-                        total, ren, urn = result
+                        row = c.fetchone()
 
-                        self.reply(" [%s][%7s] : T $B%4d$N | R $B%4d$N | U $B%4d$N | $B%5.2f%%$N" % (side[0].upper(), etype.upper(), total, ren, urn, float(ren) / float(total) * 100))
+                        self.reply(" [%s][%7s] : T $B%4d$N | R $B%4d$N | U $B%4d$N | $B%5.2f%%$N" % (side[0].upper(), etype.upper(), row['total'], row['ren'], row['urn'], float(row['ren']) / float(row['total']) * 100))
 
     def todo(self):
+        side_lookup = {'client': 0, 'server': 1}
+
+        msg_split = self.ev.msg.strip().split(None, 1)
+        if len(msg_split) != 1:
+            self.reply("Syntax error: $B%s <client|server>" % self.ev.cmd)
+            return
+        search_side = msg_split[0]
+        if search_side not in side_lookup:
+            self.reply("$Btodo <client|server>")
+            return
+
         with self.db.get_db() as db_con:
             c = db_con.cursor()
             idversion = self.get_version(c)
 
-            side_lookup = {'client': 0, 'server': 1}
-
-            msg_split = self.ev.msg.strip().split(None, 1)
-            if len(msg_split) != 1:
-                self.reply("Syntax error: $B%s <client|server>" % self.ev.cmd)
-                return
-            search_side = msg_split[0]
-            if search_side not in side_lookup:
-                self.reply("$Btodo <client|server>")
-                return
+            self.reply("$B[ TODO %s ]" % search_side.upper())
 
             c.execute("""
-                    SELECT id, name, methodst+fieldst, methodsr+fieldsr, methodsu+fieldsu
+                    SELECT name, methodst+fieldst AS memberst, methodsr+fieldsr AS membersr, methodsu+fieldsu AS membersu
                     FROM vclassesstats
                     WHERE side=? AND versionid=?
                     ORDER BY methodsu+fieldsu DESC
                     LIMIT 10
                 """,
                 (side_lookup[search_side], idversion))
-            results = c.fetchall()
+            rows = c.fetchall()
 
-            self.reply("$B[ TODO %s ]" % search_side.upper())
-            for result in results:
-                classid, name, memberst, membersr, membersu = result
-                if not memberst:
-                    memberst = 0
-                if not membersr:
-                    membersr = 0
-                if not membersu:
-                    membersu = 0
-                if not membersr:
-                    percent = 0.
+            for row in rows:
+                if row['memberst']:
+                    percent = float(row['membersr']) / float(row['memberst']) * 100.0
                 else:
-                    percent = float(membersr) / float(memberst) * 100.0
-                self.reply(" %s : $B%2d$N [ T $B%3d$N | R $B%3d$N | $B%5.2f%%$N ] " % (name.ljust(20), membersu, memberst, membersr, percent))
+                    percent = 0.
+                self.reply(" %s : $B%2d$N [ T $B%3d$N | R $B%3d$N | $B%5.2f%%$N ] " % (row['name'].ljust(20), row['membersu'], row['memberst'], row['membersr'], percent))

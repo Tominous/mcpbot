@@ -14,6 +14,7 @@ class DBConnection(object):
         with self._db_lock:
             db = sqlite3.connect(self.db_name)
             db.text_factory = sqlite3.OptimizedUnicode
+            db.row_factory = sqlite3.Row
             try:
                 yield db
                 db.rollback()

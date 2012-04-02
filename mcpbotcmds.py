@@ -10,7 +10,7 @@ class MCPBotCmds(object):
     def __init__(self, bot, ev):
         self.bot = bot
         self.ev = ev
-        self.process = MCPBotProcess(bot)
+        self.process = MCPBotProcess(self)
         self.say = self.bot.say
 
     def process_cmd(self):
@@ -94,189 +94,189 @@ class MCPBotCmds(object):
     #================== Getters classes ================================
     def cmd_gcc(self):
         """$Bgcc <classname>$N              : Get Client Class."""
-        self.process.getClass(self.ev.sender, self.ev.chan, self.ev.cmd, self.ev.msg, 'client')
+        self.process.getClass('client')
 
     def cmd_gsc(self):
         """$Bgsc <classname>$N              : Get Server Class."""
-        self.process.getClass(self.ev.sender, self.ev.chan, self.ev.cmd, self.ev.msg, 'server')
+        self.process.getClass('server')
 
     def cmd_gc(self):
-        self.process.getClass(self.ev.sender, self.ev.chan, self.ev.cmd, self.ev.msg, 'client')
-        self.process.getClass(self.ev.sender, self.ev.chan, self.ev.cmd, self.ev.msg, 'server')
+        self.process.getClass('client')
+        self.process.getClass('server')
 
     #===================================================================
 
     #================== Getters members ================================
     def cmd_gcm(self):
         """$Bgcm [classname.]<methodname>$N : Get Client Method."""
-        self.process.outputMembers(self.ev.sender, self.ev.chan, self.ev.cmd, self.ev.msg, 'client', 'methods')
+        self.process.outputMembers('client', 'methods')
 
     def cmd_gsm(self):
         """$Bgsm [classname.]<methodname>$N : Get Server Method."""
-        self.process.outputMembers(self.ev.sender, self.ev.chan, self.ev.cmd, self.ev.msg, 'server', 'methods')
+        self.process.outputMembers('server', 'methods')
 
     def cmd_gm(self):
-        self.process.outputMembers(self.ev.sender, self.ev.chan, self.ev.cmd, self.ev.msg, 'client', 'methods')
-        self.process.outputMembers(self.ev.sender, self.ev.chan, self.ev.cmd, self.ev.msg, 'server', 'methods')
+        self.process.outputMembers('client', 'methods')
+        self.process.outputMembers('server', 'methods')
 
     def cmd_gcf(self):
         """$Bgcf [classname.]<fieldname>$N  : Get Client Field."""
-        self.process.outputMembers(self.ev.sender, self.ev.chan, self.ev.cmd, self.ev.msg, 'client', 'fields')
+        self.process.outputMembers('client', 'fields')
 
     def cmd_gsf(self):
         """$Bgsf [classname.]<fieldname>$N  : Get Server Field."""
-        self.process.outputMembers(self.ev.sender, self.ev.chan, self.ev.cmd, self.ev.msg, 'server', 'fields')
+        self.process.outputMembers('server', 'fields')
 
     def cmd_gf(self):
-        self.process.outputMembers(self.ev.sender, self.ev.chan, self.ev.cmd, self.ev.msg, 'client', 'fields')
-        self.process.outputMembers(self.ev.sender, self.ev.chan, self.ev.cmd, self.ev.msg, 'server', 'fields')
+        self.process.outputMembers('client', 'fields')
+        self.process.outputMembers('server', 'fields')
 
     #===================================================================
 
     #====================== Search commands ============================
     def cmd_search(self):
         """$Bsearch <pattern>$N  : Search for a pattern."""
-        self.process.search(self.ev.sender, self.ev.chan, self.ev.cmd, self.ev.msg)
+        self.process.search()
 
     #===================================================================
 
     #====================== Setters for members ========================
     def cmd_scm(self):
         """$Bscm [<id>|<searge>] <newname> [description]$N : Set Client Method."""
-        self.process.setMember(self.ev.sender, self.ev.chan, self.ev.cmd, self.ev.msg, 'client', 'methods', forced=False)
+        self.process.setMember('client', 'methods', forced=False)
 
     def cmd_scf(self):
         """$Bscf [<id>|<searge>] <newname> [description]$N : Set Server Method."""
-        self.process.setMember(self.ev.sender, self.ev.chan, self.ev.cmd, self.ev.msg, 'client', 'fields', forced=False)
+        self.process.setMember('client', 'fields', forced=False)
 
     def cmd_ssm(self):
         """$Bssm [<id>|<searge>] <newname> [description]$N : Set Client Field."""
-        self.process.setMember(self.ev.sender, self.ev.chan, self.ev.cmd, self.ev.msg, 'server', 'methods', forced=False)
+        self.process.setMember('server', 'methods', forced=False)
 
     def cmd_ssf(self):
         """$Bssf [<id>|<searge>] <newname> [description]$N : Set Server Field."""
-        self.process.setMember(self.ev.sender, self.ev.chan, self.ev.cmd, self.ev.msg, 'server', 'fields', forced=False)
+        self.process.setMember('server', 'fields', forced=False)
 
     def cmd_fscm(self):
         """$Bscm [<id>|<searge>] <newname> [description]$N : Set Client Method."""
-        self.process.setMember(self.ev.sender, self.ev.chan, self.ev.cmd, self.ev.msg, 'client', 'methods', forced=True)
+        self.process.setMember('client', 'methods', forced=True)
 
     def cmd_fscf(self):
         """$Bscf [<id>|<searge>] <newname> [description]$N : Set Server Method."""
-        self.process.setMember(self.ev.sender, self.ev.chan, self.ev.cmd, self.ev.msg, 'client', 'fields', forced=True)
+        self.process.setMember('client', 'fields', forced=True)
 
     def cmd_fssm(self):
         """$Bssm [<id>|<searge>] <newname> [description]$N : Set Client Field."""
-        self.process.setMember(self.ev.sender, self.ev.chan, self.ev.cmd, self.ev.msg, 'server', 'methods', forced=True)
+        self.process.setMember('server', 'methods', forced=True)
 
     def cmd_fssf(self):
         """$Bssf [<id>|<searge>] <newname> [description]$N : Set Server Field."""
-        self.process.setMember(self.ev.sender, self.ev.chan, self.ev.cmd, self.ev.msg, 'server', 'fields', forced=True)
+        self.process.setMember('server', 'fields', forced=True)
 
     #===================================================================
 
     #======================= Port mappings =============================
     @restricted(2)
     def cmd_pcm(self):
-        self.process.portMember(self.ev.sender, self.ev.chan, self.ev.cmd, self.ev.msg, 'client', 'methods', forced=False)
+        self.process.portMember('client', 'methods', forced=False)
 
     @restricted(2)
     def cmd_pcf(self):
-        self.process.portMember(self.ev.sender, self.ev.chan, self.ev.cmd, self.ev.msg, 'client', 'fields', forced=False)
+        self.process.portMember('client', 'fields', forced=False)
 
     @restricted(2)
     def cmd_psm(self):
-        self.process.portMember(self.ev.sender, self.ev.chan, self.ev.cmd, self.ev.msg, 'server', 'methods', forced=False)
+        self.process.portMember('server', 'methods', forced=False)
 
     @restricted(2)
     def cmd_psf(self):
-        self.process.portMember(self.ev.sender, self.ev.chan, self.ev.cmd, self.ev.msg, 'server', 'fields', forced=False)
+        self.process.portMember('server', 'fields', forced=False)
 
     @restricted(2)
     def cmd_fpcm(self):
-        self.process.portMember(self.ev.sender, self.ev.chan, self.ev.cmd, self.ev.msg, 'client', 'methods', forced=True)
+        self.process.portMember('client', 'methods', forced=True)
 
     @restricted(2)
     def cmd_fpcf(self):
-        self.process.portMember(self.ev.sender, self.ev.chan, self.ev.cmd, self.ev.msg, 'client', 'fields', forced=True)
+        self.process.portMember('client', 'fields', forced=True)
 
     @restricted(2)
     def cmd_fpsm(self):
-        self.process.portMember(self.ev.sender, self.ev.chan, self.ev.cmd, self.ev.msg, 'server', 'methods', forced=True)
+        self.process.portMember('server', 'methods', forced=True)
 
     @restricted(2)
     def cmd_fpsf(self):
-        self.process.portMember(self.ev.sender, self.ev.chan, self.ev.cmd, self.ev.msg, 'server', 'fields', forced=True)
+        self.process.portMember('server', 'fields', forced=True)
 
     #===================================================================
 
     #======================= Mapping info ==============================
     @restricted(2)
     def cmd_icm(self):
-        self.process.infoChanges(self.ev.sender, self.ev.chan, self.ev.cmd, self.ev.msg, 'client', 'methods')
+        self.process.infoChanges('client', 'methods')
 
     @restricted(2)
     def cmd_icf(self):
-        self.process.infoChanges(self.ev.sender, self.ev.chan, self.ev.cmd, self.ev.msg, 'client', 'fields')
+        self.process.infoChanges('client', 'fields')
 
     @restricted(2)
     def cmd_ism(self):
-        self.process.infoChanges(self.ev.sender, self.ev.chan, self.ev.cmd, self.ev.msg, 'server', 'methods')
+        self.process.infoChanges('server', 'methods')
 
     @restricted(2)
     def cmd_isf(self):
-        self.process.infoChanges(self.ev.sender, self.ev.chan, self.ev.cmd, self.ev.msg, 'server', 'fields')
+        self.process.infoChanges('server', 'fields')
 
     #===================================================================
 
     #====================== Revert changes =============================
     @restricted(2)
     def cmd_rcm(self):
-        self.process.revertChanges(self.ev.sender, self.ev.chan, self.ev.cmd, self.ev.msg, 'client', 'methods')
+        self.process.revertChanges('client', 'methods')
 
     @restricted(2)
     def cmd_rcf(self):
-        self.process.revertChanges(self.ev.sender, self.ev.chan, self.ev.cmd, self.ev.msg, 'client', 'fields')
+        self.process.revertChanges('client', 'fields')
 
     @restricted(2)
     def cmd_rsm(self):
-        self.process.revertChanges(self.ev.sender, self.ev.chan, self.ev.cmd, self.ev.msg, 'server', 'methods')
+        self.process.revertChanges('server', 'methods')
 
     @restricted(2)
     def cmd_rsf(self):
-        self.process.revertChanges(self.ev.sender, self.ev.chan, self.ev.cmd, self.ev.msg, 'server', 'fields')
+        self.process.revertChanges('server', 'fields')
 
     #===================================================================
 
     #====================== Log Methods ================================
     def cmd_getlog(self):
-        self.process.getlog(self.ev.sender, self.ev.chan, self.ev.cmd, self.ev.msg)
+        self.process.getlog()
 
     @restricted(3)
     def cmd_commit(self):
-        self.process.dbCommit(self.ev.sender, self.ev.chan, self.ev.cmd, self.ev.msg, pushforced=False)
+        self.process.dbCommit(pushforced=False)
 
     @restricted(4)
     def cmd_fcommit(self):
-        self.process.dbCommit(self.ev.sender, self.ev.chan, self.ev.cmd, self.ev.msg, pushforced=True)
+        self.process.dbCommit(pushforced=True)
 
     @restricted(3)
     def cmd_updatecsv(self):
-        self.process.dbCommit(self.ev.sender, self.ev.chan, self.ev.cmd, self.ev.msg, pushforced=False)
-        self.process.updateCsv(self.ev.sender, self.ev.chan, self.ev.cmd, self.ev.msg)
+        self.process.dbCommit(pushforced=False)
+        self.process.updateCsv()
 
     @restricted(4)
     def cmd_fupdatecsv(self):
-        self.process.dbCommit(self.ev.sender, self.ev.chan, self.ev.cmd, self.ev.msg, pushforced=True)
-        self.process.updateCsv(self.ev.sender, self.ev.chan, self.ev.cmd, self.ev.msg)
+        self.process.dbCommit(pushforced=True)
+        self.process.updateCsv()
 
     @restricted(3)
     def cmd_altcsv(self):
-        self.process.altCsv(self.ev.sender, self.ev.chan, self.ev.cmd, self.ev.msg)
+        self.process.altCsv()
 
     @restricted(2)
     def cmd_testcsv(self):
-        self.process.testCsv(self.ev.sender, self.ev.chan, self.ev.cmd, self.ev.msg)
+        self.process.testCsv()
 
     #===================================================================
 
@@ -379,7 +379,7 @@ class MCPBotCmds(object):
         self.say(self.ev.sender, "For help, please check : http://mcp.ocean-labs.de/index.php/MCPBot")
 
     def cmd_status(self):
-        self.process.status(self.ev.sender, self.ev.chan, self.ev.cmd, self.ev.msg)
+        self.process.status()
 
     @restricted(4)
     def cmd_listthreads(self):
@@ -415,4 +415,4 @@ class MCPBotCmds(object):
         self.say(self.ev.sender, str(self.bot.dcc.sockets.keys()))
 
     def cmd_todo(self):
-        self.process.todo(self.ev.sender, self.ev.chan, self.ev.cmd, self.ev.msg)
+        self.process.todo()

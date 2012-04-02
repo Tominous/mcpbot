@@ -749,7 +749,8 @@ class MCPBotProcess(object):
             else:
                 trgdir = 'devconf'
 
-            methodswriter = csv.writer(open('%s/methods.csv' % trgdir, 'wb'))
+            methodswriter = csv.DictWriter(open('%s/methods.csv' % trgdir, 'wb'), ('searge', 'name', 'side', 'desc'))
+            methodswriter.writeheader()
             c.execute("""
                     SELECT DISTINCT searge, name, side, desc
                     FROM vmethods
@@ -760,11 +761,11 @@ class MCPBotProcess(object):
                 """,
                 (idversion,))
             rows = c.fetchall()
-            methodswriter.writerow(('searge', 'name', 'side', 'desc'))
             for row in rows:
-                methodswriter.writerow(row)
+                methodswriter.writerow({'searge': row['searge'], 'name': row['name'], 'side': row['side'], 'desc': row['desc']})
 
-            fieldswriter = csv.writer(open('%s/fields.csv' % trgdir, 'wb'))
+            fieldswriter = csv.DictWriter(open('%s/fields.csv' % trgdir, 'wb'), ('searge', 'name', 'side', 'desc'))
+            fieldswriter.writeheader()
             c.execute("""
                     SELECT DISTINCT searge, name, side, desc
                     FROM vfields
@@ -775,9 +776,8 @@ class MCPBotProcess(object):
                 """,
                 (idversion,))
             rows = c.fetchall()
-            fieldswriter.writerow(('searge', 'name', 'side', 'desc'))
             for row in rows:
-                fieldswriter.writerow(row)
+                fieldswriter.writerow({'searge': row['searge'], 'name': row['name'], 'side': row['side'], 'desc': row['desc']})
 
             self.reply("New CSVs exported")
 
@@ -796,7 +796,8 @@ class MCPBotProcess(object):
             c = db_con.cursor()
             idversion = self.get_version(c)
 
-            methodswriter = csv.writer(open('%s/methods.csv' % trgdir, 'wb'))
+            methodswriter = csv.DictWriter(open('%s/methods.csv' % trgdir, 'wb'), ('searge', 'name', 'side', 'desc'))
+            methodswriter.writeheader()
             c.execute("""
                     SELECT DISTINCT searge, name, side, desc
                     FROM vmethods
@@ -807,11 +808,11 @@ class MCPBotProcess(object):
                 """,
                 (idversion,))
             rows = c.fetchall()
-            methodswriter.writerow(('searge', 'name', 'side', 'desc'))
             for row in rows:
-                methodswriter.writerow(row)
+                methodswriter.writerow({'searge': row['searge'], 'name': row['name'], 'side': row['side'], 'desc': row['desc']})
 
-            fieldswriter = csv.writer(open('%s/fields.csv' % trgdir, 'wb'))
+            fieldswriter = csv.DictWriter(open('%s/fields.csv' % trgdir, 'wb'), ('searge', 'name', 'side', 'desc'))
+            fieldswriter.writeheader()
             c.execute("""
                     SELECT DISTINCT searge, name, side, desc
                     FROM vfields
@@ -822,9 +823,8 @@ class MCPBotProcess(object):
                 """,
                 (idversion,))
             rows = c.fetchall()
-            fieldswriter.writerow(('searge', 'name', 'side', 'desc'))
             for row in rows:
-                fieldswriter.writerow(row)
+                fieldswriter.writerow({'searge': row['searge'], 'name': row['name'], 'side': row['side'], 'desc': row['desc']})
 
             self.reply("Test CSVs exported: http://mcp.ocean-labs.de/files/mcptest/")
 

@@ -709,31 +709,13 @@ class MCPBotProcess(object):
 
     def altCsv(self):
         msg_split = self.ev.msg.strip().split(None, 1)
-        if len(msg_split) > 2:
-            self.reply(" Syntax error: $B%s [version]$N" % self.ev.cmd)
+        if len(msg_split):
+            self.reply(" Syntax error: $B%s" % self.ev.cmd)
             return
-        if len(msg_split) == 1:
-            version = msg_split[0]
-        else:
-            version = None
 
         with self.db.get_db() as db_con:
             c = db_con.cursor()
             idversion = self.get_version(c)
-
-            if version:
-                c.execute("""
-                        SELECT id
-                        FROM versions
-                        WHERE mcpversion=?
-                    """,
-                    (version,))
-                row = c.fetchone()
-                if not row:
-                    self.reply("Version not recognised.")
-                    return
-                else:
-                    idversion = row['id']
 
             c.execute("""
                     SELECT mcpversion

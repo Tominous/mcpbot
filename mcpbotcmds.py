@@ -259,16 +259,6 @@ class MCPBotCmds(object):
         self.process.dbCommit(pushforced=True)
 
     @restricted(3)
-    def cmd_updatecsv(self):
-        self.process.dbCommit(pushforced=False)
-        self.process.updateCsv()
-
-    @restricted(4)
-    def cmd_fupdatecsv(self):
-        self.process.dbCommit(pushforced=True)
-        self.process.updateCsv()
-
-    @restricted(3)
     def cmd_altcsv(self):
         self.process.altCsv()
 

@@ -3,8 +3,8 @@ def restricted(level=4):
         def wrap_f(*args, **kwargs):
             commands = args[0]
             bot = commands.bot
-            sender = args[1]
-            chan = args[2]
+            sender = commands.ev.sender
+            chan = commands.ev.chan
 
             # Small work around for !pub restricted commands
             if sender == chan:

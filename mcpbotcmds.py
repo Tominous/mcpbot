@@ -11,7 +11,9 @@ class MCPBotCmds(object):
         self.bot = bot
         self.ev = ev
         self.process = MCPBotProcess(self)
-        self.say = self.bot.say
+
+    def reply(self, msg):
+        self.bot.say(self.ev.sender, msg)
 
     def process_cmd(self):
         getattr(self, 'cmd_%s' % self.ev.cmd, self.cmdDefault)()
@@ -24,17 +26,17 @@ class MCPBotCmds(object):
     def cmd_say(self):
         msg_split = self.ev.msg.strip().split(None, 1)
         if len(msg_split) < 2:
-            self.say(self.ev.sender, " Syntax error: $B%s <target> <message>$N" % self.ev.cmd)
+            self.reply(" Syntax error: $B%s <target> <message>$N" % self.ev.cmd)
             return
         target = msg_split[0]
         outmsg = msg_split[1]
-        self.say(target, outmsg)
+        self.bot.say(target, outmsg)
 
     @restricted(4)
     def cmd_msg(self):
         msg_split = self.ev.msg.strip().split(None, 1)
         if len(msg_split) < 2:
-            self.say(self.ev.sender, " Syntax error: $B%s <target> <message>$N" % self.ev.cmd)
+            self.reply(" Syntax error: $B%s <target> <message>$N" % self.ev.cmd)
             return
         target = msg_split[0]
         outmsg = msg_split[1]
@@ -44,7 +46,7 @@ class MCPBotCmds(object):
     def cmd_notice(self):
         msg_split = self.ev.msg.strip().split(None, 1)
         if len(msg_split) < 2:
-            self.say(self.ev.sender, " Syntax error: $B%s <target> <message>$N" % self.ev.cmd)
+            self.reply(" Syntax error: $B%s <target> <message>$N" % self.ev.cmd)
             return
         target = msg_split[0]
         outmsg = msg_split[1]
@@ -54,7 +56,7 @@ class MCPBotCmds(object):
     def cmd_action(self):
         msg_split = self.ev.msg.strip().split(None, 1)
         if len(msg_split) < 2:
-            self.say(self.ev.sender, " Syntax error: $B%s <target> <message>$N" % self.ev.cmd)
+            self.reply(" Syntax error: $B%s <target> <message>$N" % self.ev.cmd)
             return
         target = msg_split[0]
         outmsg = msg_split[1]
@@ -69,17 +71,13 @@ class MCPBotCmds(object):
             msg = msg[1:]
         msg_split = msg.strip().split(None, 1)
         if not len(msg_split):
-            self.say(self.ev.sender, " Syntax error: $B%s <command>$N" % self.ev.cmd)
+            self.reply(" Syntax error: $B%s <command>$N" % self.ev.cmd)
             return
         outcmd = msg_split[0].lower()
         if len(msg_split) > 1:
             outmsg = msg_split[1]
         else:
             outmsg = ''
-
-        if outcmd in ['ssf, ssm, scf, scm']:
-            self.say(self.ev.sender, 'No public setters !')
-            return
 
         if self.ev.chan is None:
             sender = self.ev.senderfull
@@ -292,52 +290,52 @@ class MCPBotCmds(object):
             try:
                 level = int(msg_split[1])
             except ValueError:
-                self.say(self.ev.sender, "Syntax error: $B%s <nick> [level]" % self.ev.cmd)
+                self.reply("Syntax error: $B%s <nick> [level]" % self.ev.cmd)
                 return
         else:
-            self.say(self.ev.sender, "Syntax error: $B%s <nick> [level]" % self.ev.cmd)
+            self.reply("Syntax error: $B%s <nick> [level]" % self.ev.cmd)
             return
         if level > 4:
-            self.say(self.ev.sender, "Max level is 4.")
+            self.reply("Max level is 4.")
             return
         if level >= self.bot.whitelist[self.ev.sender]:
-            self.say(self.ev.sender, "You don't have the rights to do that.")
+            self.reply("You don't have the rights to do that.")
             return
         self.bot.addWhitelist(nick, level)
-        self.say(self.ev.sender, "Added %s with level %d to whitelist" % (nick, level))
+        self.reply("Added %s with level %d to whitelist" % (nick, level))
 
     @restricted(0)
     def cmd_rmwhite(self):
         msg_split = self.ev.msg.strip().split(None, 1)
         if len(msg_split) != 1:
-            self.say(self.ev.sender, "Syntax error: $B%s <nick>" % self.ev.cmd)
+            self.reply("Syntax error: $B%s <nick>" % self.ev.cmd)
             return
         nick = msg_split[0]
 
         if nick in self.bot.whitelist and self.bot.whitelist[nick] >= self.bot.whitelist[self.ev.sender]:
-            self.say(self.ev.sender, "You don't have the rights to do that.")
+            self.reply("You don't have the rights to do that.")
             return
 
         try:
             self.bot.rmWhitelist(nick)
         except KeyError:
-            self.say(self.ev.sender, "User %s not found in the whitelist" % nick)
+            self.reply("User %s not found in the whitelist" % nick)
             return
-        self.say(self.ev.sender, "User %s removed from the whitelist" % nick)
+        self.reply("User %s removed from the whitelist" % nick)
 
     @restricted(0)
     def cmd_getwhite(self):
         msg_split = self.ev.msg.strip().split(None, 1)
         if len(msg_split):
-            self.say(self.ev.sender, "Syntax error: $B%s" % self.ev.cmd)
+            self.reply("Syntax error: $B%s" % self.ev.cmd)
             return
-        self.say(self.ev.sender, "Whitelist : %s" % self.bot.whitelist)
+        self.reply("Whitelist : %s" % self.bot.whitelist)
 
     @restricted(4)
     def cmd_savewhite(self):
         msg_split = self.ev.msg.strip().split(None, 1)
         if len(msg_split):
-            self.say(self.ev.sender, "Syntax error: $B%s" % self.ev.cmd)
+            self.reply("Syntax error: $B%s" % self.ev.cmd)
             return
         self.bot.saveWhitelist()
 
@@ -345,7 +343,7 @@ class MCPBotCmds(object):
     def cmd_loadwhite(self):
         msg_split = self.ev.msg.strip().split(None, 1)
         if len(msg_split):
-            self.say(self.ev.sender, "Syntax error: $B%s" % self.ev.cmd)
+            self.reply("Syntax error: $B%s" % self.ev.cmd)
             return
         self.bot.loadWhitelist()
     #===================================================================
@@ -355,7 +353,7 @@ class MCPBotCmds(object):
         """$Bdcc$N : Starts a dcc session. Faster and not under the flood protection."""
         msg_split = self.ev.msg.strip().split(None, 1)
         if len(msg_split):
-            self.say(self.ev.sender, "Syntax error: $B%s" % self.ev.cmd)
+            self.reply("Syntax error: $B%s" % self.ev.cmd)
             return
         self.bot.dcc.dcc(self.ev.sender)
 
@@ -363,7 +361,7 @@ class MCPBotCmds(object):
     def cmd_kick(self):
         msg_split = self.ev.msg.strip().split(None, 2)
         if len(msg_split) < 2:
-            self.say(self.ev.sender, "Syntax error: $B%s <channel> <target> [message]" % self.ev.cmd)
+            self.reply("Syntax error: $B%s <channel> <target> [message]" % self.ev.cmd)
             return
         if len(msg_split) > 2:
             self.bot.irc.kick(msg_split[0], msg_split[1], msg_split[2])
@@ -375,8 +373,8 @@ class MCPBotCmds(object):
         self.bot.irc.rawcmd(self.ev.msg)
 
     def cmd_help(self):
-        self.say(self.ev.sender, "$B[ HELP ]")
-        self.say(self.ev.sender, "For help, please check : http://mcp.ocean-labs.de/index.php/MCPBot")
+        self.reply("$B[ HELP ]")
+        self.reply("For help, please check : http://mcp.ocean-labs.de/index.php/MCPBot")
 
     def cmd_status(self):
         self.process.status()
@@ -385,11 +383,11 @@ class MCPBotCmds(object):
     def cmd_listthreads(self):
         msg_split = self.ev.msg.strip().split(None, 1)
         if len(msg_split):
-            self.say(self.ev.sender, "Syntax error: $B%s" % self.ev.cmd)
+            self.reply("Syntax error: $B%s" % self.ev.cmd)
             return
 
         threads = threading.enumerate()
-        self.say(self.ev.sender, "$B[ THREADS ]")
+        self.reply("$B[ THREADS ]")
         maxthreadname = max([len(i.name) for i in threads])
 
         for t in threads:
@@ -397,22 +395,22 @@ class MCPBotCmds(object):
                 line = '%s %4d %4d %4d' % (str(t.name).ljust(maxthreadname), t.ncalls, t.nscalls, t.nfcalls)
             else:
                 line = '%s %4d %4d %4d' % (str(t.name).ljust(maxthreadname), 0, 0, 0)
-            self.say(self.ev.sender, line)
+            self.reply(line)
 
         nthreads = len(threads)
         if nthreads == self.bot.nthreads + 1:
-            self.say(self.ev.sender, " All threads up and running !")
+            self.reply(" All threads up and running !")
         else:
-            self.say(self.ev.sender, " Found only $R%d$N threads ! $BThere is a problem !" % (nthreads - 1))
+            self.reply(" Found only $R%d$N threads ! $BThere is a problem !" % (nthreads - 1))
 
     @restricted(4)
     def cmd_listdcc(self):
         msg_split = self.ev.msg.strip().split(None, 1)
         if len(msg_split):
-            self.say(self.ev.sender, "Syntax error: $B%s" % self.ev.cmd)
+            self.reply("Syntax error: $B%s" % self.ev.cmd)
             return
 
-        self.say(self.ev.sender, str(self.bot.dcc.sockets.keys()))
+        self.reply(str(self.bot.dcc.sockets.keys()))
 
     def cmd_todo(self):
         self.process.todo()

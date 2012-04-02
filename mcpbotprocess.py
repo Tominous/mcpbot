@@ -7,7 +7,7 @@ class MCPBotProcess(object):
     def __init__(self, cmds):
         self.commands = cmds
         self.ev = self.commands.ev
-        self.say = self.commands.say
+        self.reply = self.commands.reply
         self.bot = self.commands.bot
         self.db = self.bot.db
 
@@ -31,7 +31,7 @@ class MCPBotProcess(object):
 
             msg_split = self.ev.msg.strip().split(None, 1)
             if len(msg_split) != 1:
-                self.say(self.ev.sender, " Syntax error: $B%s <classname>$N" % self.ev.cmd)
+                self.reply(" Syntax error: $B%s <classname>$N" % self.ev.cmd)
                 return
             search_class = msg_split[0]
 
@@ -46,8 +46,8 @@ class MCPBotProcess(object):
             classresults = c.fetchall()
 
             if not classresults:
-                self.say(self.ev.sender, "$B[ GET %s CLASS ]" % side.upper())
-                self.say(self.ev.sender, " No results found for $B%s" % search_class)
+                self.reply("$B[ GET %s CLASS ]" % side.upper())
+                self.reply(" No results found for $B%s" % search_class)
                 return
 
             for classresult in classresults:
@@ -63,14 +63,14 @@ class MCPBotProcess(object):
                      side_lookup[side], idversion))
                 constructorsresult = c.fetchall()
 
-                self.say(self.ev.sender, "$B[ GET %s CLASS ]" % side.upper())
-                self.say(self.ev.sender, " Side        : $B%s" % side)
-                self.say(self.ev.sender, " Name        : $B%s" % name)
-                self.say(self.ev.sender, " Notch       : $B%s" % notch)
-                self.say(self.ev.sender, " Super       : $B%s" % supername)
+                self.reply("$B[ GET %s CLASS ]" % side.upper())
+                self.reply(" Side        : $B%s" % side)
+                self.reply(" Name        : $B%s" % name)
+                self.reply(" Notch       : $B%s" % notch)
+                self.reply(" Super       : $B%s" % supername)
 
                 for constructor in constructorsresult:
-                    self.say(self.ev.sender, " Constructor : $B%s$N | $B%s$N" % (constructor[0], constructor[1]))
+                    self.reply(" Constructor : $B%s$N | $B%s$N" % (constructor[0], constructor[1]))
 
     def outputMembers(self, side, etype):
         with self.db.get_db() as db_con:
@@ -82,7 +82,7 @@ class MCPBotProcess(object):
 
             msg_split = self.ev.msg.strip().split(None, 2)
             if len(msg_split) < 1 or len(msg_split) > 2:
-                self.say(self.ev.sender, " Syntax error: $B%s <membername> [signature]$N or $B%s <classname>.<membername> [signature]$N" % (self.ev.cmd, self.ev.cmd))
+                self.reply(" Syntax error: $B%s <membername> [signature]$N or $B%s <classname>.<membername> [signature]$N" % (self.ev.cmd, self.ev.cmd))
                 return
             member = msg_split[0]
             sname = None
@@ -92,7 +92,7 @@ class MCPBotProcess(object):
             mname = None
             split_member = member.split('.', 2)
             if len(split_member) > 2:
-                self.say(self.ev.sender, " Syntax error: $B%s <membername> [signature]$N or $B%s <classname>.<membername> [signature]$N" % (self.ev.cmd, self.ev.cmd))
+                self.reply(" Syntax error: $B%s <membername> [signature]$N or $B%s <classname>.<membername> [signature]$N" % (self.ev.cmd, self.ev.cmd))
                 return
             if len(split_member) > 1:
                 cname = split_member[0]
@@ -153,14 +153,14 @@ class MCPBotProcess(object):
                 highlimit = 10
 
             if len(results) > highlimit:
-                self.say(self.ev.sender, "$B[ GET %s %s ]" % (side.upper(), etype.upper()))
-                self.say(self.ev.sender, " $BVERY$N ambiguous request $R'%s'$N" % self.ev.msg)
-                self.say(self.ev.sender, " Found %s possible answers" % len(results))
-                self.say(self.ev.sender, " Not displaying any !")
+                self.reply("$B[ GET %s %s ]" % (side.upper(), etype.upper()))
+                self.reply(" $BVERY$N ambiguous request $R'%s'$N" % self.ev.msg)
+                self.reply(" Found %s possible answers" % len(results))
+                self.reply(" Not displaying any !")
             elif highlimit >= len(results) > lowlimit:
-                self.say(self.ev.sender, "$B[ GET %s %s ]" % (side.upper(), etype.upper()))
-                self.say(self.ev.sender, " Ambiguous request $R'%s'$N" % self.ev.msg)
-                self.say(self.ev.sender, " Found %s possible answers" % len(results))
+                self.reply("$B[ GET %s %s ]" % (side.upper(), etype.upper()))
+                self.reply(" Ambiguous request $R'%s'$N" % self.ev.msg)
+                self.reply(" Found %s possible answers" % len(results))
                 maxlencsv = max([len('%s.%s' % (result[6], result[0])) for result in results])
                 maxlennotch = max([len('[%s.%s]' % (result[7], result[1])) for result in results])
                 for result in results:
@@ -168,21 +168,21 @@ class MCPBotProcess(object):
                     fullcsv = '%s.%s' % (classname, name)
                     fullnotch = '[%s.%s]' % (classnotch, notch)
                     fullsearge = '[%s]' % searge
-                    self.say(self.ev.sender, " %s %s %s %s %s" % (fullsearge, fullcsv.ljust(maxlencsv + 2), fullnotch.ljust(maxlennotch + 2), sig, notchsig))
+                    self.reply(" %s %s %s %s %s" % (fullsearge, fullcsv.ljust(maxlencsv + 2), fullnotch.ljust(maxlennotch + 2), sig, notchsig))
             elif lowlimit >= len(results) > 0:
                 for result in results:
                     name, notch, searge, sig, notchsig, desc, classname, classnotch = result
-                    self.say(self.ev.sender, "$B[ GET %s %s ]" % (side.upper(), etype.upper()))
-                    self.say(self.ev.sender, " Side        : $B%s" % side)
-                    self.say(self.ev.sender, " Name        : $B%s.%s" % (classname, name,))
-                    self.say(self.ev.sender, " Notch       : $B%s.%s" % (classnotch, notch,))
-                    self.say(self.ev.sender, " Searge      : $B%s" % searge)
-                    self.say(self.ev.sender, " Type/Sig    : $B%s$N | $B%s$N" % (sig, notchsig))
+                    self.reply("$B[ GET %s %s ]" % (side.upper(), etype.upper()))
+                    self.reply(" Side        : $B%s" % side)
+                    self.reply(" Name        : $B%s.%s" % (classname, name,))
+                    self.reply(" Notch       : $B%s.%s" % (classnotch, notch,))
+                    self.reply(" Searge      : $B%s" % searge)
+                    self.reply(" Type/Sig    : $B%s$N | $B%s$N" % (sig, notchsig))
                     if desc:
-                        self.say(self.ev.sender, " Description : %s" % desc)
+                        self.reply(" Description : %s" % desc)
             else:
-                self.say(self.ev.sender, "$B[ GET %s %s ]" % (side.upper(), etype.upper()))
-                self.say(self.ev.sender, " No result for %s" % self.ev.msg.strip())
+                self.reply("$B[ GET %s %s ]" % (side.upper(), etype.upper()))
+                self.reply(" No result for %s" % self.ev.msg.strip())
 
     def search(self):
         with self.db.get_db() as db_con:
@@ -193,7 +193,7 @@ class MCPBotProcess(object):
 
             msg_split = self.ev.msg.strip().split(None, 1)
             if len(msg_split) != 1:
-                self.say(self.ev.sender, " Syntax error: $B%s <name>$N" % self.ev.cmd)
+                self.reply(" Syntax error: $B%s <name>$N" % self.ev.cmd)
                 return
             search_str = msg_split[0]
 
@@ -204,7 +204,7 @@ class MCPBotProcess(object):
             else:
                 highlimit = 10
 
-            self.say(self.ev.sender, "$B[ SEARCH RESULTS ]")
+            self.reply("$B[ SEARCH RESULTS ]")
             for side in ['client', 'server']:
                 c.execute("""
                         SELECT c.name, c.notch
@@ -228,31 +228,31 @@ class MCPBotProcess(object):
                     results[etype] = c.fetchall()
 
                 if not results['classes']:
-                    self.say(self.ev.sender, " [%s][  CLASS] No results" % side.upper())
+                    self.reply(" [%s][  CLASS] No results" % side.upper())
                 else:
                     maxlenname = max([len(result[0]) for result in results['classes']])
                     maxlennotch = max([len(result[1]) for result in results['classes']])
                     if len(results['classes']) > highlimit:
-                        self.say(self.ev.sender, " [%s][  CLASS] Too many results : %d" % (side.upper(), len(results['classes'])))
+                        self.reply(" [%s][  CLASS] Too many results : %d" % (side.upper(), len(results['classes'])))
                     else:
                         for result in results['classes']:
                             name, notch = result
-                            self.say(self.ev.sender, " [%s][  CLASS] %s %s" % (side.upper(), name.ljust(maxlenname + 2), notch.ljust(maxlennotch + 2)))
+                            self.reply(" [%s][  CLASS] %s %s" % (side.upper(), name.ljust(maxlenname + 2), notch.ljust(maxlennotch + 2)))
 
                 for etype in ['fields', 'methods']:
                     if not results[etype]:
-                        self.say(self.ev.sender, " [%s][%7s] No results" % (side.upper(), etype.upper()))
+                        self.reply(" [%s][%7s] No results" % (side.upper(), etype.upper()))
                     else:
                         maxlenname = max([len('%s.%s' % (result[6], result[0])) for result in results[etype]])
                         maxlennotch = max([len('[%s.%s]' % (result[7], result[1])) for result in results[etype]])
                         if len(results[etype]) > highlimit:
-                            self.say(self.ev.sender, " [%s][%7s] Too many results : %d" % (side.upper(), etype.upper(), len(results[etype])))
+                            self.reply(" [%s][%7s] Too many results : %d" % (side.upper(), etype.upper(), len(results[etype])))
                         else:
                             for result in results[etype]:
                                 name, notch, searge, sig, notchsig, desc, classname, classnotch = result
                                 fullname = '%s.%s' % (classname, name)
                                 fullnotch = '[%s.%s]' % (classnotch, notch)
-                                self.say(self.ev.sender, " [%s][%7s] %s %s %s %s" % (side.upper(), etype.upper(), fullname.ljust(maxlenname + 2), fullnotch.ljust(maxlennotch + 2), sig, notchsig))
+                                self.reply(" [%s][%7s] %s %s %s %s" % (side.upper(), etype.upper(), fullname.ljust(maxlenname + 2), fullnotch.ljust(maxlennotch + 2), sig, notchsig))
 
     def setMember(self, side, etype, forced=False):
         with self.db.get_db() as db_con:
@@ -264,7 +264,7 @@ class MCPBotProcess(object):
 
             msg_split = self.ev.msg.strip().split(None, 2)
             if len(msg_split) < 2:
-                self.say(self.ev.sender, " Syntax error: $B%s <membername> <newname> [newdescription]$N" % self.ev.cmd)
+                self.reply(" Syntax error: $B%s <membername> <newname> [newdescription]$N" % self.ev.cmd)
                 return
 
             oldname = msg_split[0]
@@ -273,13 +273,13 @@ class MCPBotProcess(object):
             if len(msg_split) > 2:
                 newdesc = msg_split[2]
 
-            self.say(self.ev.sender, "$B[ SET %s %s ]" % (side.upper(), etype.upper()))
+            self.reply("$B[ SET %s %s ]" % (side.upper(), etype.upper()))
             if forced:
-                self.say(self.ev.sender, "$RCAREFUL, YOU ARE FORCING AN UPDATE !")
+                self.reply("$RCAREFUL, YOU ARE FORCING AN UPDATE !")
 
             # DON'T ALLOW STRANGE CHARACTERS IN NAMES
             if re.search(r'[^A-Za-z0-9$_]', newname):
-                self.say(self.ev.sender, "$RIllegal character in name")
+                self.reply("$RIllegal character in name")
                 return
 
             ## WE CHECK IF WE ARE NOT CONFLICTING WITH A CLASS NAME ##
@@ -293,7 +293,7 @@ class MCPBotProcess(object):
                  side_lookup[side], idversion))
             result = c.fetchone()
             if result:
-                self.say(self.ev.sender, "$RIt is illegal to use class names for fields or methods !")
+                self.reply("$RIt is illegal to use class names for fields or methods !")
                 return
 
             ## WE CHECK WE ONLY HAVE ONE RESULT ##
@@ -308,8 +308,8 @@ class MCPBotProcess(object):
             results = c.fetchall()
 
             if len(results) > 1:
-                self.say(self.ev.sender, " Ambiguous request $R'%s'$N" % oldname)
-                self.say(self.ev.sender, " Found %s possible answers" % len(results))
+                self.reply(" Ambiguous request $R'%s'$N" % oldname)
+                self.reply(" Found %s possible answers" % len(results))
 
                 maxlencsv = max([len('%s.%s' % (result[5], result[2])) for result in results])
                 maxlennotch = max([len('[%s.%s]' % (result[6], result[1])) for result in results])
@@ -317,10 +317,10 @@ class MCPBotProcess(object):
                     name, notch, searge, sig, notchsig, desc, classname, classnotch, methodid = result
                     fullcsv = '%s.%s' % (classname, name)
                     fullnotch = '[%s.%s]' % (classnotch, notch)
-                    self.say(self.ev.sender, " %s %s %s" % (fullcsv.ljust(maxlencsv + 2), fullnotch.ljust(maxlennotch + 2), sig))
+                    self.reply(" %s %s %s" % (fullcsv.ljust(maxlencsv + 2), fullnotch.ljust(maxlennotch + 2), sig))
                 return
             elif not len(results):
-                self.say(self.ev.sender, " No result for %s" % oldname)
+                self.reply(" No result for %s" % oldname)
                 return
 
             ## WE CHECK THAT WE HAVE A UNIQUE NAME
@@ -335,7 +335,7 @@ class MCPBotProcess(object):
                      side_lookup[side], idversion))
                 result = c.fetchone()
                 if result:
-                    self.say(self.ev.sender, "$RYou are conflicting with at least one other method: %s. Please use forced update only if you are certain !" % result[0])
+                    self.reply("$RYou are conflicting with at least one other method: %s. Please use forced update only if you are certain !" % result[0])
                     return
 
                 c.execute("""
@@ -348,7 +348,7 @@ class MCPBotProcess(object):
                      side_lookup[side], idversion))
                 result = c.fetchone()
                 if result:
-                    self.say(self.ev.sender, "$RYou are conflicting with at least one other field: %s. Please use forced update only if you are certain !" % result[0])
+                    self.reply("$RYou are conflicting with at least one other field: %s. Please use forced update only if you are certain !" % result[0])
                     return
 
             if not forced:
@@ -362,7 +362,7 @@ class MCPBotProcess(object):
                      side_lookup[side], idversion))
                 result = c.fetchone()
                 if result and result[0] != result[1]:
-                    self.say(self.ev.sender, "$RYou are trying to rename an already named member. Please use forced update only if you are certain !")
+                    self.reply("$RYou are trying to rename an already named member. Please use forced update only if you are certain !")
                     return
 
                 c.execute("""
@@ -375,13 +375,13 @@ class MCPBotProcess(object):
                      side_lookup[side], idversion))
                 result = c.fetchone()
                 if result and result[0] != result[1]:
-                    self.say(self.ev.sender, "$RYou are trying to rename an already named member. Please use forced update only if you are certain !")
+                    self.reply("$RYou are trying to rename an already named member. Please use forced update only if you are certain !")
                     return
 
             if len(results) == 1:
                 name, notch, searge, sig, notchsig, desc, classname, classnotch, entryid = results[0]
-                self.say(self.ev.sender, "Name     : $B%s => %s" % (name, newname))
-                self.say(self.ev.sender, "$BOld desc$N : %s" % desc)
+                self.reply("Name     : $B%s => %s" % (name, newname))
+                self.reply("$BOld desc$N : %s" % desc)
 
                 if not newdesc and not desc:
                     newdesc = None
@@ -398,7 +398,7 @@ class MCPBotProcess(object):
                     """.format(etype=etype),
                     (None, int(entryid), name, desc, newname, newdesc, int(time.time()), self.ev.sender, forced, self.ev.cmd))
                 db_con.commit()
-                self.say(self.ev.sender, "$BNew desc$N : %s" % newdesc)
+                self.reply("$BNew desc$N : %s" % newdesc)
 
     def portMember(self, side, etype, forced=False):
         with self.db.get_db() as db_con:
@@ -411,15 +411,15 @@ class MCPBotProcess(object):
 
             msg_split = self.ev.msg.strip().split(None, 2)
             if len(msg_split) < 2:
-                self.say(self.ev.sender, " Syntax error: $B%s <origin_member> <target_member>$N" % self.ev.cmd)
+                self.reply(" Syntax error: $B%s <origin_member> <target_member>$N" % self.ev.cmd)
                 return
 
             origin = msg_split[0]
             target = msg_split[1]
 
-            self.say(self.ev.sender, "$B[ PORT %s %s ]" % (side.upper(), etype.upper()))
+            self.reply("$B[ PORT %s %s ]" % (side.upper(), etype.upper()))
             if forced:
-                self.say(self.ev.sender, "$RCAREFUL, YOU ARE FORCING AN UPDATE !")
+                self.reply("$RCAREFUL, YOU ARE FORCING AN UPDATE !")
 
             ## WE CHECK WE ONLY HAVE ONE RESULT ##
             c.execute("""
@@ -433,8 +433,8 @@ class MCPBotProcess(object):
             results = c.fetchall()
 
             if len(results) > 1:
-                self.say(self.ev.sender, " Ambiguous request $R'%s'$N" % origin)
-                self.say(self.ev.sender, " Found %s possible answers" % len(results))
+                self.reply(" Ambiguous request $R'%s'$N" % origin)
+                self.reply(" Found %s possible answers" % len(results))
 
                 maxlencsv = max([len('%s.%s' % (result[5], result[2])) for result in results])
                 maxlennotch = max([len('[%s.%s]' % (result[6], result[1])) for result in results])
@@ -442,10 +442,10 @@ class MCPBotProcess(object):
                     name, notch, searge, sig, notchsig, desc, classname, classnotch, methodid = result
                     fullcsv = '%s.%s' % (classname, name)
                     fullnotch = '[%s.%s]' % (classnotch, notch)
-                    self.say(self.ev.sender, " %s %s %s" % (fullcsv.ljust(maxlencsv + 2), fullnotch.ljust(maxlennotch + 2), sig))
+                    self.reply(" %s %s %s" % (fullcsv.ljust(maxlencsv + 2), fullnotch.ljust(maxlennotch + 2), sig))
                 return
             elif not len(results):
-                self.say(self.ev.sender, " No result for %s" % origin)
+                self.reply(" No result for %s" % origin)
                 return
 
             origin_id, origin_name, origin_notch, origin_searge, origin_sig, origin_notchsig, origin_desc, origin_classname, origin_classnotch, origin_methodid = results[0]
@@ -462,8 +462,8 @@ class MCPBotProcess(object):
             results_target = c.fetchall()
 
             if len(results_target) > 1:
-                self.say(self.ev.sender, " Ambiguous request $R'%s'$N" % target)
-                self.say(self.ev.sender, " Found %s possible answers" % len(results_target))
+                self.reply(" Ambiguous request $R'%s'$N" % target)
+                self.reply(" Found %s possible answers" % len(results_target))
 
                 maxlencsv = max([len('%s.%s' % (result[5], result[2])) for result in results_target])
                 maxlennotch = max([len('[%s.%s]' % (result[6], result[1])) for result in results_target])
@@ -471,10 +471,10 @@ class MCPBotProcess(object):
                     name, notch, searge, sig, notchsig, desc, classname, classnotch, methodid = result
                     fullcsv = '%s.%s' % (classname, name)
                     fullnotch = '[%s.%s]' % (classnotch, notch)
-                    self.say(self.ev.sender, " %s %s %s" % (fullcsv.ljust(maxlencsv + 2), fullnotch.ljust(maxlennotch + 2), sig))
+                    self.reply(" %s %s %s" % (fullcsv.ljust(maxlencsv + 2), fullnotch.ljust(maxlennotch + 2), sig))
                 return
             elif not len(results_target):
-                self.say(self.ev.sender, " No result for %s" % target)
+                self.reply(" No result for %s" % target)
                 return
 
             target_id, target_name, target_notch, target_searge, target_sig, target_notchsig, target_desc, target_classname, target_classnotch, target_methodid = results_target[0]
@@ -490,7 +490,7 @@ class MCPBotProcess(object):
                  target_side_lookup[side], idversion))
             result = c.fetchone()
             if result:
-                self.say(self.ev.sender, "$RIt is illegal to use class names for fields or methods !")
+                self.reply("$RIt is illegal to use class names for fields or methods !")
                 return
 
             ## WE CHECK THAT WE HAVE A UNIQUE NAME
@@ -505,7 +505,7 @@ class MCPBotProcess(object):
                      target_side_lookup[side], idversion))
                 result = c.fetchone()
                 if result:
-                    self.say(self.ev.sender, "$RYou are conflicting with at least one other method: %s. Please use forced update only if you are certain !" % result[0])
+                    self.reply("$RYou are conflicting with at least one other method: %s. Please use forced update only if you are certain !" % result[0])
                     return
 
                 c.execute("""
@@ -518,7 +518,7 @@ class MCPBotProcess(object):
                      target_side_lookup[side], idversion))
                 result = c.fetchone()
                 if result:
-                    self.say(self.ev.sender, "$RYou are conflicting with at least one other field: %s. Please use forced update only if you are certain !" % result[0])
+                    self.reply("$RYou are conflicting with at least one other field: %s. Please use forced update only if you are certain !" % result[0])
                     return
 
             if not forced:
@@ -532,7 +532,7 @@ class MCPBotProcess(object):
                      side_lookup[side], idversion))
                 result = c.fetchone()
                 if result and result[0] != result[1]:
-                    self.say(self.ev.sender, "$RYou are trying to rename an already named member. Please use forced update only if you are certain !")
+                    self.reply("$RYou are trying to rename an already named member. Please use forced update only if you are certain !")
                     return
 
                 c.execute("""
@@ -545,12 +545,12 @@ class MCPBotProcess(object):
                      side_lookup[side], idversion))
                 result = c.fetchone()
                 if result and result[0] != result[1]:
-                    self.say(self.ev.sender, "$RYou are trying to rename an already named member. Please use forced update only if you are certain !")
+                    self.reply("$RYou are trying to rename an already named member. Please use forced update only if you are certain !")
                     return
 
             if len(results_target) == 1:
                 memberid, name, notch, searge, sig, notchsig, desc, classname, classnotch, entryid = results_target[0]
-                self.say(self.ev.sender, "%s     : $B%s => %s" % (side, origin, target))
+                self.reply("%s     : $B%s => %s" % (side, origin, target))
 
                 c.execute("""
                         INSERT INTO {etype}hist
@@ -569,7 +569,7 @@ class MCPBotProcess(object):
 
             msg_split = self.ev.msg.split(None, 1)
             if len(msg_split) != 1:
-                self.say(self.ev.sender, "Syntax error: $B%s <searge|index>" % self.ev.cmd)
+                self.reply("Syntax error: $B%s <searge|index>" % self.ev.cmd)
                 return
             member = msg_split[0]
 
@@ -590,10 +590,10 @@ class MCPBotProcess(object):
             if len(results) >= 1:
                 for result in results:
                     oldname, olddesc, newname, newdesc, timestamp, nick, forced, searge, version = result
-                    self.say(self.ev.sender, "[%s, %s] %s: %s -> %s" % (version, timestamp, nick, oldname, newname))
+                    self.reply("[%s, %s] %s: %s -> %s" % (version, timestamp, nick, oldname, newname))
             else:
-                self.say(self.ev.sender, "$B[ GET CHANGES %s %s ]" % (side.upper(), etype.upper()))
-                self.say(self.ev.sender, " No result for %s" % self.ev.msg.strip())
+                self.reply("$B[ GET CHANGES %s %s ]" % (side.upper(), etype.upper()))
+                self.reply(" No result for %s" % self.ev.msg.strip())
 
     def revertChanges(self, side, etype):
         with self.db.get_db() as db_con:
@@ -605,11 +605,11 @@ class MCPBotProcess(object):
 
             msg_split = self.ev.msg.split(None, 1)
             if len(msg_split) != 1:
-                self.say(self.ev.sender, "Syntax error: $B%s <searge|index>" % self.ev.cmd)
+                self.reply("Syntax error: $B%s <searge|index>" % self.ev.cmd)
                 return
             member = msg_split[0]
 
-            self.say(self.ev.sender, "$B[ REVERT %s %s ]" % (side.upper(), etype.upper()))
+            self.reply("$B[ REVERT %s %s ]" % (side.upper(), etype.upper()))
 
             c.execute("""
                     UPDATE {etype}
@@ -620,7 +620,7 @@ class MCPBotProcess(object):
                 ('{0}!_{1}!_%'.format(type_lookup[etype], member), member,
                  side_lookup[side], idversion))
             db_con.commit()
-            self.say(self.ev.sender, " Reverting changes on $B%s$N is done." % member)
+            self.reply(" Reverting changes on $B%s$N is done." % member)
 
     def getlog(self):
         with self.db.get_db() as db_con:
@@ -629,12 +629,12 @@ class MCPBotProcess(object):
 
             if self.bot.cnick == 'MCPBot':
                 if self.ev.sender not in self.bot.dcc.sockets or not self.bot.dcc.sockets[self.ev.sender]:
-                    self.say(self.ev.sender, "$BPlease use DCC for getlog")
+                    self.reply("$BPlease use DCC for getlog")
                     return
 
             msg_split = self.ev.msg.strip().split(None, 1)
             if len(msg_split) > 1:
-                self.say(self.ev.sender, "Syntax error: $B%s [full]" % self.ev.cmd)
+                self.reply("Syntax error: $B%s [full]" % self.ev.cmd)
                 return
             fulllog = False
             if len(msg_split) == 1:
@@ -643,7 +643,7 @@ class MCPBotProcess(object):
 
             side_lookup = {'client': 0, 'server': 1}
 
-            self.say(self.ev.sender, "$B[ LOGS ]")
+            self.reply("$B[ LOGS ]")
             for side in ['server', 'client']:
                 for etype in ['methods', 'fields']:
                     c.execute("""
@@ -668,12 +668,12 @@ class MCPBotProcess(object):
 
                                 if hforced == forcedstatus:
                                     if fulllog:
-                                        self.say(self.ev.sender, "+ %s, %s, %s" % (htimestamp, hnick, hcmd))
-                                        self.say(self.ev.sender, "  [%s%s][%s] %s => %s" % (side[0].upper(), etype[0].upper(), msearge.ljust(maxlensearge), mname.ljust(maxlenmname), hname))
-                                        self.say(self.ev.sender, "  [%s%s][%s] %s => %s" % (side[0].upper(), etype[0].upper(), msearge.ljust(maxlensearge), mdesc, hdesc))
+                                        self.reply("+ %s, %s, %s" % (htimestamp, hnick, hcmd))
+                                        self.reply("  [%s%s][%s] %s => %s" % (side[0].upper(), etype[0].upper(), msearge.ljust(maxlensearge), mname.ljust(maxlenmname), hname))
+                                        self.reply("  [%s%s][%s] %s => %s" % (side[0].upper(), etype[0].upper(), msearge.ljust(maxlensearge), mdesc, hdesc))
                                     else:
                                         indexmember = re.search('[0-9]+', msearge).group()
-                                        self.say(self.ev.sender, "+ %s, %s [%s%s][%5s][%4s] %s => %s" % (htimestamp, hnick.ljust(maxlennick), side[0].upper(), etype[0].upper(), indexmember, hcmd, mname.ljust(maxlensearge), hname))
+                                        self.reply("+ %s, %s [%s%s][%5s][%4s] %s => %s" % (htimestamp, hnick.ljust(maxlennick), side[0].upper(), etype[0].upper(), indexmember, hcmd, mname.ljust(maxlensearge), hname))
 
     def updateCsv(self):
         with self.db.get_db() as db_con:
@@ -690,7 +690,7 @@ class MCPBotProcess(object):
 
             msg_split = self.ev.msg.strip().split(None, 1)
             if len(msg_split):
-                self.say(self.ev.sender, "Syntax error: $B%s" % self.ev.cmd)
+                self.reply("Syntax error: $B%s" % self.ev.cmd)
                 return
 
             ffmetho = open('%s/%s' % (directory, outmethodcsv), 'w')
@@ -767,7 +767,7 @@ class MCPBotProcess(object):
 
             msg_split = self.ev.msg.strip().split(None, 1)
             if len(msg_split):
-                self.say(self.ev.sender, "Syntax error: $B%s" % self.ev.cmd)
+                self.reply("Syntax error: $B%s" % self.ev.cmd)
                 return
 
             nentries = 0
@@ -810,11 +810,11 @@ class MCPBotProcess(object):
                     """,
                     (None, int(time.time()), self.ev.sender))
                 db_con.commit()
-                self.say(self.ev.sender, "$B[ COMMIT ]")
-                self.say(self.ev.sender, " Committed %d new updates" % nentries)
+                self.reply("$B[ COMMIT ]")
+                self.reply(" Committed %d new updates" % nentries)
             else:
-                self.say(self.ev.sender, "$B[ COMMIT ]")
-                self.say(self.ev.sender, " No new entries to commit")
+                self.reply("$B[ COMMIT ]")
+                self.reply(" No new entries to commit")
 
     def altCsv(self):
         with self.db.get_db() as db_con:
@@ -823,7 +823,7 @@ class MCPBotProcess(object):
 
             msg_split = self.ev.msg.strip().split(None, 1)
             if len(msg_split) > 2:
-                self.say(self.ev.sender, " Syntax error: $B%s [version]$N" % self.ev.cmd)
+                self.reply(" Syntax error: $B%s [version]$N" % self.ev.cmd)
                 return
             if len(msg_split) == 1:
                 version = msg_split[0]
@@ -835,7 +835,7 @@ class MCPBotProcess(object):
                     (version,))
                 result = c.fetchone()
                 if not result:
-                    self.say(self.ev.sender, "Version not recognised.")
+                    self.reply("Version not recognised.")
                     return
                 else:
                     (idversion,) = result
@@ -884,7 +884,7 @@ class MCPBotProcess(object):
             for row in results:
                 fieldswriter.writerow(row)
 
-            self.say(self.ev.sender, "New CSVs exported")
+            self.reply("New CSVs exported")
 
     def testCsv(self):
         with self.db.get_db() as db_con:
@@ -898,7 +898,7 @@ class MCPBotProcess(object):
 
             msg_split = self.ev.msg.strip().split(None, 1)
             if len(msg_split):
-                self.say(self.ev.sender, "Syntax error: $B%s" % self.ev.cmd)
+                self.reply("Syntax error: $B%s" % self.ev.cmd)
                 return
 
             methodswriter = csv.writer(open('%s/methods.csv' % trgdir, 'wb'))
@@ -931,7 +931,7 @@ class MCPBotProcess(object):
             for row in results:
                 fieldswriter.writerow(row)
 
-            self.say(self.ev.sender, "Test CSVs exported: http://mcp.ocean-labs.de/files/mcptest/")
+            self.reply("Test CSVs exported: http://mcp.ocean-labs.de/files/mcptest/")
 
     def status(self):
         with self.db.get_db() as db_con:
@@ -942,7 +942,7 @@ class MCPBotProcess(object):
 
             msg_split = self.ev.msg.strip().split(None, 1)
             if len(msg_split) > 1:
-                self.say(self.ev.sender, "Syntax error: $B%s [full]" % self.ev.cmd)
+                self.reply("Syntax error: $B%s [full]" % self.ev.cmd)
                 return
             full_status = False
             if len(msg_split) == 1:
@@ -958,11 +958,11 @@ class MCPBotProcess(object):
             result = c.fetchone()
             mcpversion, botversion, dbversion, clientversion, serverversion = result
 
-            self.say(self.ev.sender, "$B[ STATUS ]")
-            self.say(self.ev.sender, " MCP    : $B%s" % mcpversion)
-            self.say(self.ev.sender, " Bot    : $B%s" % botversion)
-            self.say(self.ev.sender, " Client : $B%s" % clientversion)
-            self.say(self.ev.sender, " Server : $B%s" % serverversion)
+            self.reply("$B[ STATUS ]")
+            self.reply(" MCP    : $B%s" % mcpversion)
+            self.reply(" Bot    : $B%s" % botversion)
+            self.reply(" Client : $B%s" % clientversion)
+            self.reply(" Server : $B%s" % serverversion)
 
             if full_status:
                 for side in ['client', 'server']:
@@ -976,7 +976,7 @@ class MCPBotProcess(object):
                         result = c.fetchone()
                         total, ren, urn = result
 
-                        self.say(self.ev.sender, " [%s][%7s] : T $B%4d$N | R $B%4d$N | U $B%4d$N | $B%5.2f%%$N" % (side[0].upper(), etype.upper(), total, ren, urn, float(ren) / float(total) * 100))
+                        self.reply(" [%s][%7s] : T $B%4d$N | R $B%4d$N | U $B%4d$N | $B%5.2f%%$N" % (side[0].upper(), etype.upper(), total, ren, urn, float(ren) / float(total) * 100))
 
     def todo(self):
         with self.db.get_db() as db_con:
@@ -987,11 +987,11 @@ class MCPBotProcess(object):
 
             msg_split = self.ev.msg.strip().split(None, 1)
             if len(msg_split) != 1:
-                self.say(self.ev.sender, "Syntax error: $B%s <client|server>" % self.ev.cmd)
+                self.reply("Syntax error: $B%s <client|server>" % self.ev.cmd)
                 return
             search_side = msg_split[0]
             if search_side not in side_lookup:
-                self.say(self.ev.sender, "$Btodo <client|server>")
+                self.reply("$Btodo <client|server>")
                 return
 
             c.execute("""
@@ -1004,7 +1004,7 @@ class MCPBotProcess(object):
                 (side_lookup[search_side], idversion))
             results = c.fetchall()
 
-            self.say(self.ev.sender, "$B[ TODO %s ]" % search_side.upper())
+            self.reply("$B[ TODO %s ]" % search_side.upper())
             for result in results:
                 classid, name, memberst, membersr, membersu = result
                 if not memberst:
@@ -1017,4 +1017,4 @@ class MCPBotProcess(object):
                     percent = 0.
                 else:
                     percent = float(membersr) / float(memberst) * 100.0
-                self.say(self.ev.sender, " %s : $B%2d$N [ T $B%3d$N | R $B%3d$N | $B%5.2f%%$N ] " % (name.ljust(20), membersu, memberst, membersr, percent))
+                self.reply(" %s : $B%2d$N [ T $B%3d$N | R $B%3d$N | $B%5.2f%%$N ] " % (name.ljust(20), membersu, memberst, membersr, percent))

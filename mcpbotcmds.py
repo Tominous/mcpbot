@@ -3,7 +3,7 @@ import threading
 from irc_lib.event import Event
 from irc_lib.utils.restricted import restricted
 from irc_lib.utils.ThreadPool import Worker
-from mcpbotprocess import MCPBotProcess
+from mcpbotprocess import MCPBotProcess, SIDE_LOOKUP
 
 
 class MCPBotCmds(object):
@@ -43,27 +43,24 @@ class MCPBotCmds(object):
     #================== Base chatting commands =========================
     @restricted(4)
     def cmd_say(self):
-        target, outmsg = self.check_args(2, text=True, syntax='<target> <message>')
-
-        self.bot.say(target, outmsg)
+        self.say_command(self.bot.say)
 
     @restricted(4)
     def cmd_msg(self):
-        target, outmsg = self.check_args(2, text=True, syntax='<target> <message>')
-
-        self.bot.irc.privmsg(target, outmsg)
+        self.say_command(self.bot.irc.privmsg)
 
     @restricted(4)
     def cmd_notice(self):
-        target, outmsg = self.check_args(2, text=True, syntax='<target> <message>')
-
-        self.bot.irc.notice(target, outmsg)
+        self.say_command(self.bot.irc.notice)
 
     @restricted(4)
     def cmd_action(self):
+        self.say_command(self.bot.ctcp.action)
+
+    def say_command(self, say_func):
         target, outmsg = self.check_args(2, text=True, syntax='<target> <message>')
 
-        self.bot.ctcp.action(target, outmsg)
+        say_func(target, outmsg)
 
     @restricted(4)
     def cmd_pub(self):
@@ -81,186 +78,233 @@ class MCPBotCmds(object):
         outev = Event(sender, outcmd, self.ev.chan, outmsg, 'CMD')
         MCPBotCmds(self.bot, outev).process_cmd()
 
-    #===================================================================
-
     #================== Getters classes ================================
     def cmd_gcc(self):
         """$Bgcc <classname>$N              : Get Client Class."""
-        self.process.getClass('client')
+        self.get_class('client')
 
     def cmd_gsc(self):
         """$Bgsc <classname>$N              : Get Server Class."""
-        self.process.getClass('server')
+        self.get_class('server')
 
     def cmd_gc(self):
-        self.process.getClass('client')
-        self.process.getClass('server')
+        self.get_class('client')
+        self.get_class('server')
 
-    #===================================================================
+    def get_class(self, side):
+        search_class, = self.check_args(1, syntax='<classname>')
+
+        self.reply("$B[ GET %s CLASS ]" % side.upper())
+        self.process.get_class(search_class, side)
 
     #================== Getters members ================================
     def cmd_gcm(self):
         """$Bgcm [classname.]<methodname>$N : Get Client Method."""
-        self.process.outputMembers('client', 'methods')
+        self.get_member('client', 'methods')
 
     def cmd_gsm(self):
         """$Bgsm [classname.]<methodname>$N : Get Server Method."""
-        self.process.outputMembers('server', 'methods')
+        self.get_member('server', 'methods')
 
     def cmd_gm(self):
-        self.process.outputMembers('client', 'methods')
-        self.process.outputMembers('server', 'methods')
+        self.get_member('client', 'methods')
+        self.get_member('server', 'methods')
 
     def cmd_gcf(self):
         """$Bgcf [classname.]<fieldname>$N  : Get Client Field."""
-        self.process.outputMembers('client', 'fields')
+        self.get_member('client', 'fields')
 
     def cmd_gsf(self):
         """$Bgsf [classname.]<fieldname>$N  : Get Server Field."""
-        self.process.outputMembers('server', 'fields')
+        self.get_member('server', 'fields')
 
     def cmd_gf(self):
-        self.process.outputMembers('client', 'fields')
-        self.process.outputMembers('server', 'fields')
+        self.get_member('client', 'fields')
+        self.get_member('server', 'fields')
 
-    #===================================================================
+    def get_member(self, side, etype):
+        member, sname = self.check_args(2, min_args=1, syntax='[<classname>.]<membername> [signature]')
+
+        split_member = member.rsplit('.', 1)
+        if len(split_member) > 1:
+            cname = split_member[0]
+            mname = split_member[1]
+        else:
+            cname = None
+            mname = split_member[0]
+
+        self.reply("$B[ GET %s %s ]" % (side.upper(), etype.upper()))
+        self.process.get_member(cname, mname, sname, side, etype)
 
     #====================== Search commands ============================
     def cmd_search(self):
         """$Bsearch <pattern>$N  : Search for a pattern."""
-        self.process.search()
+        search_str, = self.check_args(1, syntax='<name>')
 
-    #===================================================================
+        self.reply("$B[ SEARCH RESULTS ]")
+        self.process.search(search_str)
 
     #====================== Setters for members ========================
     def cmd_scm(self):
         """$Bscm [<id>|<searge>] <newname> [description]$N : Set Client Method."""
-        self.process.setMember('client', 'methods', forced=False)
+        self.set_member('client', 'methods')
 
     def cmd_scf(self):
         """$Bscf [<id>|<searge>] <newname> [description]$N : Set Server Method."""
-        self.process.setMember('client', 'fields', forced=False)
+        self.set_member('client', 'fields')
 
     def cmd_ssm(self):
         """$Bssm [<id>|<searge>] <newname> [description]$N : Set Client Field."""
-        self.process.setMember('server', 'methods', forced=False)
+        self.set_member('server', 'methods')
 
     def cmd_ssf(self):
         """$Bssf [<id>|<searge>] <newname> [description]$N : Set Server Field."""
-        self.process.setMember('server', 'fields', forced=False)
+        self.set_member('server', 'fields')
 
     def cmd_fscm(self):
         """$Bscm [<id>|<searge>] <newname> [description]$N : Set Client Method."""
-        self.process.setMember('client', 'methods', forced=True)
+        self.set_member('client', 'methods', forced=True)
 
     def cmd_fscf(self):
         """$Bscf [<id>|<searge>] <newname> [description]$N : Set Server Method."""
-        self.process.setMember('client', 'fields', forced=True)
+        self.set_member('client', 'fields', forced=True)
 
     def cmd_fssm(self):
         """$Bssm [<id>|<searge>] <newname> [description]$N : Set Client Field."""
-        self.process.setMember('server', 'methods', forced=True)
+        self.set_member('server', 'methods', forced=True)
 
     def cmd_fssf(self):
         """$Bssf [<id>|<searge>] <newname> [description]$N : Set Server Field."""
-        self.process.setMember('server', 'fields', forced=True)
+        self.set_member('server', 'fields', forced=True)
 
-    #===================================================================
+    def set_member(self, side, etype, forced=False):
+        oldname, newname, newdesc = self.check_args(3, min_args=2, text=True, syntax='<membername> <newname> [newdescription]')
+
+        self.reply("$B[ SET %s %s ]" % (side.upper(), etype.upper()))
+        self.process.set_member(oldname, newname, newdesc, side, etype, forced)
 
     #======================= Port mappings =============================
     @restricted(2)
     def cmd_pcm(self):
-        self.process.portMember('client', 'methods', forced=False)
+        self.port_member('client', 'methods')
 
     @restricted(2)
     def cmd_pcf(self):
-        self.process.portMember('client', 'fields', forced=False)
+        self.port_member('client', 'fields')
 
     @restricted(2)
     def cmd_psm(self):
-        self.process.portMember('server', 'methods', forced=False)
+        self.port_member('server', 'methods')
 
     @restricted(2)
     def cmd_psf(self):
-        self.process.portMember('server', 'fields', forced=False)
+        self.port_member('server', 'fields')
 
     @restricted(2)
     def cmd_fpcm(self):
-        self.process.portMember('client', 'methods', forced=True)
+        self.port_member('client', 'methods', forced=True)
 
     @restricted(2)
     def cmd_fpcf(self):
-        self.process.portMember('client', 'fields', forced=True)
+        self.port_member('client', 'fields', forced=True)
 
     @restricted(2)
     def cmd_fpsm(self):
-        self.process.portMember('server', 'methods', forced=True)
+        self.port_member('server', 'methods', forced=True)
 
     @restricted(2)
     def cmd_fpsf(self):
-        self.process.portMember('server', 'fields', forced=True)
+        self.port_member('server', 'fields', forced=True)
 
-    #===================================================================
+    def port_member(self, side, etype, forced=False):
+        origin, target = self.check_args(2, syntax='<origin_member> <target_member>')
+
+        self.reply("$B[ PORT %s %s ]" % (side.upper(), etype.upper()))
+        self.process.port_member(origin, target, side, etype, forced)
 
     #======================= Mapping info ==============================
     @restricted(2)
     def cmd_icm(self):
-        self.process.infoChanges('client', 'methods')
+        self.log_member('client', 'methods')
 
     @restricted(2)
     def cmd_icf(self):
-        self.process.infoChanges('client', 'fields')
+        self.log_member('client', 'fields')
 
     @restricted(2)
     def cmd_ism(self):
-        self.process.infoChanges('server', 'methods')
+        self.log_member('server', 'methods')
 
     @restricted(2)
     def cmd_isf(self):
-        self.process.infoChanges('server', 'fields')
+        self.log_member('server', 'fields')
 
-    #===================================================================
+    def log_member(self, side, etype):
+        member, = self.check_args(1, syntax='<member>')
+
+        self.reply("$B[ GET CHANGES %s %s ]" % (side.upper(), etype.upper()))
+        self.process.log_member(member, side, etype)
 
     #====================== Revert changes =============================
     @restricted(2)
     def cmd_rcm(self):
-        self.process.revertChanges('client', 'methods')
+        self.revert_member('client', 'methods')
 
     @restricted(2)
     def cmd_rcf(self):
-        self.process.revertChanges('client', 'fields')
+        self.revert_member('client', 'fields')
 
     @restricted(2)
     def cmd_rsm(self):
-        self.process.revertChanges('server', 'methods')
+        self.revert_member('server', 'methods')
 
     @restricted(2)
     def cmd_rsf(self):
-        self.process.revertChanges('server', 'fields')
+        self.revert_member('server', 'fields')
 
-    #===================================================================
+    def revert_member(self, side, etype):
+        member, = self.check_args(1, syntax='<member>')
+
+        self.reply("$B[ REVERT %s %s ]" % (side.upper(), etype.upper()))
+        self.process.revert_member(member, side, etype)
 
     #====================== Log Methods ================================
     def cmd_getlog(self):
-        self.process.getlog()
+        full_log, = self.check_args(1, min_args=0, syntax='[full]')
+        if full_log.lower() == 'full':
+            full_log = True
+        else:
+            full_log = False
+
+        self.reply("$B[ LOGS ]")
+        self.process.get_log(full_log)
 
     @restricted(3)
     def cmd_commit(self):
-        self.process.dbCommit(pushforced=False)
+        self.db_commit()
 
     @restricted(4)
     def cmd_fcommit(self):
-        self.process.dbCommit(pushforced=True)
+        self.db_commit(forced=True)
+
+    def db_commit(self, forced=False):
+        self.check_args(0)
+
+        self.reply("$B[ COMMIT ]")
+        self.process.db_commit(forced)
+
 
     @restricted(3)
     def cmd_altcsv(self):
-        self.process.altCsv()
+        self.check_args(0)
+
+        self.process.alt_csv()
 
     @restricted(2)
     def cmd_testcsv(self):
-        self.process.testCsv()
+        self.check_args(0)
 
-    #===================================================================
+        self.process.test_csv()
 
     #====================== Whitelist Handling =========================
     @restricted(0)
@@ -316,7 +360,6 @@ class MCPBotCmds(object):
         self.check_args(0)
 
         self.bot.loadWhitelist()
-    #===================================================================
 
     #====================== Misc commands ==============================
     def cmd_dcc(self):
@@ -337,6 +380,7 @@ class MCPBotCmds(object):
     @restricted(5)
     def cmd_rawcmd(self):
         outmsg, = self.check_args(1, text=True, syntax='<command>')
+
         self.bot.irc.rawcmd(outmsg)
 
     def cmd_help(self):
@@ -346,14 +390,22 @@ class MCPBotCmds(object):
         self.reply("For help, please check : http://mcp.ocean-labs.de/index.php/MCPBot")
 
     def cmd_status(self):
-        self.process.status()
+        full_status, = self.check_args(1, min_args=0, syntax='[full]')
+        if full_status.lower() == 'full':
+            full_status = True
+        else:
+            full_status = False
+
+        self.reply("$B[ STATUS ]")
+        self.process.status(full_status)
 
     @restricted(4)
     def cmd_listthreads(self):
         self.check_args(0)
 
-        threads = threading.enumerate()
         self.reply("$B[ THREADS ]")
+
+        threads = threading.enumerate()
         maxthreadname = max([len(i.name) for i in threads])
 
         for t in threads:
@@ -376,4 +428,10 @@ class MCPBotCmds(object):
         self.reply(str(self.bot.dcc.sockets.keys()))
 
     def cmd_todo(self):
-        self.process.todo()
+        search_side, = self.check_args(1, syntax='<client|server>')
+
+        if search_side not in SIDE_LOOKUP:
+            raise Exception(' Syntax error: $B{cmd} <client|server>'.format(cmd=self.ev.cmd))
+
+        self.reply("$B[ TODO %s ]" % search_side.upper())
+        self.process.todo(search_side)

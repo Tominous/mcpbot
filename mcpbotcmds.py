@@ -10,77 +10,68 @@ class MCPBotCmds(object):
     def __init__(self, bot, ev):
         self.bot = bot
         self.ev = ev
-        self.db = None
-        self.process = MCPBotProcess(self)
+        self.process = None
 
     def reply(self, msg):
         self.bot.say(self.ev.sender, msg)
 
     def process_cmd(self):
         with self.bot.db.get_db() as db:
-            self.db = db
-            getattr(self, 'cmd_%s' % self.ev.cmd, self.cmdDefault)()
+            self.process = MCPBotProcess(self, db)
+            getattr(self, 'cmd_%s' % self.ev.cmd, self.cmd_Default)()
 
-    def cmdDefault(self):
+    def check_args(self, max_args, min_args=None, text=False, syntax=''):
+        if syntax:
+            syntax = ' ' + syntax
+        if min_args is None:
+            min_args = max_args
+        if text:
+            msg_split = self.ev.msg.split(None, max_args - 1)
+        else:
+            msg_split = self.ev.msg.split(None)
+        if min_args is not None and len(msg_split) < min_args or max_args is not None and len(msg_split) > max_args:
+            print msg_split
+            raise Exception(' Syntax error: $B{cmd}{syntax}'.format(cmd=self.ev.cmd, syntax=syntax))
+        empty_args = max_args - len(msg_split)
+        msg_split.extend([''] * empty_args)
+        print msg_split
+        return msg_split
+
+    def cmd_Default(self):
         pass
 
     #================== Base chatting commands =========================
     @restricted(4)
     def cmd_say(self):
-        msg_split = self.ev.msg.strip().split(None, 1)
-        if len(msg_split) < 2:
-            self.reply(" Syntax error: $B%s <target> <message>$N" % self.ev.cmd)
-            return
-        target = msg_split[0]
-        outmsg = msg_split[1]
+        target, outmsg = self.check_args(2, text=True, syntax='<target> <message>')
+
         self.bot.say(target, outmsg)
 
     @restricted(4)
     def cmd_msg(self):
-        msg_split = self.ev.msg.strip().split(None, 1)
-        if len(msg_split) < 2:
-            self.reply(" Syntax error: $B%s <target> <message>$N" % self.ev.cmd)
-            return
-        target = msg_split[0]
-        outmsg = msg_split[1]
+        target, outmsg = self.check_args(2, text=True, syntax='<target> <message>')
+
         self.bot.irc.privmsg(target, outmsg)
 
     @restricted(4)
     def cmd_notice(self):
-        msg_split = self.ev.msg.strip().split(None, 1)
-        if len(msg_split) < 2:
-            self.reply(" Syntax error: $B%s <target> <message>$N" % self.ev.cmd)
-            return
-        target = msg_split[0]
-        outmsg = msg_split[1]
+        target, outmsg = self.check_args(2, text=True, syntax='<target> <message>')
+
         self.bot.irc.notice(target, outmsg)
 
     @restricted(4)
     def cmd_action(self):
-        msg_split = self.ev.msg.strip().split(None, 1)
-        if len(msg_split) < 2:
-            self.reply(" Syntax error: $B%s <target> <message>$N" % self.ev.cmd)
-            return
-        target = msg_split[0]
-        outmsg = msg_split[1]
+        target, outmsg = self.check_args(2, text=True, syntax='<target> <message>')
+
         self.bot.ctcp.action(target, outmsg)
 
     @restricted(4)
     def cmd_pub(self):
-        msg = self.ev.msg.lstrip()
-        if not msg:
-            return
-        if msg[0] == self.bot.controlchar:
-            msg = msg[1:]
-        msg_split = msg.strip().split(None, 1)
-        if not len(msg_split):
-            self.reply(" Syntax error: $B%s <command>$N" % self.ev.cmd)
-            return
-        outcmd = msg_split[0].lower()
-        if len(msg_split) > 1:
-            outmsg = msg_split[1]
-        else:
-            outmsg = ''
+        outcmd, outmsg = self.check_args(2, min_args=1, text=True, syntax='<command>')
+
+        outcmd = outcmd.lower()
+        if len(outcmd) > 1 and outcmd[0] == self.bot.controlchar:
+            outcmd = outcmd[1:]
 
         if self.ev.chan is None:
             sender = self.ev.senderfull
@@ -274,36 +265,28 @@ class MCPBotCmds(object):
     #====================== Whitelist Handling =========================
     @restricted(0)
     def cmd_addwhite(self):
-        msg_split = self.ev.msg.strip().split(None, 2)
-        if len(msg_split) == 1:
-            nick = msg_split[0]
-            level = 4
-        elif len(msg_split) == 2:
-            nick = msg_split[0]
+        nick, level = self.check_args(2, min_args=1, syntax='<nick> [level]')
+        if level:
             try:
-                level = int(msg_split[1])
+                level = int(level)
             except ValueError:
-                self.reply("Syntax error: $B%s <nick> [level]" % self.ev.cmd)
-                return
+                raise Exception(' Syntax error: $B{cmd} <nick> [level]'.format(cmd=self.ev.cmd))
         else:
-            self.reply("Syntax error: $B%s <nick> [level]" % self.ev.cmd)
-            return
+            level = 4
+
         if level > 4:
             self.reply("Max level is 4.")
             return
         if level >= self.bot.whitelist[self.ev.sender]:
             self.reply("You don't have the rights to do that.")
             return
+
         self.bot.addWhitelist(nick, level)
         self.reply("Added %s with level %d to whitelist" % (nick, level))
 
     @restricted(0)
     def cmd_rmwhite(self):
-        msg_split = self.ev.msg.strip().split(None, 1)
-        if len(msg_split) != 1:
-            self.reply("Syntax error: $B%s <nick>" % self.ev.cmd)
-            return
-        nick = msg_split[0]
+        nick, = self.check_args(1, syntax='<nick>')
 
         if nick in self.bot.whitelist and self.bot.whitelist[nick] >= self.bot.whitelist[self.ev.sender]:
             self.reply("You don't have the rights to do that.")
@@ -318,54 +301,47 @@ class MCPBotCmds(object):
 
     @restricted(0)
     def cmd_getwhite(self):
-        msg_split = self.ev.msg.strip().split(None, 1)
-        if len(msg_split):
-            self.reply("Syntax error: $B%s" % self.ev.cmd)
-            return
+        self.check_args(0)
+
         self.reply("Whitelist : %s" % self.bot.whitelist)
 
     @restricted(4)
     def cmd_savewhite(self):
-        msg_split = self.ev.msg.strip().split(None, 1)
-        if len(msg_split):
-            self.reply("Syntax error: $B%s" % self.ev.cmd)
-            return
+        self.check_args(0)
+
         self.bot.saveWhitelist()
 
     @restricted(4)
     def cmd_loadwhite(self):
-        msg_split = self.ev.msg.strip().split(None, 1)
-        if len(msg_split):
-            self.reply("Syntax error: $B%s" % self.ev.cmd)
-            return
+        self.check_args(0)
+
         self.bot.loadWhitelist()
     #===================================================================
 
     #====================== Misc commands ==============================
     def cmd_dcc(self):
         """$Bdcc$N : Starts a dcc session. Faster and not under the flood protection."""
-        msg_split = self.ev.msg.strip().split(None, 1)
-        if len(msg_split):
-            self.reply("Syntax error: $B%s" % self.ev.cmd)
-            return
+        self.check_args(0)
+
         self.bot.dcc.dcc(self.ev.sender)
 
     @restricted(4)
     def cmd_kick(self):
-        msg_split = self.ev.msg.strip().split(None, 2)
-        if len(msg_split) < 2:
-            self.reply("Syntax error: $B%s <channel> <target> [message]" % self.ev.cmd)
-            return
-        if len(msg_split) > 2:
-            self.bot.irc.kick(msg_split[0], msg_split[1], msg_split[2])
+        chan, nick, comment = self.check_args(3, min_args=2, text=True, syntax='<channel> <target> [message]')
+
+        if comment:
+            self.bot.irc.kick(chan, nick, comment)
         else:
-            self.bot.irc.kick(msg_split[0], msg_split[1])
+            self.bot.irc.kick(chan, nick)
 
     @restricted(5)
     def cmd_rawcmd(self):
-        self.bot.irc.rawcmd(self.ev.msg)
+        outmsg, = self.check_args(1, text=True, syntax='<command>')
+        self.bot.irc.rawcmd(outmsg)
 
     def cmd_help(self):
+        self.check_args(0)
+
         self.reply("$B[ HELP ]")
         self.reply("For help, please check : http://mcp.ocean-labs.de/index.php/MCPBot")
 
@@ -374,10 +350,7 @@ class MCPBotCmds(object):
 
     @restricted(4)
     def cmd_listthreads(self):
-        msg_split = self.ev.msg.strip().split(None, 1)
-        if len(msg_split):
-            self.reply("Syntax error: $B%s" % self.ev.cmd)
-            return
+        self.check_args(0)
 
         threads = threading.enumerate()
         self.reply("$B[ THREADS ]")
@@ -398,10 +371,7 @@ class MCPBotCmds(object):
 
     @restricted(4)
     def cmd_listdcc(self):
-        msg_split = self.ev.msg.strip().split(None, 1)
-        if len(msg_split):
-            self.reply("Syntax error: $B%s" % self.ev.cmd)
-            return
+        self.check_args(0)
 
         self.reply(str(self.bot.dcc.sockets.keys()))
 

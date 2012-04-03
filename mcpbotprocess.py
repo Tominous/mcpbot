@@ -4,12 +4,13 @@ import time
 
 
 class MCPBotProcess(object):
-    def __init__(self, cmds):
+    def __init__(self, cmds, db):
         self.commands = cmds
         self.ev = self.commands.ev
         self.reply = self.commands.reply
         self.bot = self.commands.bot
-        self.db = self.commands.db
+        self.check_args = self.commands.check_args
+        self.db = db
 
     def get_version(self):
         c = self.db.cursor()
@@ -23,13 +24,9 @@ class MCPBotProcess(object):
         return idversion
 
     def getClass(self, side):
-        side_lookup = {'client': 0, 'server': 1}
+        search_class, = self.check_args(1, syntax='<classname>')
 
-        msg_split = self.ev.msg.strip().split(None, 1)
-        if len(msg_split) != 1:
-            self.reply(" Syntax error: $B%s <classname>$N" % self.ev.cmd)
-            return
-        search_class = msg_split[0]
+        side_lookup = {'client': 0, 'server': 1}
 
         c = self.db.cursor()
         idversion = self.get_version()
@@ -70,27 +67,20 @@ class MCPBotProcess(object):
                 self.reply(" Constructor : $B%s$N | $B%s$N" % (const_row['sig'], const_row['notchsig']))
 
     def outputMembers(self, side, etype):
-        side_lookup = {'client': 0, 'server': 1}
-        type_lookup = {'fields': 'field', 'methods': 'func'}
+        member, sname = self.check_args(2, min_args=1, syntax='[<classname>.]<membername> [signature]')
 
-        msg_split = self.ev.msg.strip().split(None, 2)
-        if len(msg_split) < 1 or len(msg_split) > 2:
-            self.reply(" Syntax error: $B%s <membername> [signature]$N or $B%s <classname>.<membername> [signature]$N" % (self.ev.cmd, self.ev.cmd))
-            return
-        member = msg_split[0]
-        sname = None
-        if len(msg_split) > 1:
-            sname = msg_split[1]
         split_member = member.split('.', 2)
         if len(split_member) > 2:
-            self.reply(" Syntax error: $B%s <membername> [signature]$N or $B%s <classname>.<membername> [signature]$N" % (self.ev.cmd, self.ev.cmd))
-            return
+            raise Exception(' Syntax error: $B{cmd} [<classname>.]<membername> [signature]'.format(cmd=self.ev.cmd))
         if len(split_member) > 1:
             cname = split_member[0]
             mname = split_member[1]
         else:
             cname = None
             mname = split_member[0]
+
+        side_lookup = {'client': 0, 'server': 1}
+        type_lookup = {'fields': 'field', 'methods': 'func'}
 
         c = self.db.cursor()
         idversion = self.get_version()
@@ -173,13 +163,9 @@ class MCPBotProcess(object):
             self.reply(" No result for %s" % self.ev.msg.strip())
 
     def search(self):
-        side_lookup = {'client': 0, 'server': 1}
+        search_str, = self.check_args(1, syntax='<name>')
 
-        msg_split = self.ev.msg.strip().split(None, 1)
-        if len(msg_split) != 1:
-            self.reply(" Syntax error: $B%s <name>$N" % self.ev.cmd)
-            return
-        search_str = msg_split[0]
+        side_lookup = {'client': 0, 'server': 1}
 
         if self.ev.sender in self.bot.dcc.sockets and self.bot.dcc.sockets[self.ev.sender]:
             highlimit = 100
@@ -241,19 +227,10 @@ class MCPBotProcess(object):
                             self.reply(" [%s][%7s] %s %s %s %s" % (side.upper(), etype.upper(), fullname.ljust(maxlenname + 2), fullnotch.ljust(maxlennotch + 2), row['sig'], row['notchsig']))
 
     def setMember(self, side, etype, forced=False):
+        oldname, newname, newdesc = self.check_args(3, min_args=2, text=True, syntax='<membername> <newname> [newdescription]')
+
         type_lookup = {'methods': 'func', 'fields': 'field'}
         side_lookup = {'client': 0, 'server': 1}
-
-        msg_split = self.ev.msg.strip().split(None, 2)
-        if len(msg_split) < 2:
-            self.reply(" Syntax error: $B%s <membername> <newname> [newdescription]$N" % self.ev.cmd)
-            return
-
-        oldname = msg_split[0]
-        newname = msg_split[1]
-        newdesc = None
-        if len(msg_split) > 2:
-            newdesc = msg_split[2]
 
         c = self.db.cursor()
         idversion = self.get_version()
@@ -385,17 +362,11 @@ class MCPBotProcess(object):
             self.reply("$BNew desc$N : %s" % newdesc)
 
     def portMember(self, side, etype, forced=False):
+        origin, target = self.check_args(2, syntax='<origin_member> <target_member>')
+
         type_lookup = {'methods': 'func', 'fields': 'field'}
         side_lookup = {'client': 0, 'server': 1}
         target_side_lookup = {'client': 1, 'server': 0}
-
-        msg_split = self.ev.msg.strip().split(None, 2)
-        if len(msg_split) < 2:
-            self.reply(" Syntax error: $B%s <origin_member> <target_member>$N" % self.ev.cmd)
-            return
-
-        origin = msg_split[0]
-        target = msg_split[1]
 
         c = self.db.cursor()
         idversion = self.get_version()
@@ -536,14 +507,10 @@ class MCPBotProcess(object):
         self.reply("%s     : $B%s => %s" % (side, origin, target))
 
     def infoChanges(self, side, etype):
+        member, = self.check_args(1, syntax='<member>')
+
         type_lookup = {'methods': 'func', 'fields': 'field'}
         side_lookup = {'client': 0, 'server': 1}
-
-        msg_split = self.ev.msg.split(None, 1)
-        if len(msg_split) != 1:
-            self.reply("Syntax error: $B%s <searge|index>" % self.ev.cmd)
-            return
-        member = msg_split[0]
 
         c = self.db.cursor()
 
@@ -570,14 +537,10 @@ class MCPBotProcess(object):
             self.reply(" No result for %s" % self.ev.msg.strip())
 
     def revertChanges(self, side, etype):
+        member, = self.check_args(1, syntax='<member>')
+
         type_lookup = {'methods': 'func', 'fields': 'field'}
         side_lookup = {'client': 0, 'server': 1}
-
-        msg_split = self.ev.msg.split(None, 1)
-        if len(msg_split) != 1:
-            self.reply("Syntax error: $B%s <searge|index>" % self.ev.cmd)
-            return
-        member = msg_split[0]
 
         c = self.db.cursor()
         idversion = self.get_version()
@@ -596,21 +559,18 @@ class MCPBotProcess(object):
         self.reply(" Reverting changes on $B%s$N is done." % member)
 
     def getlog(self):
+        full_log, = self.check_args(1, min_args=0, syntax='[full]')
+        if full_log.lower() == 'full':
+            full_log = True
+        else:
+            full_log = False
+
         side_lookup = {'client': 0, 'server': 1}
 
         if self.bot.cnick == 'MCPBot':
             if self.ev.sender not in self.bot.dcc.sockets or not self.bot.dcc.sockets[self.ev.sender]:
                 self.reply("$BPlease use DCC for getlog")
                 return
-
-        msg_split = self.ev.msg.strip().split(None, 1)
-        if len(msg_split) > 1:
-            self.reply("Syntax error: $B%s [full]" % self.ev.cmd)
-            return
-        fulllog = False
-        if len(msg_split) == 1:
-            if msg_split[0] == 'full':
-                fulllog = True
 
         c = self.db.cursor()
         idversion = self.get_version()
@@ -638,7 +598,7 @@ class MCPBotProcess(object):
                     for forcedstatus in [0, 1]:
                         for row in rows:
                             if row['forced'] == forcedstatus:
-                                if fulllog:
+                                if full_log:
                                     self.reply("+ %s, %s, %s" % (row['timestamp'], row['h.nick'], row['h.cmd']))
                                     self.reply("  [%s%s][%s] %s => %s" % (side[0].upper(), etype[0].upper(), row['searge'].ljust(maxlensearge), row['m.name'].ljust(maxlenmname), row['h.newname']))
                                     self.reply("  [%s%s][%s] %s => %s" % (side[0].upper(), etype[0].upper(), row['searge'].ljust(maxlensearge), row['m.desc'], row['h.newdesc']))
@@ -647,10 +607,7 @@ class MCPBotProcess(object):
                                     self.reply("+ %s, %s [%s%s][%5s][%4s] %s => %s" % (row['timestamp'], row['h.nick'].ljust(maxlennick), side[0].upper(), etype[0].upper(), indexmember, row['h.cmd'], row['m.name'].ljust(maxlensearge), row['h.newname']))
 
     def dbCommit(self, pushforced=False):
-        msg_split = self.ev.msg.strip().split(None, 1)
-        if len(msg_split):
-            self.reply("Syntax error: $B%s" % self.ev.cmd)
-            return
+        self.check_args(0)
 
         c = self.db.cursor()
         idversion = self.get_version()
@@ -699,10 +656,7 @@ class MCPBotProcess(object):
             self.reply(" No new entries to commit")
 
     def altCsv(self):
-        msg_split = self.ev.msg.strip().split(None, 1)
-        if len(msg_split):
-            self.reply(" Syntax error: $B%s" % self.ev.cmd)
-            return
+        self.check_args(0)
 
         c = self.db.cursor()
         idversion = self.get_version()
@@ -754,10 +708,7 @@ class MCPBotProcess(object):
         self.reply("New CSVs exported")
 
     def testCsv(self):
-        msg_split = self.ev.msg.strip().split(None, 1)
-        if len(msg_split):
-            self.reply("Syntax error: $B%s" % self.ev.cmd)
-            return
+        self.check_args(0)
 
         if self.bot.cnick == 'MCPBot':
             trgdir = '/home/mcpfiles/mcptest'
@@ -800,16 +751,13 @@ class MCPBotProcess(object):
         self.reply("Test CSVs exported: http://mcp.ocean-labs.de/files/mcptest/")
 
     def status(self):
-        side_lookup = {'client': 0, 'server': 1}
+        full_status, = self.check_args(1, min_args=0, syntax='[full]')
+        if full_status.lower() == 'full':
+            full_status = True
+        else:
+            full_status = False
 
-        msg_split = self.ev.msg.strip().split(None, 1)
-        if len(msg_split) > 1:
-            self.reply("Syntax error: $B%s [full]" % self.ev.cmd)
-            return
-        full_status = False
-        if len(msg_split) == 1:
-            if msg_split[0] == 'full':
-                full_status = True
+        side_lookup = {'client': 0, 'server': 1}
 
         c = self.db.cursor()
         idversion = self.get_version()
@@ -843,16 +791,12 @@ class MCPBotProcess(object):
                     self.reply(" [%s][%7s] : T $B%4d$N | R $B%4d$N | U $B%4d$N | $B%5.2f%%$N" % (side[0].upper(), etype.upper(), row['total'], row['ren'], row['urn'], float(row['ren']) / float(row['total']) * 100))
 
     def todo(self):
+        search_side, = self.check_args(1, syntax='<client|server>')
+
         side_lookup = {'client': 0, 'server': 1}
 
-        msg_split = self.ev.msg.strip().split(None, 1)
-        if len(msg_split) != 1:
-            self.reply("Syntax error: $B%s <client|server>" % self.ev.cmd)
-            return
-        search_side = msg_split[0]
         if search_side not in side_lookup:
-            self.reply("$Btodo <client|server>")
-            return
+            raise Exception(' Syntax error: $B{cmd} <client|server>'.format(cmd=self.ev.cmd))
 
         c = self.db.cursor()
         idversion = self.get_version()

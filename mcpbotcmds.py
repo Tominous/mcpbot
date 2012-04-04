@@ -64,19 +64,17 @@ class MCPBotCmds(object):
 
     @restricted(4)
     def cmd_pub(self):
-        outcmd, outmsg = self.check_args(2, min_args=1, text=True, syntax='<command>')
+        outmsg, = self.check_args(1, text=True, syntax='<command>')
 
-        outcmd = outcmd.lower()
-        if len(outcmd) > 1 and outcmd[0] == self.bot.controlchar:
-            outcmd = outcmd[1:]
-
+        # if command didn't come from a channel send it back to the sender instead
         if self.ev.chan is None:
-            sender = self.ev.senderfull
+            sender = self.ev.sender
         else:
             sender = self.ev.chan
 
-        outev = Event(sender, outcmd, self.ev.chan, outmsg, 'CMD')
-        MCPBotCmds(self.bot, outev).process_cmd()
+        # due to moving the db lock MCPBotCmds isn't reentrant anymore, so we need to generate a new command instead of
+        # just calling MCPBotCmds directly
+        self.bot.process_msg(sender, self.ev.sender, outmsg)
 
     #================== Getters classes ================================
     def cmd_gcc(self):

@@ -6,6 +6,28 @@ SIDE_LOOKUP = {'client': 0, 'server': 1}
 TYPE_LOOKUP = {'methods': 'func', 'fields': 'field'}
 
 
+class Error(Exception):
+    pass
+
+
+class CmdError(Error):
+    def __init__(self, msg):
+        Error.__init__(self)
+        self.msg = msg
+
+    def __str__(self):
+        return 'Error: $R{msg}'.format(msg=self.msg)
+
+
+class CmdSyntaxError(CmdError):
+    def __init__(self, cmd, msg=''):
+        CmdError.__init__(self, msg)
+        self.cmd = cmd
+
+    def __str__(self):
+        return 'Syntax error: $B{cmd} {msg}'.format(cmd=self.cmd, msg=self.msg)
+
+
 class MCPBotProcess(object):
     def __init__(self, cmds, db):
         self.commands = cmds
@@ -206,8 +228,7 @@ class MCPBotProcess(object):
 
         # DON'T ALLOW STRANGE CHARACTERS IN NAMES
         if re.search(r'[^A-Za-z0-9$_]', newname):
-            self.reply("$RIllegal character in name")
-            return
+            raise CmdError("Illegal character in name")
 
         ## WE CHECK IF WE ARE NOT CONFLICTING WITH A CLASS NAME ##
         c.execute("""
@@ -220,8 +241,7 @@ class MCPBotProcess(object):
              SIDE_LOOKUP[side], self.version_id))
         row = c.fetchone()
         if row:
-            self.reply("$RIt is illegal to use class names for fields or methods !")
-            return
+            raise CmdError("It is illegal to use class names for fields or methods !")
 
         ## WE CHECK WE ONLY HAVE ONE RESULT ##
         c.execute("""
@@ -261,8 +281,7 @@ class MCPBotProcess(object):
                  SIDE_LOOKUP[side], self.version_id))
             row = c.fetchone()
             if row:
-                self.reply("$RYou are conflicting with at least one other method: %s. Please use forced update only if you are certain !" % row['searge'])
-                return
+                raise CmdError("You are conflicting with at least one other method: %s. Please use forced update only if you are certain !" % row['searge'])
 
             c.execute("""
                     SELECT searge, name
@@ -274,8 +293,7 @@ class MCPBotProcess(object):
                  SIDE_LOOKUP[side], self.version_id))
             row = c.fetchone()
             if row:
-                self.reply("$RYou are conflicting with at least one other field: %s. Please use forced update only if you are certain !" % row['searge'])
-                return
+                raise CmdError("You are conflicting with at least one other field: %s. Please use forced update only if you are certain !" % row['searge'])
 
         if not forced:
             c.execute("""
@@ -288,8 +306,7 @@ class MCPBotProcess(object):
                  SIDE_LOOKUP[side], self.version_id))
             row = c.fetchone()
             if row and row['searge'] != row['name']:
-                self.reply("$RYou are trying to rename an already named member. Please use forced update only if you are certain !")
-                return
+                raise CmdError("You are trying to rename an already named member. Please use forced update only if you are certain !")
 
             c.execute("""
                     SELECT searge, name
@@ -301,8 +318,7 @@ class MCPBotProcess(object):
                  SIDE_LOOKUP[side], self.version_id))
             row = c.fetchone()
             if row and row['searge'] != row['name']:
-                self.reply("$RYou are trying to rename an already named member. Please use forced update only if you are certain !")
-                return
+                raise CmdError("You are trying to rename an already named member. Please use forced update only if you are certain !")
 
         if len(rows) == 1:
             row = rows[0]
@@ -399,8 +415,7 @@ class MCPBotProcess(object):
              target_side_lookup[side], self.version_id))
         row = c.fetchone()
         if row:
-            self.reply("$RIt is illegal to use class names for fields or methods !")
-            return
+            raise CmdError("It is illegal to use class names for fields or methods !")
 
         ## WE CHECK THAT WE HAVE A UNIQUE NAME
         if not forced:
@@ -414,8 +429,7 @@ class MCPBotProcess(object):
                  target_side_lookup[side], self.version_id))
             row = c.fetchone()
             if row:
-                self.reply("$RYou are conflicting with at least one other method: %s. Please use forced update only if you are certain !" % row['searge'])
-                return
+                raise CmdError("You are conflicting with at least one other method: %s. Please use forced update only if you are certain !" % row['searge'])
 
             c.execute("""
                     SELECT searge, name
@@ -427,8 +441,7 @@ class MCPBotProcess(object):
                  target_side_lookup[side], self.version_id))
             row = c.fetchone()
             if row:
-                self.reply("$RYou are conflicting with at least one other field: %s. Please use forced update only if you are certain !" % row['searge'])
-                return
+                raise CmdError("You are conflicting with at least one other field: %s. Please use forced update only if you are certain !" % row['searge'])
 
         if not forced:
             c.execute("""
@@ -441,8 +454,7 @@ class MCPBotProcess(object):
                  SIDE_LOOKUP[side], self.version_id))
             row = c.fetchone()
             if row and row['searge'] != row['name']:
-                self.reply("$RYou are trying to rename an already named member. Please use forced update only if you are certain !")
-                return
+                raise CmdError("You are trying to rename an already named member. Please use forced update only if you are certain !")
 
             c.execute("""
                     SELECT searge, name
@@ -454,8 +466,7 @@ class MCPBotProcess(object):
                  SIDE_LOOKUP[side], self.version_id))
             row = c.fetchone()
             if row and row['searge'] != row['name']:
-                self.reply("$RYou are trying to rename an already named member. Please use forced update only if you are certain !")
-                return
+                raise CmdError("You are trying to rename an already named member. Please use forced update only if you are certain !")
 
         c.execute("""
                 INSERT INTO {etype}hist

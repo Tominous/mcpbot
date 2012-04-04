@@ -3,7 +3,7 @@ import threading
 from irc_lib.event import Event
 from irc_lib.utils.restricted import restricted
 from irc_lib.utils.ThreadPool import Worker
-from mcpbotprocess import MCPBotProcess, SIDE_LOOKUP
+from mcpbotprocess import MCPBotProcess, SIDE_LOOKUP, CmdError, CmdSyntaxError
 
 
 class MCPBotCmds(object):
@@ -16,13 +16,14 @@ class MCPBotCmds(object):
         self.bot.say(self.ev.sender, msg)
 
     def process_cmd(self):
-        with self.bot.db.get_db() as db:
-            self.process = MCPBotProcess(self, db)
-            getattr(self, 'cmd_%s' % self.ev.cmd, self.cmd_Default)()
+        try:
+            with self.bot.db.get_db() as db:
+                self.process = MCPBotProcess(self, db)
+                getattr(self, 'cmd_%s' % self.ev.cmd, self.cmd_Default)()
+        except CmdError as exc:
+            self.reply(str(exc))
 
     def check_args(self, max_args, min_args=None, text=False, syntax=''):
-        if syntax:
-            syntax = ' ' + syntax
         if min_args is None:
             min_args = max_args
         if text:
@@ -30,11 +31,9 @@ class MCPBotCmds(object):
         else:
             msg_split = self.ev.msg.split(None)
         if min_args is not None and len(msg_split) < min_args or max_args is not None and len(msg_split) > max_args:
-            print msg_split
-            raise Exception(' Syntax error: $B{cmd}{syntax}'.format(cmd=self.ev.cmd, syntax=syntax))
+            raise CmdSyntaxError(self.ev.cmd, syntax)
         empty_args = max_args - len(msg_split)
         msg_split.extend([''] * empty_args)
-        print msg_split
         return msg_split
 
     def cmd_Default(self):
@@ -312,16 +311,14 @@ class MCPBotCmds(object):
             try:
                 level = int(level)
             except ValueError:
-                raise Exception(' Syntax error: $B{cmd} <nick> [level]'.format(cmd=self.ev.cmd))
+                raise CmdSyntaxError(self.ev.cmd, '<nick> [level]')
         else:
             level = 4
 
         if level > 4:
-            self.reply("Max level is 4.")
-            return
+            raise CmdError("Max level is 4")
         if level >= self.bot.whitelist[self.ev.sender]:
-            self.reply("You don't have the rights to do that.")
-            return
+            raise CmdError("You don't have the rights to do that")
 
         self.bot.addWhitelist(nick, level)
         self.reply("Added %s with level %d to whitelist" % (nick, level))
@@ -331,14 +328,12 @@ class MCPBotCmds(object):
         nick, = self.check_args(1, syntax='<nick>')
 
         if nick in self.bot.whitelist and self.bot.whitelist[nick] >= self.bot.whitelist[self.ev.sender]:
-            self.reply("You don't have the rights to do that.")
-            return
+            raise CmdError("You don't have the rights to do that.")
 
         try:
             self.bot.rmWhitelist(nick)
         except KeyError:
-            self.reply("User %s not found in the whitelist" % nick)
-            return
+            raise CmdError("User %s not found in the whitelist" % nick)
         self.reply("User %s removed from the whitelist" % nick)
 
     @restricted(0)
@@ -429,7 +424,7 @@ class MCPBotCmds(object):
         search_side, = self.check_args(1, syntax='<client|server>')
 
         if search_side not in SIDE_LOOKUP:
-            raise Exception(' Syntax error: $B{cmd} <client|server>'.format(cmd=self.ev.cmd))
+            raise CmdSyntaxError(self.sv.cmd, '<client|server>')
 
         self.reply("$B[ TODO %s ]" % search_side.upper())
         self.process.todo(search_side)

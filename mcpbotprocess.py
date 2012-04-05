@@ -43,8 +43,9 @@ class MCPBotProcess(object):
         c.execute("""
                 SELECT value
                 FROM config
-                WHERE name='currentversion'
-            """)
+                WHERE name=:name
+            """,
+            {'name': 'currentversion'})
         row = c.fetchone()
         version_id = row['value']
         return version_id
@@ -55,11 +56,11 @@ class MCPBotProcess(object):
         c.execute("""
                 SELECT name, notch, supername
                 FROM vclasses
-                WHERE (name=? OR notch=?)
-                  AND side=? AND versionid=?
+                WHERE (name=:search_class OR notch=:search_class)
+                  AND side=:side AND versionid=:version
             """,
-            (search_class, search_class,
-             SIDE_LOOKUP[side], self.version_id))
+            {'search_class': search_class,
+             'side': SIDE_LOOKUP[side], 'version': self.version_id})
         class_rows = c.fetchall()
 
         if not class_rows:
@@ -75,11 +76,11 @@ class MCPBotProcess(object):
             c.execute("""
                     SELECT sig, notchsig
                     FROM vconstructors
-                    WHERE (name=? OR notch=?)
-                      AND side=? AND versionid=?
+                    WHERE (name=:search_class OR notch=:search_class)
+                      AND side=:side AND versionid=:version
                 """,
-                (search_class, search_class,
-                 SIDE_LOOKUP[side], self.version_id))
+                {'search_class': search_class,
+                 'side': SIDE_LOOKUP[side], 'version': self.version_id})
             const_rows = c.fetchall()
 
             for const_row in const_rows:
@@ -95,46 +96,48 @@ class MCPBotProcess(object):
 
         c = self.db.cursor()
 
+        mname_esc = '{0}!_{1}!_%'.format(TYPE_LOOKUP[etype], mname)
+
         if cname and sname:
             c.execute("""
                     SELECT name, notch, searge, sig, notchsig, desc, classname, classnotch
                     FROM v{etype}
-                    WHERE (searge LIKE ? ESCAPE '!' OR searge=? OR notch=? OR name=?)
-                      AND (classname=? OR classnotch=?)
-                      AND (sig=? OR notchsig=?)
-                      AND side=? AND versionid=?
+                    WHERE (searge LIKE :mname_esc ESCAPE '!' OR searge=:mname OR notch=:mname OR name=:mname)
+                      AND (classname=:cname OR classnotch=:cname)
+                      AND (sig=:sname OR notchsig=:sname)
+                      AND side=:side AND versionid=:version
                 """.format(etype=etype),
-                ('{0}!_{1}!_%'.format(TYPE_LOOKUP[etype], mname), mname, mname, mname, cname, cname, sname, sname,
-                 SIDE_LOOKUP[side], self.version_id))
+                {'mname_esc': mname_esc, 'mname': mname, 'cname': cname, 'sname': sname,
+                 'side': SIDE_LOOKUP[side], 'version': self.version_id})
         elif cname and not sname:
             c.execute("""
                     SELECT name, notch, searge, sig, notchsig, desc, classname, classnotch
                     FROM v{etype}
-                    WHERE (searge LIKE ? ESCAPE '!' OR searge=? OR notch=? OR name=?)
-                      AND (classname=? OR classnotch=?)
-                      AND side=? AND versionid=?
+                    WHERE (searge LIKE :mname_esc ESCAPE '!' OR searge=:mname OR notch=:mname OR name=:mname)
+                      AND (classname=:cname OR classnotch=:cname)
+                      AND side=:side AND versionid=:version
                 """.format(etype=etype),
-                ('{0}!_{1}!_%'.format(TYPE_LOOKUP[etype], mname), mname, mname, mname, cname, cname,
-                 SIDE_LOOKUP[side], self.version_id))
+                {'mname_esc': mname_esc, 'mname': mname, 'cname': cname,
+                 'side': SIDE_LOOKUP[side], 'version': self.version_id})
         elif not cname and sname:
             c.execute("""
                     SELECT name, notch, searge, sig, notchsig, desc, classname, classnotch
                     FROM v{etype}
-                    WHERE (searge LIKE ? ESCAPE '!' OR searge=? OR notch=? OR name=?)
-                      AND (sig=? OR notchsig=?)
-                      AND side=? AND versionid=?
+                    WHERE (searge LIKE :mname_esc ESCAPE '!' OR searge=:mname OR notch=:mname OR name=:mname)
+                      AND (sig=:sname OR notchsig=:sname)
+                      AND side=:side AND versionid=:version
                 """.format(etype=etype),
-                ('{0}!_{1}!_%'.format(TYPE_LOOKUP[etype], mname), mname, mname, mname, sname, sname,
-                 SIDE_LOOKUP[side], self.version_id))
+                {'mname_esc': mname_esc, 'mname': mname, 'sname': sname,
+                 'side': SIDE_LOOKUP[side], 'version': self.version_id})
         else:
             c.execute("""
                     SELECT name, notch, searge, sig, notchsig, desc, classname, classnotch
                     FROM v{etype}
-                    WHERE (searge LIKE ? ESCAPE '!' OR searge=? OR notch=? OR name=?)
-                      AND side=? AND versionid=?
+                    WHERE (searge LIKE :mname_esc ESCAPE '!' OR searge=:mname OR notch=:mname OR name=:mname)
+                      AND side=:side AND versionid=:version
                 """.format(etype=etype),
-                ('{0}!_{1}!_%'.format(TYPE_LOOKUP[etype], mname), mname, mname, mname,
-                 SIDE_LOOKUP[side], self.version_id))
+                {'mname_esc': mname_esc, 'mname': mname,
+                 'side': SIDE_LOOKUP[side], 'version': self.version_id})
         rows = c.fetchall()
 
         if len(rows) > highlimit:
@@ -173,26 +176,27 @@ class MCPBotProcess(object):
 
         rows = {'classes': None, 'fields': None, 'methods': None}
 
+        search_esc = '%{0}%'.format(search_str)
         for side in ['client', 'server']:
             c.execute("""
                     SELECT name, notch
                     FROM vclasses
-                    WHERE name LIKE ? ESCAPE '!'
-                      AND side=? AND versionid=?
+                    WHERE name LIKE :search_esc ESCAPE '!'
+                      AND side=:side AND versionid=:version
                 """,
-                ('%{0}%'.format(search_str),
-                 SIDE_LOOKUP[side], self.version_id))
+                {'search_esc': search_esc,
+                 'side': SIDE_LOOKUP[side], 'version': self.version_id})
             rows['classes'] = c.fetchall()
 
             for etype in ['fields', 'methods']:
                 c.execute("""
                         SELECT name, notch, searge, sig, notchsig, desc, classname, classnotch
                         FROM v{etype}
-                        WHERE name LIKE ? ESCAPE '!'
-                          AND side=? AND versionid=?
+                        WHERE name LIKE :search_esc ESCAPE '!'
+                          AND side=:side AND versionid=:version
                     """.format(etype=etype),
-                    ('%{0}%'.format(search_str),
-                     SIDE_LOOKUP[side], self.version_id))
+                    {'search_esc': search_esc,
+                     'side': SIDE_LOOKUP[side], 'version': self.version_id})
                 rows[etype] = c.fetchall()
 
             if not rows['classes']:
@@ -234,24 +238,25 @@ class MCPBotProcess(object):
         c.execute("""
                 SELECT name
                 FROM vclasses
-                WHERE lower(name)=lower(?)
-                  AND side=? AND versionid=?
+                WHERE lower(name)=lower(:newname)
+                  AND side=:side AND versionid=:version
             """,
-            (newname,
-             SIDE_LOOKUP[side], self.version_id))
+            {'newname': newname,
+             'side': SIDE_LOOKUP[side], 'version': self.version_id})
         row = c.fetchone()
         if row:
             raise CmdError("It is illegal to use class names for fields or methods !")
 
         ## WE CHECK WE ONLY HAVE ONE RESULT ##
+        oldname_esc = '{0}!_{1}!_%'.format(TYPE_LOOKUP[etype], oldname)
         c.execute("""
                 SELECT name, notch, searge, sig, notchsig, desc, classname, classnotch, id
                 FROM v{etype}
-                WHERE (searge LIKE ? ESCAPE '!' OR searge=?)
-                  AND side=? AND versionid=?
+                WHERE (searge LIKE :oldname_esc ESCAPE '!' OR searge=:oldname)
+                  AND side=:side AND versionid=:version
             """.format(etype=etype),
-            ('{0}!_{1}!_%'.format(TYPE_LOOKUP[etype], oldname), oldname,
-             SIDE_LOOKUP[side], self.version_id))
+            {'oldname_esc': oldname_esc, 'oldname': oldname,
+             'side': SIDE_LOOKUP[side], 'version': self.version_id})
         rows = c.fetchall()
 
         if len(rows) > 1:
@@ -274,11 +279,11 @@ class MCPBotProcess(object):
             c.execute("""
                     SELECT searge, name
                     FROM vmethods
-                    WHERE name=?
-                      AND side=? AND versionid=?
+                    WHERE name=:newname
+                      AND side=:side AND versionid=:version
                 """,
-                (newname,
-                 SIDE_LOOKUP[side], self.version_id))
+                {'newname': newname,
+                 'side': SIDE_LOOKUP[side], 'version': self.version_id})
             row = c.fetchone()
             if row:
                 raise CmdError("You are conflicting with at least one other method: %s. Please use forced update only if you are certain !" % row['searge'])
@@ -286,11 +291,11 @@ class MCPBotProcess(object):
             c.execute("""
                     SELECT searge, name
                     FROM vfields
-                    WHERE name=?
-                      AND side=? AND versionid=?
+                    WHERE name=:newname
+                      AND side=:side AND versionid=:version
                 """,
-                (newname,
-                 SIDE_LOOKUP[side], self.version_id))
+                {'newname': newname,
+                 'side': SIDE_LOOKUP[side], 'version': self.version_id})
             row = c.fetchone()
             if row:
                 raise CmdError("You are conflicting with at least one other field: %s. Please use forced update only if you are certain !" % row['searge'])
@@ -299,11 +304,11 @@ class MCPBotProcess(object):
             c.execute("""
                     SELECT searge, name
                     FROM vmethods
-                    WHERE (searge LIKE ? ESCAPE '!' OR searge=?)
-                      AND side=? AND versionid=?
+                    WHERE (searge LIKE :oldname_esc ESCAPE '!' OR searge=:oldname)
+                      AND side=:side AND versionid=:version
                 """,
-                ('{0}!_{1}!_%'.format(TYPE_LOOKUP[etype], oldname), oldname,
-                 SIDE_LOOKUP[side], self.version_id))
+                {'oldname_esc': oldname_esc, 'oldname': oldname,
+                 'side': SIDE_LOOKUP[side], 'version': self.version_id})
             row = c.fetchone()
             if row and row['searge'] != row['name']:
                 raise CmdError("You are trying to rename an already named member. Please use forced update only if you are certain !")
@@ -311,11 +316,11 @@ class MCPBotProcess(object):
             c.execute("""
                     SELECT searge, name
                     FROM vfields
-                    WHERE (searge LIKE ? ESCAPE '!' OR searge=?)
-                      AND side=? AND versionid=?
+                    WHERE (searge LIKE :oldname_esc ESCAPE '!' OR searge=:oldname)
+                      AND side=:side AND versionid=:version
                 """,
-                ('{0}!_{1}!_%'.format(TYPE_LOOKUP[etype], oldname), oldname,
-                 SIDE_LOOKUP[side], self.version_id))
+                {'oldname_esc': oldname_esc, 'oldname': oldname,
+                 'side': SIDE_LOOKUP[side], 'version': self.version_id})
             row = c.fetchone()
             if row and row['searge'] != row['name']:
                 raise CmdError("You are trying to rename an already named member. Please use forced update only if you are certain !")
@@ -336,9 +341,9 @@ class MCPBotProcess(object):
 
             c.execute("""
                     INSERT INTO {etype}hist
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    VALUES (:id, :memberid, :oldname, :olddesc, :newname, :newdesc, :timestamp, :nick, :forced, :cmd)
                 """.format(etype=etype),
-                (None, int(row['id']), row['name'], row['desc'], newname, newdesc, int(time.time()), self.ev.sender, forced, self.ev.cmd))
+                {'id': None, 'memberid': int(row['id']), 'oldname': row['name'], 'olddesc': row['desc'], 'newname': newname, 'newdesc': newdesc, 'timestamp': int(time.time()), 'nick': self.ev.sender, 'forced': forced, 'cmd': self.ev.cmd})
             self.reply("$BNew desc$N : %s" % newdesc)
 
     def port_member(self, origin, target, side, etype, forced=False):
@@ -350,14 +355,15 @@ class MCPBotProcess(object):
             self.reply("$RCAREFUL, YOU ARE FORCING AN UPDATE !")
 
         ## WE CHECK WE ONLY HAVE ONE RESULT ##
+        origin_esc = '{0}!_{1}!_%'.format(TYPE_LOOKUP[etype], origin)
         c.execute("""
                 SELECT name, notch, searge, sig, notchsig, desc, classname, classnotch, id
                 FROM v{etype}
-                WHERE (searge LIKE ? ESCAPE '!' OR searge=?)
-                  AND side=? AND versionid=?
+                WHERE (searge LIKE :origin_esc ESCAPE '!' OR searge=:origin)
+                  AND side=:side AND versionid=:version
             """.format(etype=etype),
-            ('{0}!_{1}!_%'.format(TYPE_LOOKUP[etype], origin), origin,
-             SIDE_LOOKUP[side], self.version_id))
+            {'origin_esc': origin_esc, 'origin': origin,
+             'side': SIDE_LOOKUP[side], 'version': self.version_id})
         rows = c.fetchall()
 
         if len(rows) > 1:
@@ -377,14 +383,15 @@ class MCPBotProcess(object):
         src_row = rows[0]
 
         # DO THE SAME FOR OTHER SIDE #
+        target_esc = '{0}!_{1}!_%'.format(TYPE_LOOKUP[etype], target)
         c.execute("""
                 SELECT name, notch, searge, sig, notchsig, desc, classname, classnotch, id
                 FROM v{etype}
-                WHERE (searge LIKE ? ESCAPE '!' OR searge=?)
-                  AND side=? AND versionid=?
+                WHERE (searge LIKE :target_esc ESCAPE '!' OR searge=:target)
+                  AND side=:side AND versionid=:version
             """.format(etype=etype),
-            ('{0}!_{1}!_%'.format(TYPE_LOOKUP[etype], target), target,
-             target_side_lookup[side], self.version_id))
+            {'target_esc': target_esc, 'target': target,
+             'side': target_side_lookup[side], 'version': self.version_id})
         rows = c.fetchall()
 
         if len(rows) > 1:
@@ -407,11 +414,11 @@ class MCPBotProcess(object):
         c.execute("""
                 SELECT name
                 FROM vclasses
-                WHERE lower(name)=lower(?)
-                  AND side=? AND versionid=?
+                WHERE lower(name)=lower(:name)
+                  AND side=:side AND versionid=:version
             """,
-            (src_row['name'],
-             target_side_lookup[side], self.version_id))
+            {'name': src_row['name'],
+             'side': target_side_lookup[side], 'version': self.version_id})
         row = c.fetchone()
         if row:
             raise CmdError("It is illegal to use class names for fields or methods !")
@@ -421,11 +428,11 @@ class MCPBotProcess(object):
             c.execute("""
                     SELECT searge, name
                     FROM vmethods
-                    WHERE name=?
-                      AND side=? AND versionid=?
+                    WHERE name=:name
+                      AND side=:side AND versionid=:version
                 """,
-                (src_row['name'],
-                 target_side_lookup[side], self.version_id))
+                {'name': src_row['name'],
+                 'side': target_side_lookup[side], 'version': self.version_id})
             row = c.fetchone()
             if row:
                 raise CmdError("You are conflicting with at least one other method: %s. Please use forced update only if you are certain !" % row['searge'])
@@ -433,11 +440,11 @@ class MCPBotProcess(object):
             c.execute("""
                     SELECT searge, name
                     FROM vfields
-                    WHERE name=?
-                      AND side=? AND versionid=?
+                    WHERE name=:name
+                      AND side=:side AND versionid=:version
                 """,
-                (src_row['name'],
-                 target_side_lookup[side], self.version_id))
+                {'name': src_row['name'],
+                 'side': target_side_lookup[side], 'version': self.version_id})
             row = c.fetchone()
             if row:
                 raise CmdError("You are conflicting with at least one other field: %s. Please use forced update only if you are certain !" % row['searge'])
@@ -446,11 +453,11 @@ class MCPBotProcess(object):
             c.execute("""
                     SELECT searge, name
                     FROM vmethods
-                    WHERE (searge LIKE ? ESCAPE '!' OR searge=?)
-                      AND side=? AND versionid=?
+                    WHERE (searge LIKE :target_esc ESCAPE '!' OR searge=:target)
+                      AND side=:side AND versionid=:version
                 """,
-                ('{0}!_{1}!_%'.format(TYPE_LOOKUP[etype], target), target,
-                 SIDE_LOOKUP[side], self.version_id))
+                {'target_esc': target_esc, 'target': target,
+                 'side': SIDE_LOOKUP[side], 'version': self.version_id})
             row = c.fetchone()
             if row and row['searge'] != row['name']:
                 raise CmdError("You are trying to rename an already named member. Please use forced update only if you are certain !")
@@ -458,25 +465,26 @@ class MCPBotProcess(object):
             c.execute("""
                     SELECT searge, name
                     FROM vfields
-                    WHERE (searge LIKE ? ESCAPE '!' OR searge=?)
-                      AND side=? AND versionid=?
+                    WHERE (searge LIKE :target_esc ESCAPE '!' OR searge=:target)
+                      AND side=:side AND versionid=:version
                 """,
-                ('{0}!_{1}!_%'.format(TYPE_LOOKUP[etype], target), target,
-                 SIDE_LOOKUP[side], self.version_id))
+                {'target_esc': target_esc, 'target': target,
+                 'side': SIDE_LOOKUP[side], 'version': self.version_id})
             row = c.fetchone()
             if row and row['searge'] != row['name']:
                 raise CmdError("You are trying to rename an already named member. Please use forced update only if you are certain !")
 
         c.execute("""
                 INSERT INTO {etype}hist
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                VALUES (:id, :memberid, :oldname, :olddesc, :newname, :newdesc, :timestamp, :nick, :forced, :cmd)
             """.format(etype=etype),
-            (None, int(tgt_row['id']), tgt_row['name'], tgt_row['desc'], src_row['name'], src_row['desc'], int(time.time()), self.ev.sender, forced, self.ev.cmd))
+            {'id': None, 'memberid': int(tgt_row['id']), 'oldname': tgt_row['name'], 'olddesc': tgt_row['desc'], 'newname': src_row['name'], 'newdesc': src_row['desc'], 'timestamp': int(time.time()), 'nick': self.ev.sender, 'forced': forced, 'cmd': self.ev.cmd})
         self.reply("%s     : $B%s => %s" % (side, origin, target))
 
     def log_member(self, member, side, etype):
         c = self.db.cursor()
 
+        member_esc = '{0}!_{1}!_%'.format(TYPE_LOOKUP[etype], member)
         c.execute("""
                     SELECT mh.oldname, mh.olddesc, mh.newname, mh.newdesc,
                       strftime('%m-%d %H:%M', mh.timestamp, 'unixepoch') AS timestamp, mh.nick, mh.forced, m.searge,
@@ -484,11 +492,11 @@ class MCPBotProcess(object):
                     FROM {etype} m
                       INNER JOIN versions v ON v.id=m.versionid
                       INNER JOIN {etype}hist mh ON mh.memberid=m.id
-                    WHERE (m.searge LIKE ? ESCAPE '!' OR m.searge=? OR m.notch=? OR m.name=?)
-                      AND m.side=?
+                    WHERE (m.searge LIKE :member_esc ESCAPE '!' OR m.searge=:member OR m.notch=:member OR m.name=:member)
+                      AND m.side=:side
                 """.format(etype=etype),
-            ('{0}!_{1}!_%'.format(TYPE_LOOKUP[etype], member), member, member, member,
-             SIDE_LOOKUP[side]))
+            {'member_esc': member_esc, 'member': member,
+             'side': SIDE_LOOKUP[side]})
         rows = c.fetchall()
 
         if rows:
@@ -500,14 +508,15 @@ class MCPBotProcess(object):
     def revert_member(self, member, side, etype):
         c = self.db.cursor()
 
+        member_esc = '{0}!_{1}!_%'.format(TYPE_LOOKUP[etype], member)
         c.execute("""
                 UPDATE {etype}
                 SET dirtyid=0
-                WHERE (searge LIKE ? ESCAPE '!' OR searge=?)
-                  AND side=? AND versionid=?
+                WHERE (searge LIKE :member_esc ESCAPE '!' OR searge=:member)
+                  AND side=:side AND versionid=:version
             """.format(etype=etype),
-            ('{0}!_{1}!_%'.format(TYPE_LOOKUP[etype], member), member,
-             SIDE_LOOKUP[side], self.version_id))
+            {'member_esc': member_esc, 'member': member,
+             'side': SIDE_LOOKUP[side], 'version': self.version_id})
         self.reply(" Reverting changes on $B%s$N is done." % member)
 
     def get_log(self, full_log):
@@ -525,10 +534,10 @@ class MCPBotProcess(object):
                           strftime('%m-%d %H:%M', h.timestamp, 'unixepoch') AS timestamp, h.nick, h.cmd, h.forced
                         FROM {etype} m
                           INNER JOIN {etype}hist h ON h.id=m.dirtyid
-                        WHERE m.side=? AND m.versionid=?
+                        WHERE m.side=:side AND m.versionid=:version
                         ORDER BY h.timestamp
                     """.format(etype=etype),
-                    (SIDE_LOOKUP[side], self.version_id))
+                    {'side': SIDE_LOOKUP[side], 'version': self.version_id})
                 rows = c.fetchall()
 
                 if rows:
@@ -557,35 +566,35 @@ class MCPBotProcess(object):
                         SELECT m.id, h.newname, h.newdesc
                         FROM {etype} m
                           INNER JOIN {etype}hist h ON h.id=m.dirtyid
-                        WHERE m.versionid=?
+                        WHERE m.versionid=:version
                     """.format(etype=etype),
-                    (self.version_id,))
+                    {'version': self.version_id})
             else:
                 c.execute("""
                         SELECT m.id, h.newname, h.newdesc
                         FROM {etype} m
                           INNER JOIN {etype}hist h ON h.id=m.dirtyid
                         WHERE NOT h.forced=1
-                          AND m.versionid=?
+                          AND m.versionid=:version
                     """.format(etype=etype),
-                    (self.version_id,))
+                    {'version': self.version_id})
             rows = c.fetchall()
             nentries += len(rows)
 
             for row in rows:
                 c.execute("""
                         UPDATE {etype}
-                        SET name=?, desc=?, dirtyid=0
-                        WHERE id=?
+                        SET name=:newname, desc=:newdesc, dirtyid=0
+                        WHERE id=:id
                     """.format(etype=etype),
-                    (row['newname'], row['newdesc'], row['id']))
+                    {'newname': row['newname'], 'newdesc': row['newdesc'], 'id': row['id']})
 
         if nentries:
             c.execute("""
                     INSERT INTO commits
-                    VALUES (?, ?, ?)
+                    VALUES (:id, :timestamp, :nick)
                 """,
-                (None, int(time.time()), self.ev.sender))
+                {'id': None, 'timestamp': int(time.time()), 'nick': self.ev.sender})
             self.reply(" Committed %d new updates" % nentries)
         else:
             self.reply(" No new entries to commit")
@@ -596,9 +605,9 @@ class MCPBotProcess(object):
         c.execute("""
                 SELECT mcpversion
                 FROM versions
-                WHERE id=?
+                WHERE id=:version
             """,
-            (self.version_id,))
+            {'version': self.version_id})
         row = c.fetchone()
         mcpversion = row['mcpversion']
 
@@ -614,10 +623,10 @@ class MCPBotProcess(object):
                 FROM vmethods
                 WHERE name != classname
                   AND searge != name
-                  AND versionid=?
+                  AND versionid=:version
                 ORDER BY side, searge
             """,
-            (self.version_id,))
+            {'version': self.version_id})
         rows = c.fetchall()
         for row in rows:
             methodswriter.writerow({'searge': row['searge'], 'name': row['name'], 'side': row['side'], 'desc': row['desc']})
@@ -629,10 +638,10 @@ class MCPBotProcess(object):
                 FROM vfields
                 WHERE name != classname
                   AND searge != name
-                  AND versionid=?
+                  AND versionid=:version
                 ORDER BY side, searge
             """,
-            (self.version_id,))
+            {'version': self.version_id})
         rows = c.fetchall()
         for row in rows:
             fieldswriter.writerow({'searge': row['searge'], 'name': row['name'], 'side': row['side'], 'desc': row['desc']})
@@ -654,10 +663,10 @@ class MCPBotProcess(object):
                 FROM vmethods
                 WHERE name != classname
                   AND searge != name
-                  AND versionid=?
+                  AND versionid=:version
                 ORDER BY side, searge
             """,
-            (self.version_id,))
+            {'version': self.version_id})
         rows = c.fetchall()
         for row in rows:
             methodswriter.writerow({'searge': row['searge'], 'name': row['name'], 'side': row['side'], 'desc': row['desc']})
@@ -669,10 +678,10 @@ class MCPBotProcess(object):
                 FROM vfields
                 WHERE name != classname
                   AND searge != name
-                  AND versionid=?
+                  AND versionid=:version
                 ORDER BY side, searge
             """,
-            (self.version_id,))
+            {'version': self.version_id})
         rows = c.fetchall()
         for row in rows:
             fieldswriter.writerow({'searge': row['searge'], 'name': row['name'], 'side': row['side'], 'desc': row['desc']})
@@ -685,9 +694,9 @@ class MCPBotProcess(object):
         c.execute("""
                 SELECT mcpversion, botversion, dbversion, clientversion, serverversion
                 FROM versions
-                WHERE id=?
+                WHERE id=:version
             """,
-            (self.version_id,))
+            {'version': self.version_id})
         row = c.fetchone()
 
         self.reply(" MCP    : $B%s" % row['mcpversion'])
@@ -701,9 +710,9 @@ class MCPBotProcess(object):
                     c.execute("""
                             SELECT total({etype}t) AS total, total({etype}r) AS ren, total({etype}u) AS urn
                             FROM vclassesstats
-                            WHERE side=? AND versionid=?
+                            WHERE side=:side AND versionid=:version
                         """.format(etype=etype),
-                        (SIDE_LOOKUP[side], self.version_id))
+                        {'side': SIDE_LOOKUP[side], 'version': self.version_id})
                     row = c.fetchone()
 
                     self.reply(" [%s][%7s] : T $B%4d$N | R $B%4d$N | U $B%4d$N | $B%5.2f%%$N" % (side[0].upper(), etype.upper(), row['total'], row['ren'], row['urn'], float(row['ren']) / float(row['total']) * 100))
@@ -714,11 +723,11 @@ class MCPBotProcess(object):
         c.execute("""
                 SELECT name, methodst+fieldst AS memberst, methodsr+fieldsr AS membersr, methodsu+fieldsu AS membersu
                 FROM vclassesstats
-                WHERE side=? AND versionid=?
+                WHERE side=:side AND versionid=:version
                 ORDER BY methodsu+fieldsu DESC
                 LIMIT 10
             """,
-            (SIDE_LOOKUP[search_side], self.version_id))
+            {'side': SIDE_LOOKUP[search_side], 'version': self.version_id})
         rows = c.fetchall()
 
         for row in rows:

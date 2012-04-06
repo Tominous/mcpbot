@@ -1,6 +1,5 @@
 import threading
 
-from irc_lib.event import Event
 from irc_lib.utils.restricted import restricted
 from irc_lib.utils.threadpool import Worker
 from mcpbotprocess import MCPBotProcess, SIDE_LOOKUP, CmdError, CmdSyntaxError
@@ -290,7 +289,6 @@ class MCPBotCmds(object):
         self.reply("$B[ COMMIT ]")
         self.process.db_commit(forced)
 
-
     @restricted(3)
     def cmd_altcsv(self):
         self.check_args(0)
@@ -424,7 +422,7 @@ class MCPBotCmds(object):
         search_side, = self.check_args(1, syntax='<client|server>')
 
         if search_side not in SIDE_LOOKUP:
-            raise CmdSyntaxError(self.sv.cmd, '<client|server>')
+            raise CmdSyntaxError(self.ev.cmd, '<client|server>')
 
         self.reply("$B[ TODO %s ]" % search_side.upper())
         self.process.todo(search_side)

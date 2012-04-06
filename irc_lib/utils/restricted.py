@@ -1,10 +1,10 @@
 def restricted(level=4):
-    def wrap(f):
-        def wrap_f(*args, **kwargs):
+    def wrap(func):
+        def wrap_func(*args, **kwargs):
             commands = args[0]
             bot = commands.bot
-            sender = commands.ev.sender
-            chan = commands.ev.chan
+            sender = commands.evt.sender
+            chan = commands.evt.chan
 
             # Small work around for !pub restricted commands
             if sender == chan:
@@ -26,6 +26,6 @@ def restricted(level=4):
                 bot.say(sender, 'You do not have the rights to do that')
                 return
 
-            f(*args, **kwargs)
-        return wrap_f
+            func(*args, **kwargs)
+        return wrap_func
     return wrap

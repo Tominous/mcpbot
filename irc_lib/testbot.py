@@ -12,51 +12,51 @@ class TestBot(IRCBotBase):
     def onIRC_Default(self, cmd, prefix, args):
         self.logger.debug('? IRC_%s %s %s', cmd, prefix, str(args))
 
-    def onDefault(self, ev):
-        self.logger.debug('? %s_%s %s %s %s', ev.type, ev.cmd, ev.sender, ev.target, repr(ev.msg))
+    def onDefault(self, evt):
+        self.logger.debug('? %s_%s %s %s %s', evt.type, evt.cmd, evt.sender, evt.target, repr(evt.msg))
 
-    def onCmd(self, ev):
-        self.logger.info('! [%d] %s S: %s C: %s T: %s M: %s', ev.id, ev.type.ljust(4), ev.sender.ljust(20),
-                         ev.cmd.ljust(15), ev.target, ev.msg)
+    def onCmd(self, evt):
+        self.logger.info('! [%d] %s S: %s C: %s T: %s M: %s', evt.id, evt.type.ljust(4), evt.sender.ljust(20),
+                         evt.cmd.ljust(15), evt.target, evt.msg)
 
-        if ev.cmd == 'listusers':
+        if evt.cmd == 'listusers':
             for user in self.users.values():
                 self.logger.info(user.get_string())
 
-        if ev.cmd == 'ip':
-            nick = ev.msg.split()[0].strip()
+        if evt.cmd == 'ip':
+            nick = evt.msg.split()[0].strip()
             ip = self.getIP(nick)
-            self.say(ev.sender, 'User %s, %s' % (nick, ip))
+            self.say(evt.sender, 'User %s, %s' % (nick, ip))
 
-        if ev.cmd == 'dcc':
-            self.dcc.dcc(ev.sender)
+        if evt.cmd == 'dcc':
+            self.dcc.dcc(evt.sender)
 
-        if ev.cmd == 'say':
-            self.irc.privmsg(ev.msg.split()[0], ' '.join(ev.msg.split()[1:]))
+        if evt.cmd == 'say':
+            self.irc.privmsg(evt.msg.split()[0], ' '.join(evt.msg.split()[1:]))
 
-        if ev.cmd == 'notice':
-            self.irc.notice(ev.msg.split()[0], ' '.join(ev.msg.split()[1:]))
+        if evt.cmd == 'notice':
+            self.irc.notice(evt.msg.split()[0], ' '.join(evt.msg.split()[1:]))
 
-        if ev.cmd == 'action':
-            self.ctcp.action(ev.msg.split()[0], ' '.join(ev.msg.split()[1:]))
+        if evt.cmd == 'action':
+            self.ctcp.action(evt.msg.split()[0], ' '.join(evt.msg.split()[1:]))
 
-        if ev.cmd == 'colors':
+        if evt.cmd == 'colors':
             out_msg = ''
             for i in range(16):
                 out_msg += '$C%dAAA ' % i
-            self.irc.privmsg(ev.msg.split()[0], out_msg)
+            self.irc.privmsg(evt.msg.split()[0], out_msg)
 
-        if ev.cmd == 'flood':
-            self.cmdFlood(ev.sender, ev.chan, ev.msg)
+        if evt.cmd == 'flood':
+            self.cmdFlood(evt.sender, evt.chan, evt.msg)
 
-        if ev.cmd == 'addwhite':
-            self.cmdAddWhite(ev.sender, ev.chan, ev.msg)
+        if evt.cmd == 'addwhite':
+            self.cmdAddWhite(evt.sender, evt.chan, evt.msg)
 
-        if ev.cmd == 'rmwhite':
-            self.cmdRemoveWhite(ev.sender, ev.chan, ev.msg)
+        if evt.cmd == 'rmwhite':
+            self.cmdRemoveWhite(evt.sender, evt.chan, evt.msg)
 
-    def onDCCMsg(self, ev):
-        self.dcc.say(ev.sender, ev.msg)
+    def onDCCMsg(self, evt):
+        self.dcc.say(evt.sender, evt.msg)
 
     @restricted()
     def cmdAddWhite(self, sender, channel, msg):

@@ -45,8 +45,8 @@ class IRCProtocol(Protocol):
             self.bot.threadpool.add_task(cmd_func, cmd, prefix, args)
         else:
             # fake event used for logging and onDefault, missing target
-            ev = Event(prefix, cmd, '', str(args), 'IRC')
-            self.bot.threadpool.add_task(self.bot.onDefault, ev)
+            evt = Event(prefix, cmd, '', str(args), 'IRC')
+            self.bot.threadpool.add_task(self.bot.onDefault, evt)
 
     def add_user(self, nick, chan=None):
         nick_status = '-'

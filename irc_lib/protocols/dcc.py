@@ -49,21 +49,21 @@ class DCCProtocol(Protocol):
         dcccmd, _, dccargs = msg.partition(' ')
 
         # regenerate event with parsed dcc details
-        ev = Event(sender, dcccmd, target, dccargs, 'DCC')
+        evt = Event(sender, dcccmd, target, dccargs, 'DCC')
 
         cmd_func = getattr(self, 'onDCC_%s' % dcccmd, self.onDCC_Default)
-        cmd_func(ev)
+        cmd_func(evt)
 
         cmd_func = getattr(self.bot, 'onDCC_%s' % dcccmd, getattr(self.bot, 'onDCC_Default', self.bot.onDefault))
-        cmd_func(ev)
+        cmd_func(evt)
 
     def process_DCCmsg(self, sender, msg):
-        ev = Event(sender, 'DCCMSG', self.cnick, msg, 'DCC')
+        evt = Event(sender, 'DCCMSG', self.cnick, msg, 'DCC')
 
-        self.bot.threadpool.add_task(self.onRawDCCMsg, ev)
+        self.bot.threadpool.add_task(self.onRawDCCMsg, evt)
 
         cmd_func = getattr(self.bot, 'onDCCMsg', self.bot.onDefault)
-        self.bot.threadpool.add_task(cmd_func, ev)
+        self.bot.threadpool.add_task(cmd_func, evt)
 
     def conv_ip_long_std(self, longip):
         try:
@@ -100,8 +100,8 @@ class DCCProtocol(Protocol):
         while not self.bot.exit:
             inputready, _, _ = select.select(inp, [], [], 5)
 
-            for s in inputready:
-                if s == self.insocket:
+            for skt in inputready:
+                if skt == self.insocket:
                     self.logger.info('# Received connection request')
                     # handle the server socket
                     buffsocket, buffip = self.insocket.accept()
@@ -119,60 +119,60 @@ class DCCProtocol(Protocol):
                     new_data = None
                     close_socket = False
                     try:
-                        new_data = s.socket.recv(512)
+                        new_data = skt.socket.recv(512)
                     except socket.timeout:
-                        self.logger.info('*** DCC.inbound_loop: Connection closed [timeout]: %s', s.nick)
+                        self.logger.info('*** DCC.inbound_loop: Connection closed [timeout]: %s', skt.nick)
                         close_socket = True
                     except socket.error as exc:
                         if 'Connection reset by peer' in exc:
-                            self.logger.info('*** DCC.inbound_loop: Connection closed [reset]: %s', s.nick)
+                            self.logger.info('*** DCC.inbound_loop: Connection closed [reset]: %s', skt.nick)
                         elif 'Connection timed out' in exc:
-                            self.logger.info('*** DCC.inbound_loop: Connection closed [timeout]: %s', s.nick)
+                            self.logger.info('*** DCC.inbound_loop: Connection closed [timeout]: %s', skt.nick)
                         else:
-                            self.logger.exception('*** DCC.inbound_loop: Connection closed [error]: %s', s.nick)
+                            self.logger.exception('*** DCC.inbound_loop: Connection closed [error]: %s', skt.nick)
                         close_socket = True
                     if not close_socket and not new_data:
-                        self.logger.info('*** DCC.inbound_loop: Connection closed [no data]: %s', s.nick)
+                        self.logger.info('*** DCC.inbound_loop: Connection closed [no data]: %s', skt.nick)
                         close_socket = True
                     if close_socket:
-                        if s.nick in self.sockets:
-                            del self.sockets[s.nick]
+                        if skt.nick in self.sockets:
+                            del self.sockets[skt.nick]
                         else:
-                            self.logger.info('*** DCC.inbound_loop: not in sockets: %s', s.nick)
-                        s.socket.close()
-                        inp.remove(s)
+                            self.logger.info('*** DCC.inbound_loop: not in sockets: %s', skt.nick)
+                        skt.socket.close()
+                        inp.remove(skt)
                         continue
 
-                    msg_list = irc_lib.ircbot.LINESEP_REGEXP.split(s.buffer + new_data)
+                    msg_list = irc_lib.ircbot.LINESEP_REGEXP.split(skt.buffer + new_data)
 
                     # Push last line back into buffer in case its truncated
-                    s.buffer = msg_list.pop()
+                    skt.buffer = msg_list.pop()
 
                     for msg in msg_list:
-                        self.logger.debug('< %s %s', s.nick, repr(msg))
-                        self.process_DCCmsg(s.nick, msg)
+                        self.logger.debug('< %s %s', skt.nick, repr(msg))
+                        self.process_DCCmsg(skt.nick, msg)
         self.logger.info('*** DCC.inbound_loop: exited')
 
-    def onRawDCCMsg(self, ev):
-        if not ev.msg:
+    def onRawDCCMsg(self, evt):
+        if not evt.msg:
             return
 
-        self.bot.process_msg(ev.sender, self.cnick, ev.msg)
+        self.bot.process_msg(evt.sender, self.cnick, evt.msg)
 
-    def onDCC_CHAT(self, ev):
-        nick = ev.sender
-        args = ev.msg.split()
+    def onDCC_CHAT(self, evt):
+        nick = evt.sender
+        args = evt.msg.split()
         if len(args) != 3:
-            self.logger.error('*** DCC.onDCC_CHAT: INVALID: %s %s %s', ev.sender, ev.target, repr(ev.msg))
+            self.logger.error('*** DCC.onDCC_CHAT: INVALID: %s %s %s', evt.sender, evt.target, repr(evt.msg))
             return
         dccprot = args[0]
         dccip = self.conv_ip_long_std(args[1])
         dccport = int(args[2])
 
-        self.logger.info('onDCC_CHAT: %s %s | IP:%s Port:%s', ev.sender, repr(ev.msg), dccip, dccport)
+        self.logger.info('onDCC_CHAT: %s %s | IP:%s Port:%s', evt.sender, repr(evt.msg), dccip, dccport)
 
-    def onDCC_Default(self, ev):
-        self.logger.info('RAW DCC EVENT: %s %s %s %s', ev.sender, ev.target, ev.cmd, repr(ev.msg))
+    def onDCC_Default(self, evt):
+        self.logger.info('RAW DCC EVENT: %s %s %s %s', evt.sender, evt.target, evt.cmd, repr(evt.msg))
 
     def dcc_privmsg(self, target, cmd, args):
         msg = cmd + ' ' + args

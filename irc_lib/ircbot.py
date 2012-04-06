@@ -146,11 +146,11 @@ class IRCBotBase(object):
         try:
             while not self.exit:
                 try:
-                    ev = self.commandq.get(True, 1)
+                    evt = self.commandq.get(True, 1)
                 except Empty:
                     continue
                 cmd_func = getattr(self, 'onCmd', self.onDefault)
-                self.threadpool.add_task(cmd_func, ev)
+                self.threadpool.add_task(cmd_func, evt)
                 self.commandq.task_done()
         finally:
             self.logger.info('*** IRCBot.command_loop: exited')
@@ -200,7 +200,7 @@ class IRCBotBase(object):
         # wait until we are connected before returning
         self.locks['ServReg'].wait()
 
-    def onDefault(self, ev):
+    def onDefault(self, evt):
         """Default event handler (do nothing)"""
         pass
 
@@ -246,13 +246,13 @@ class IRCBotBase(object):
         del self.whitelist[nick]
 
     def saveWhitelist(self, filename='whitelist.pck'):
-        with open(filename, 'w') as ff:
-            pickle.dump(self.whitelist, ff)
+        with open(filename, 'w') as fh:
+            pickle.dump(self.whitelist, fh)
 
     def loadWhitelist(self, filename='whitelist.pck'):
         if os.path.isfile(filename):
-            with open(filename, 'r') as ff:
-                self.whitelist = pickle.load(ff)
+            with open(filename, 'r') as fh:
+                self.whitelist = pickle.load(fh)
 
 
     def start(self):

@@ -30,39 +30,39 @@ class NickServProtocol(Protocol):
         else:
             cmd = 'Unknown'
 
-        ev = Event(prefix, cmd, target, msg, 'NSRV')
+        evt = Event(prefix, cmd, target, msg, 'NSRV')
 
-        cmd_func = getattr(self, 'onNSRV_%s' % ev.cmd, self.onNSRV_Default)
-        cmd_func(ev)
+        cmd_func = getattr(self, 'onNSRV_%s' % evt.cmd, self.onNSRV_Default)
+        cmd_func(evt)
 
-        cmd_func = getattr(self.bot, 'onNSRV_%s' % ev.cmd, getattr(self.bot, 'onNSRV_Default', self.bot.onDefault))
-        cmd_func(ev)
+        cmd_func = getattr(self.bot, 'onNSRV_%s' % evt.cmd, getattr(self.bot, 'onNSRV_Default', self.bot.onDefault))
+        cmd_func(evt)
 
-    def onNSRV_NEED_ID(self, ev):
+    def onNSRV_NEED_ID(self, evt):
         pass
 
-    def onNSRV_ID_DONE(self, ev):
+    def onNSRV_ID_DONE(self, evt):
         # logged in successfully
         self.online = True
         self.identified = True
         self.locks['NSID'].set()
 
-    def onNSRV_ERR_PASS(self, ev):
+    def onNSRV_ERR_PASS(self, evt):
         # bad password
         self.logger.warning('*** Bad %s password for %s', NICKSERV, self.cnick)
         self.online = True
         self.locks['NSID'].set()
 
-    def onNSRV_ERR_LASTFAIL(self, ev):
-        self.logger.warning('*** %s %s', NICKSERV, ev.msg.replace('\x02', ''))
+    def onNSRV_ERR_LASTFAIL(self, evt):
+        self.logger.warning('*** %s %s', NICKSERV, evt.msg.replace('\x02', ''))
 
-    def onNSRV_ERR_FAILCNT(self, ev):
-        self.logger.warning('*** %s %s', NICKSERV, ev.msg.replace('\x02', ''))
+    def onNSRV_ERR_FAILCNT(self, evt):
+        self.logger.warning('*** %s %s', NICKSERV, evt.msg.replace('\x02', ''))
 
-    def onNSRV_ACC(self, ev):
-        msg = ev.msg.split()
+    def onNSRV_ACC(self, evt):
+        msg = evt.msg.split()
         if len(msg) < 3:
-            self.logger.error('*** NSRV.onNSRV_ACC: INVALID: %s %s %s', ev.sender, ev.target, repr(ev.msg))
+            self.logger.error('*** NSRV.onNSRV_ACC: INVALID: %s %s %s', evt.sender, evt.target, repr(evt.msg))
             return
 
         snick = msg[0]
@@ -74,8 +74,8 @@ class NickServProtocol(Protocol):
             self.bot.users[snick].status = status
             self.locks['NSStatus'].notifyAll()
 
-    def onNSRV_Default(self, ev):
-        self.logger.info('UNKNOWN NSRV EVENT: %s %s %s %s', ev.sender, ev.target, ev.cmd, repr(ev.msg))
+    def onNSRV_Default(self, evt):
+        self.logger.info('UNKNOWN NSRV EVENT: %s %s %s %s', evt.sender, evt.target, evt.cmd, repr(evt.msg))
 
     def nserv_privmsg(self, msg):
         self.irc.privmsg(NICKSERV, msg, color=False)

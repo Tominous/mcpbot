@@ -15,13 +15,13 @@ class MCPBot(IRCBotBase):
     def onIRC_Default(self, cmd, prefix, args):
         self.logger.debug('? IRC_%s %s %s', cmd, prefix, str(args))
 
-    def onDefault(self, ev):
-        self.logger.debug('? %s_%s %s %s %s', ev.type, ev.cmd, ev.sender, ev.target, repr(ev.msg))
+    def onDefault(self, evt):
+        self.logger.debug('? %s_%s %s %s %s', evt.type, evt.cmd, evt.sender, evt.target, repr(evt.msg))
 
-    def onCmd(self, ev):
-        self.logger.info('! [%d] %s S: %s C: %s T: %s M: %s', ev.id, ev.type.ljust(4), ev.sender.ljust(20),
-                         ev.cmd.ljust(15), ev.target, ev.msg)
-        MCPBotCmds(self, ev).process_cmd()
+    def onCmd(self, evt):
+        self.logger.info('! [%d] %s S: %s C: %s T: %s M: %s', evt.id, evt.type.ljust(4), evt.sender.ljust(20),
+                         evt.cmd.ljust(15), evt.target, evt.msg)
+        MCPBotCmds(self, evt).process_cmd()
 
 
 def main(password):

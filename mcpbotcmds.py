@@ -6,19 +6,19 @@ from mcpbotprocess import MCPBotProcess, SIDE_LOOKUP, CmdError, CmdSyntaxError
 
 
 class MCPBotCmds(object):
-    def __init__(self, bot, ev):
+    def __init__(self, bot, evt):
         self.bot = bot
-        self.ev = ev
+        self.evt = evt
         self.process = None
 
     def reply(self, msg):
-        self.bot.say(self.ev.sender, msg)
+        self.bot.say(self.evt.sender, msg)
 
     def process_cmd(self):
         try:
             with self.bot.db.get_db() as db:
                 self.process = MCPBotProcess(self, db)
-                getattr(self, 'cmd_%s' % self.ev.cmd, self.cmd_Default)()
+                getattr(self, 'cmd_%s' % self.evt.cmd, self.cmd_Default)()
         except CmdError as exc:
             self.reply(str(exc))
 
@@ -26,11 +26,11 @@ class MCPBotCmds(object):
         if min_args is None:
             min_args = max_args
         if text:
-            msg_split = self.ev.msg.split(None, max_args - 1)
+            msg_split = self.evt.msg.split(None, max_args - 1)
         else:
-            msg_split = self.ev.msg.split(None)
+            msg_split = self.evt.msg.split(None)
         if min_args is not None and len(msg_split) < min_args or max_args is not None and len(msg_split) > max_args:
-            raise CmdSyntaxError(self.ev.cmd, syntax)
+            raise CmdSyntaxError(self.evt.cmd, syntax)
         empty_args = max_args - len(msg_split)
         msg_split.extend([''] * empty_args)
         return msg_split
@@ -65,14 +65,14 @@ class MCPBotCmds(object):
         outmsg, = self.check_args(1, text=True, syntax='<command>')
 
         # if command didn't come from a channel send it back to the sender instead
-        if self.ev.chan is None:
-            sender = self.ev.sender
+        if self.evt.chan is None:
+            sender = self.evt.sender
         else:
-            sender = self.ev.chan
+            sender = self.evt.chan
 
         # due to moving the db lock MCPBotCmds isn't reentrant anymore, so we need to generate a new command instead of
         # just calling MCPBotCmds directly
-        self.bot.process_msg(sender, self.ev.sender, outmsg)
+        self.bot.process_msg(sender, self.evt.sender, outmsg)
 
     #================== Getters classes ================================
     def cmd_gcc(self):
@@ -309,13 +309,13 @@ class MCPBotCmds(object):
             try:
                 level = int(level)
             except ValueError:
-                raise CmdSyntaxError(self.ev.cmd, '<nick> [level]')
+                raise CmdSyntaxError(self.evt.cmd, '<nick> [level]')
         else:
             level = 4
 
         if level > 4:
             raise CmdError("Max level is 4")
-        if level >= self.bot.whitelist[self.ev.sender]:
+        if level >= self.bot.whitelist[self.evt.sender]:
             raise CmdError("You don't have the rights to do that")
 
         self.bot.addWhitelist(nick, level)
@@ -325,7 +325,7 @@ class MCPBotCmds(object):
     def cmd_rmwhite(self):
         nick, = self.check_args(1, syntax='<nick>')
 
-        if nick in self.bot.whitelist and self.bot.whitelist[nick] >= self.bot.whitelist[self.ev.sender]:
+        if nick in self.bot.whitelist and self.bot.whitelist[nick] >= self.bot.whitelist[self.evt.sender]:
             raise CmdError("You don't have the rights to do that.")
 
         try:
@@ -357,7 +357,7 @@ class MCPBotCmds(object):
         """$Bdcc$N : Starts a dcc session. Faster and not under the flood protection."""
         self.check_args(0)
 
-        self.bot.dcc.dcc(self.ev.sender)
+        self.bot.dcc.dcc(self.evt.sender)
 
     @restricted(4)
     def cmd_kick(self):
@@ -399,11 +399,11 @@ class MCPBotCmds(object):
         threads = threading.enumerate()
         maxthreadname = max([len(i.name) for i in threads])
 
-        for t in threads:
-            if isinstance(t, Worker):
-                line = '%s %4d %4d %4d' % (str(t.name).ljust(maxthreadname), t.ncalls, t.nscalls, t.nfcalls)
+        for thread in threads:
+            if isinstance(thread, Worker):
+                line = '%s %4d %4d %4d' % (str(thread.name).ljust(maxthreadname), thread.ncalls, thread.nscalls, thread.nfcalls)
             else:
-                line = '%s %4d %4d %4d' % (str(t.name).ljust(maxthreadname), 0, 0, 0)
+                line = '%s %4d %4d %4d' % (str(thread.name).ljust(maxthreadname), 0, 0, 0)
             self.reply(line)
 
         nthreads = len(threads)
@@ -422,7 +422,7 @@ class MCPBotCmds(object):
         search_side, = self.check_args(1, syntax='<client|server>')
 
         if search_side not in SIDE_LOOKUP:
-            raise CmdSyntaxError(self.ev.cmd, '<client|server>')
+            raise CmdSyntaxError(self.evt.cmd, '<client|server>')
 
         self.reply("$B[ TODO %s ]" % search_side.upper())
         self.process.todo(search_side)

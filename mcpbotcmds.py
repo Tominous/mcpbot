@@ -2,7 +2,7 @@ import threading
 
 from irc_lib.event import Event
 from irc_lib.utils.restricted import restricted
-from irc_lib.utils.ThreadPool import Worker
+from irc_lib.utils.threadpool import Worker
 from mcpbotprocess import MCPBotProcess, SIDE_LOOKUP, CmdError, CmdSyntaxError
 
 

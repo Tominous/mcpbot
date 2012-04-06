@@ -9,7 +9,7 @@ from Queue import Queue, Empty
 
 from irc_lib.event import Event
 from irc_lib.user import User
-from irc_lib.utils.ThreadPool import ThreadPool
+from irc_lib.utils.threadpool import ThreadPool
 from irc_lib.protocols.irc import IRCProtocol
 
 

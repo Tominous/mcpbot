@@ -1,6 +1,6 @@
 import time
 
-from irc_lib.utils.irc_name import split_prefix
+from irc_lib.utils.ircname import split_prefix
 
 
 class Event(object):

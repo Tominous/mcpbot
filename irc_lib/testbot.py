@@ -20,7 +20,7 @@ class TestBot(IRCBotBase):
                          ev.cmd.ljust(15), ev.target, ev.msg)
 
         if ev.cmd == 'listusers':
-            for key, user in self.users.items():
+            for user in self.users.values():
                 self.logger.info(user.get_string())
 
         if ev.cmd == 'ip':

@@ -98,7 +98,7 @@ class DCCProtocol(Protocol):
     def inbound_loop(self):
         inp = [self.insocket]
         while not self.bot.exit:
-            inputready, outputready, exceptready = select.select(inp, [], [], 5)
+            inputready, _, _ = select.select(inp, [], [], 5)
 
             for s in inputready:
                 if s == self.insocket:

@@ -46,26 +46,3 @@ class ThreadPool(object):
         """Wait for completion of all the tasks in the queue"""
         self.logger.info('waiting for threads')
         self.tasks.join()
-
-if __name__ == '__main__':
-    from random import randrange
-    delays = [randrange(1, 10) for i in range(100)]
-
-    from time import sleep
-
-    def wait_delay(delay):
-        print 'sleeping for (%d)sec' % delay
-        sleep(delay)
-
-    # 1) Init a Thread pool with the desired number of threads
-    pool = ThreadPool(20)
-
-    for i, d in enumerate(delays):
-        # print the percentage of tasks placed in the queue
-        print '%.2f%c' % ((float(i) / float(len(delays))) * 100.0, '%')
-
-        # 2) Add the task to the queue
-        pool.add_task(wait_delay, d)
-
-    # 3) Wait for completion
-    pool.wait_completion()

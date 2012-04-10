@@ -1,8 +1,10 @@
+import csv
+import re
 import threading
 
 from irc_lib.utils.restricted import restricted
 from irc_lib.utils.threadpool import Worker
-from mcpbotprocess import MCPBotProcess, SIDE_LOOKUP, CmdError, CmdSyntaxError
+from mcpbotprocess import MCPBotProcess, CmdError, CmdSyntaxError
 
 
 class MCPBotCmds(object):
@@ -11,6 +13,7 @@ class MCPBotCmds(object):
         self.evt = evt
         self.dbh = dbh
         self.process = None
+        self.queries = None
 
     def reply(self, msg):
         self.bot.say(self.evt.sender, msg)
@@ -19,6 +22,7 @@ class MCPBotCmds(object):
         try:
             with self.dbh.get_con() as db_con:
                 self.process = MCPBotProcess(self, db_con)
+                self.queries = self.dbh.get_queries(db_con)
                 cmd_func = getattr(self, 'cmd_%s' % self.evt.cmd, self.cmd_default)
                 cmd_func()
         except CmdError as exc:
@@ -93,7 +97,20 @@ class MCPBotCmds(object):
         search_class, = self.check_args(1, syntax='<classname>')
 
         self.reply("$B[ GET %s CLASS ]" % side.upper())
-        self.process.get_class(search_class, side)
+
+        class_rows = self.queries.get_classes(search_class, side)
+        for class_row in class_rows:
+            self.reply(" Side        : $B%s" % side)
+            self.reply(" Name        : $B%s" % class_row['name'])
+            self.reply(" Notch       : $B%s" % class_row['notch'])
+            self.reply(" Super       : $B%s" % class_row['supername'])
+
+            const_rows = self.queries.get_constructors(search_class, side)
+            for const_row in const_rows:
+                self.reply(" Constructor : $B%s$N | $B%s$N" % (const_row['sig'], const_row['notchsig']))
+        else:
+            if not class_rows:
+                self.reply(" No results found for $B%s" % search_class)
 
     #================== Getters members ================================
     def cmd_gcm(self):
@@ -132,7 +149,40 @@ class MCPBotCmds(object):
             mname = split_member[0]
 
         self.reply("$B[ GET %s %s ]" % (side.upper(), etype.upper()))
-        self.process.get_member(cname, mname, sname, side, etype)
+
+        if self.evt.sender in self.bot.dcc.sockets and self.bot.dcc.sockets[self.evt.sender]:
+            lowlimit = 10
+            highlimit = 999
+        else:
+            lowlimit = 1
+            highlimit = 10
+
+        rows = self.queries.get_member(cname, mname, sname, side, etype)
+        if len(rows) > highlimit:
+            self.reply(" $BVERY$N ambiguous request $R'%s'$N" % self.evt.msg)
+            self.reply(" Found %s possible answers" % len(rows))
+            self.reply(" Not displaying any !")
+        elif highlimit >= len(rows) > lowlimit:
+            self.reply(" Ambiguous request $R'%s'$N" % self.evt.msg)
+            self.reply(" Found %s possible answers" % len(rows))
+            maxlencsv = max([len('%s.%s' % (row['classname'], row['name'])) for row in rows])
+            maxlennotch = max([len('[%s.%s]' % (row['classnotch'], row['notch'])) for row in rows])
+            for row in rows:
+                fullcsv = '%s.%s' % (row['classname'], row['name'])
+                fullnotch = '[%s.%s]' % (row['classnotch'], row['notch'])
+                fullsearge = '[%s]' % row['searge']
+                self.reply(" %s %s %s %s %s" % (fullsearge, fullcsv.ljust(maxlencsv + 2), fullnotch.ljust(maxlennotch + 2), row['sig'], row['notchsig']))
+        elif lowlimit >= len(rows) > 0:
+            for row in rows:
+                self.reply(" Side        : $B%s" % side)
+                self.reply(" Name        : $B%s.%s" % (row['classname'], row['name']))
+                self.reply(" Notch       : $B%s.%s" % (row['classnotch'], row['notch']))
+                self.reply(" Searge      : $B%s" % row['searge'])
+                self.reply(" Type/Sig    : $B%s$N | $B%s$N" % (row['sig'], row['notchsig']))
+                if row['desc']:
+                    self.reply(" Description : %s" % row['desc'])
+        else:
+            self.reply(" No result for %s" % self.evt.msg.strip())
 
     #====================== Search commands ============================
     def cmd_search(self):
@@ -140,7 +190,43 @@ class MCPBotCmds(object):
         search_str, = self.check_args(1, syntax='<name>')
 
         self.reply("$B[ SEARCH RESULTS ]")
-        self.process.search(search_str)
+
+        if self.evt.sender in self.bot.dcc.sockets and self.bot.dcc.sockets[self.evt.sender]:
+            highlimit = 100
+        else:
+            highlimit = 10
+
+        rows = {'classes': None, 'fields': None, 'methods': None}
+
+        for side in ['client', 'server']:
+            rows['classes'] = self.queries.search_class(search_str, side)
+            for etype in ['fields', 'methods']:
+                rows[etype] = self.queries.search_member(search_str, side, etype)
+
+            if not rows['classes']:
+                self.reply(" [%s][  CLASS] No results" % side.upper())
+            else:
+                if len(rows['classes']) > highlimit:
+                    self.reply(" [%s][  CLASS] Too many results : %d" % (side.upper(), len(rows['classes'])))
+                else:
+                    maxlenname = max([len(row['name']) for row in rows['classes']])
+                    maxlennotch = max([len(row['notch']) for row in rows['classes']])
+                    for row in rows['classes']:
+                        self.reply(" [%s][  CLASS] %s %s" % (side.upper(), row['name'].ljust(maxlenname + 2), row['notch'].ljust(maxlennotch + 2)))
+
+            for etype in ['fields', 'methods']:
+                if not rows[etype]:
+                    self.reply(" [%s][%7s] No results" % (side.upper(), etype.upper()))
+                else:
+                    if len(rows[etype]) > highlimit:
+                        self.reply(" [%s][%7s] Too many results : %d" % (side.upper(), etype.upper(), len(rows[etype])))
+                    else:
+                        maxlenname = max([len('%s.%s' % (row['classname'], row['name'])) for row in rows[etype]])
+                        maxlennotch = max([len('[%s.%s]' % (row['classnotch'], row['notch'])) for row in rows[etype]])
+                        for row in rows[etype]:
+                            fullname = '%s.%s' % (row['classname'], row['name'])
+                            fullnotch = '[%s.%s]' % (row['classnotch'], row['notch'])
+                            self.reply(" [%s][%7s] %s %s %s %s" % (side.upper(), etype.upper(), fullname.ljust(maxlenname + 2), fullnotch.ljust(maxlennotch + 2), row['sig'], row['notchsig']))
 
     #====================== Setters for members ========================
     def cmd_scm(self):
@@ -179,6 +265,7 @@ class MCPBotCmds(object):
         oldname, newname, newdesc = self.check_args(3, min_args=2, text=True, syntax='<membername> <newname> [newdescription]')
 
         self.reply("$B[ SET %s %s ]" % (side.upper(), etype.upper()))
+
         self.process.set_member(oldname, newname, newdesc, side, etype, forced)
 
     #======================= Port mappings =============================
@@ -218,6 +305,7 @@ class MCPBotCmds(object):
         origin, target = self.check_args(2, syntax='<origin_member> <target_member>')
 
         self.reply("$B[ PORT %s %s ]" % (side.upper(), etype.upper()))
+
         self.process.port_member(origin, target, side, etype, forced)
 
     #======================= Mapping info ==============================
@@ -241,7 +329,13 @@ class MCPBotCmds(object):
         member, = self.check_args(1, syntax='<member>')
 
         self.reply("$B[ GET CHANGES %s %s ]" % (side.upper(), etype.upper()))
-        self.process.log_member(member, side, etype)
+
+        rows = self.queries.log_member(member, side, etype)
+        for row in rows:
+            self.reply("[%s, %s] %s: %s -> %s" % (row['mcpversion'], row['timestamp'], row['nick'], row['oldname'], row['newname']))
+        else:
+            if not rows:
+                self.reply(" No result for %s" % self.evt.msg.strip())
 
     #====================== Revert changes =============================
     @restricted(2)
@@ -264,7 +358,10 @@ class MCPBotCmds(object):
         member, = self.check_args(1, syntax='<member>')
 
         self.reply("$B[ REVERT %s %s ]" % (side.upper(), etype.upper()))
-        self.process.revert_member(member, side, etype)
+
+        self.queries.revert_member(member, side, etype)
+
+        self.reply(" Reverting changes on $B%s$N is done." % member)
 
     #====================== Log Methods ================================
     def cmd_getlog(self):
@@ -274,8 +371,31 @@ class MCPBotCmds(object):
         else:
             full_log = False
 
+        if self.bot.cnick == 'MCPBot':
+            if self.evt.sender not in self.bot.dcc.sockets or not self.bot.dcc.sockets[self.evt.sender]:
+                self.reply("$BPlease use DCC for getlog")
+                return
+
         self.reply("$B[ LOGS ]")
-        self.process.get_log(full_log)
+
+        for side in ['client', 'server']:
+            for etype in ['methods', 'fields']:
+                rows = self.queries.get_log(side, etype)
+                if rows:
+                    maxlennick = max([len(row['nick']) for row in rows])
+                    maxlensearge = max([len(row['searge']) for row in rows])
+                    maxlenmname = max([len(row['name']) for row in rows])
+
+                    for forcedstatus in [0, 1]:
+                        for row in rows:
+                            if row['forced'] == forcedstatus:
+                                if full_log:
+                                    self.reply("+ %s, %s, %s" % (row['timestamp'], row['nick'], row['cmd']))
+                                    self.reply("  [%s%s][%s] %s => %s" % (side[0].upper(), etype[0].upper(), row['searge'].ljust(maxlensearge), row['name'].ljust(maxlenmname), row['newname']))
+                                    self.reply("  [%s%s][%s] %s => %s" % (side[0].upper(), etype[0].upper(), row['searge'].ljust(maxlensearge), row['desc'], row['newdesc']))
+                                else:
+                                    indexmember = re.search('[0-9]+', row['searge']).group()
+                                    self.reply("+ %s, %s [%s%s][%5s][%4s] %s => %s" % (row['timestamp'], row['nick'].ljust(maxlennick), side[0].upper(), etype[0].upper(), indexmember, row['cmd'], row['name'].ljust(maxlensearge), row['newname']))
 
     @restricted(3)
     def cmd_commit(self):
@@ -289,19 +409,65 @@ class MCPBotCmds(object):
         self.check_args(0)
 
         self.reply("$B[ COMMIT ]")
-        self.process.db_commit(forced)
+
+        nentries = self.queries.db_commit(forced)
+        if nentries:
+            self.queries.add_commit(self.evt.sender)
+            self.reply(" Committed %d updates" % nentries)
+        else:
+            self.reply(" No new entries to commit")
 
     @restricted(3)
     def cmd_altcsv(self):
         self.check_args(0)
 
-        self.process.alt_csv()
+        self.reply("$B[ ALTCSV ]")
+
+        mcpversion = self.queries.get_mcpversion()
+        if self.bot.cnick == 'MCPBot':
+            trgdir = '/home/mcpfiles/mcprolling_%s/mcp/conf' % mcpversion
+        else:
+            trgdir = 'devconf'
+
+        methodswriter = csv.DictWriter(open('%s/methods.csv' % trgdir, 'wb'), ('searge', 'name', 'side', 'desc'))
+        methodswriter.writeheader()
+        rows = self.queries.csv_member('methods')
+        for row in rows:
+            methodswriter.writerow({'searge': row['searge'], 'name': row['name'], 'side': row['side'], 'desc': row['desc']})
+
+        fieldswriter = csv.DictWriter(open('%s/fields.csv' % trgdir, 'wb'), ('searge', 'name', 'side', 'desc'))
+        fieldswriter.writeheader()
+        rows = self.queries.csv_member('fields')
+        for row in rows:
+            fieldswriter.writerow({'searge': row['searge'], 'name': row['name'], 'side': row['side'], 'desc': row['desc']})
+
+        self.reply("New CSVs exported for MCP %s" % mcpversion)
 
     @restricted(2)
     def cmd_testcsv(self):
         self.check_args(0)
 
-        self.process.test_csv()
+        self.reply("$B[ TESTCSV ]")
+
+        mcpversion = self.queries.get_mcpversion()
+        if self.bot.cnick == 'MCPBot':
+            trgdir = '/home/mcpfiles/mcptest'
+        else:
+            trgdir = 'devconf'
+
+        methodswriter = csv.DictWriter(open('%s/methods.csv' % trgdir, 'wb'), ('searge', 'name', 'side', 'desc'))
+        methodswriter.writeheader()
+        rows = self.queries.csv_member('methods')
+        for row in rows:
+            methodswriter.writerow({'searge': row['searge'], 'name': row['name'], 'side': row['side'], 'desc': row['desc']})
+
+        fieldswriter = csv.DictWriter(open('%s/fields.csv' % trgdir, 'wb'), ('searge', 'name', 'side', 'desc'))
+        fieldswriter.writeheader()
+        rows = self.queries.csv_member('fields')
+        for row in rows:
+            fieldswriter.writerow({'searge': row['searge'], 'name': row['name'], 'side': row['side'], 'desc': row['desc']})
+
+        self.reply("Test CSVs for MCP %s exported: http://mcp.ocean-labs.de/files/mcptest/" % mcpversion)
 
     #====================== Whitelist Handling =========================
     @restricted(0)
@@ -380,6 +546,7 @@ class MCPBotCmds(object):
         self.check_args(0)
 
         self.reply("$B[ HELP ]")
+
         self.reply("For help, please check : http://mcp.ocean-labs.de/index.php/MCPBot")
 
     def cmd_status(self):
@@ -390,7 +557,18 @@ class MCPBotCmds(object):
             full_status = False
 
         self.reply("$B[ STATUS ]")
-        self.process.status(full_status)
+
+        row = self.queries.status()
+        self.reply(" MCP    : $B%s" % row['mcpversion'])
+        self.reply(" Bot    : $B%s" % row['botversion'])
+        self.reply(" Client : $B%s" % row['clientversion'])
+        self.reply(" Server : $B%s" % row['serverversion'])
+
+        if full_status:
+            for side in ['client', 'server']:
+                for etype in ['methods', 'fields']:
+                    row = self.queries.status_members(side, etype)
+                    self.reply(" [%s][%7s] : T $B%4d$N | R $B%4d$N | U $B%4d$N | $B%5.2f%%$N" % (side[0].upper(), etype.upper(), row['total'], row['ren'], row['urn'], float(row['ren']) / float(row['total']) * 100))
 
     @restricted(4)
     def cmd_listthreads(self):
@@ -418,13 +596,22 @@ class MCPBotCmds(object):
     def cmd_listdcc(self):
         self.check_args(0)
 
+        self.reply("$B[ DCC USERS ]")
+
         self.reply(str(self.bot.dcc.sockets.keys()))
 
     def cmd_todo(self):
         search_side, = self.check_args(1, syntax='<client|server>')
 
-        if search_side not in SIDE_LOOKUP:
+        if search_side not in ['client', 'server']:
             raise CmdSyntaxError(self.evt.cmd, '<client|server>')
 
         self.reply("$B[ TODO %s ]" % search_side.upper())
-        self.process.todo(search_side)
+
+        rows = self.queries.todo(search_side)
+        for row in rows:
+            if row['memberst']:
+                percent = float(row['membersr']) / float(row['memberst']) * 100.0
+            else:
+                percent = 0.
+            self.reply(" %s : $B%2d$N [ T $B%3d$N | R $B%3d$N | $B%5.2f%%$N ] " % (row['name'].ljust(20), row['membersu'], row['memberst'], row['membersr'], percent))

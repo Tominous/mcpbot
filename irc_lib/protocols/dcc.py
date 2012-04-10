@@ -9,9 +9,9 @@ import irc_lib.ircbot
 
 
 class DCCSocket(object):
-    def __init__(self, socket, nick):
+    def __init__(self, socket_, nick):
         self.buffer = ''
-        self.socket = socket
+        self.socket = socket_
         self.nick = nick
 
     def fileno(self):

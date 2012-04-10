@@ -99,18 +99,19 @@ class MCPBotCmds(object):
         self.reply("$B[ GET %s CLASS ]" % side.upper())
 
         class_rows = self.queries.get_classes(search_class, side)
-        for class_row in class_rows:
-            self.reply(" Side        : $B%s" % side)
-            self.reply(" Name        : $B%s" % class_row['name'])
-            self.reply(" Notch       : $B%s" % class_row['notch'])
-            self.reply(" Super       : $B%s" % class_row['supername'])
 
-            const_rows = self.queries.get_constructors(search_class, side)
-            for const_row in const_rows:
-                self.reply(" Constructor : $B%s$N | $B%s$N" % (const_row['sig'], const_row['notchsig']))
+        if not class_rows:
+            self.reply(" No results found for $B%s" % search_class)
         else:
-            if not class_rows:
-                self.reply(" No results found for $B%s" % search_class)
+            for class_row in class_rows:
+                self.reply(" Side        : $B%s" % side)
+                self.reply(" Name        : $B%s" % class_row['name'])
+                self.reply(" Notch       : $B%s" % class_row['notch'])
+                self.reply(" Super       : $B%s" % class_row['supername'])
+
+                const_rows = self.queries.get_constructors(search_class, side)
+                for const_row in const_rows:
+                    self.reply(" Constructor : $B%s$N | $B%s$N" % (const_row['sig'], const_row['notchsig']))
 
     #================== Getters members ================================
     def cmd_gcm(self):
@@ -158,7 +159,10 @@ class MCPBotCmds(object):
             highlimit = 10
 
         rows = self.queries.get_member(cname, mname, sname, side, etype)
-        if len(rows) > highlimit:
+
+        if not rows:
+            self.reply(" No result for %s" % self.evt.msg.strip())
+        elif len(rows) > highlimit:
             self.reply(" $BVERY$N ambiguous request $R'%s'$N" % self.evt.msg)
             self.reply(" Found %s possible answers" % len(rows))
             self.reply(" Not displaying any !")
@@ -172,7 +176,7 @@ class MCPBotCmds(object):
                 fullnotch = '[%s.%s]' % (row['classnotch'], row['notch'])
                 fullsearge = '[%s]' % row['searge']
                 self.reply(" %s %s %s %s %s" % (fullsearge, fullcsv.ljust(maxlencsv + 2), fullnotch.ljust(maxlennotch + 2), row['sig'], row['notchsig']))
-        elif lowlimit >= len(rows) > 0:
+        else:
             for row in rows:
                 self.reply(" Side        : $B%s" % side)
                 self.reply(" Name        : $B%s.%s" % (row['classname'], row['name']))
@@ -181,8 +185,6 @@ class MCPBotCmds(object):
                 self.reply(" Type/Sig    : $B%s$N | $B%s$N" % (row['sig'], row['notchsig']))
                 if row['desc']:
                     self.reply(" Description : %s" % row['desc'])
-        else:
-            self.reply(" No result for %s" % self.evt.msg.strip())
 
     #====================== Search commands ============================
     def cmd_search(self):
@@ -205,28 +207,26 @@ class MCPBotCmds(object):
 
             if not rows['classes']:
                 self.reply(" [%s][  CLASS] No results" % side.upper())
+            elif len(rows['classes']) > highlimit:
+                self.reply(" [%s][  CLASS] Too many results : %d" % (side.upper(), len(rows['classes'])))
             else:
-                if len(rows['classes']) > highlimit:
-                    self.reply(" [%s][  CLASS] Too many results : %d" % (side.upper(), len(rows['classes'])))
-                else:
-                    maxlenname = max([len(row['name']) for row in rows['classes']])
-                    maxlennotch = max([len(row['notch']) for row in rows['classes']])
-                    for row in rows['classes']:
-                        self.reply(" [%s][  CLASS] %s %s" % (side.upper(), row['name'].ljust(maxlenname + 2), row['notch'].ljust(maxlennotch + 2)))
+                maxlenname = max([len(row['name']) for row in rows['classes']])
+                maxlennotch = max([len(row['notch']) for row in rows['classes']])
+                for row in rows['classes']:
+                    self.reply(" [%s][  CLASS] %s %s" % (side.upper(), row['name'].ljust(maxlenname + 2), row['notch'].ljust(maxlennotch + 2)))
 
             for etype in ['fields', 'methods']:
                 if not rows[etype]:
                     self.reply(" [%s][%7s] No results" % (side.upper(), etype.upper()))
+                elif len(rows[etype]) > highlimit:
+                    self.reply(" [%s][%7s] Too many results : %d" % (side.upper(), etype.upper(), len(rows[etype])))
                 else:
-                    if len(rows[etype]) > highlimit:
-                        self.reply(" [%s][%7s] Too many results : %d" % (side.upper(), etype.upper(), len(rows[etype])))
-                    else:
-                        maxlenname = max([len('%s.%s' % (row['classname'], row['name'])) for row in rows[etype]])
-                        maxlennotch = max([len('[%s.%s]' % (row['classnotch'], row['notch'])) for row in rows[etype]])
-                        for row in rows[etype]:
-                            fullname = '%s.%s' % (row['classname'], row['name'])
-                            fullnotch = '[%s.%s]' % (row['classnotch'], row['notch'])
-                            self.reply(" [%s][%7s] %s %s %s %s" % (side.upper(), etype.upper(), fullname.ljust(maxlenname + 2), fullnotch.ljust(maxlennotch + 2), row['sig'], row['notchsig']))
+                    maxlenname = max([len('%s.%s' % (row['classname'], row['name'])) for row in rows[etype]])
+                    maxlennotch = max([len('[%s.%s]' % (row['classnotch'], row['notch'])) for row in rows[etype]])
+                    for row in rows[etype]:
+                        fullname = '%s.%s' % (row['classname'], row['name'])
+                        fullnotch = '[%s.%s]' % (row['classnotch'], row['notch'])
+                        self.reply(" [%s][%7s] %s %s %s %s" % (side.upper(), etype.upper(), fullname.ljust(maxlenname + 2), fullnotch.ljust(maxlennotch + 2), row['sig'], row['notchsig']))
 
     #====================== Setters for members ========================
     def cmd_scm(self):
@@ -331,11 +331,12 @@ class MCPBotCmds(object):
         self.reply("$B[ GET CHANGES %s %s ]" % (side.upper(), etype.upper()))
 
         rows = self.queries.log_member(member, side, etype)
-        for row in rows:
-            self.reply("[%s, %s] %s: %s -> %s" % (row['mcpversion'], row['timestamp'], row['nick'], row['oldname'], row['newname']))
+
+        if not rows:
+            self.reply(" No result for %s" % self.evt.msg.strip())
         else:
-            if not rows:
-                self.reply(" No result for %s" % self.evt.msg.strip())
+            for row in rows:
+                self.reply("[%s, %s] %s: %s -> %s" % (row['mcpversion'], row['timestamp'], row['nick'], row['oldname'], row['newname']))
 
     #====================== Revert changes =============================
     @restricted(2)
@@ -429,17 +430,7 @@ class MCPBotCmds(object):
         else:
             trgdir = 'devconf'
 
-        methodswriter = csv.DictWriter(open('%s/methods.csv' % trgdir, 'wb'), ('searge', 'name', 'side', 'desc'))
-        methodswriter.writeheader()
-        rows = self.queries.csv_member('methods')
-        for row in rows:
-            methodswriter.writerow({'searge': row['searge'], 'name': row['name'], 'side': row['side'], 'desc': row['desc']})
-
-        fieldswriter = csv.DictWriter(open('%s/fields.csv' % trgdir, 'wb'), ('searge', 'name', 'side', 'desc'))
-        fieldswriter.writeheader()
-        rows = self.queries.csv_member('fields')
-        for row in rows:
-            fieldswriter.writerow({'searge': row['searge'], 'name': row['name'], 'side': row['side'], 'desc': row['desc']})
+        self.write_csvs(trgdir)
 
         self.reply("New CSVs exported for MCP %s" % mcpversion)
 
@@ -455,6 +446,11 @@ class MCPBotCmds(object):
         else:
             trgdir = 'devconf'
 
+        self.write_csvs(trgdir)
+
+        self.reply("Test CSVs for MCP %s exported: http://mcp.ocean-labs.de/files/mcptest/" % mcpversion)
+
+    def write_csvs(self, trgdir):
         methodswriter = csv.DictWriter(open('%s/methods.csv' % trgdir, 'wb'), ('searge', 'name', 'side', 'desc'))
         methodswriter.writeheader()
         rows = self.queries.csv_member('methods')
@@ -466,8 +462,6 @@ class MCPBotCmds(object):
         rows = self.queries.csv_member('fields')
         for row in rows:
             fieldswriter.writerow({'searge': row['searge'], 'name': row['name'], 'side': row['side'], 'desc': row['desc']})
-
-        self.reply("Test CSVs for MCP %s exported: http://mcp.ocean-labs.de/files/mcptest/" % mcpversion)
 
     #====================== Whitelist Handling =========================
     @restricted(0)

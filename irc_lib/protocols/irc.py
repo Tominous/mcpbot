@@ -8,8 +8,8 @@ from irc_lib.protocols.nickserv import NickServProtocol, NICKSERV
 
 
 class IRCProtocol(Protocol):
-    def __init__(self, _nick, _locks, _bot, _parent):
-        Protocol.__init__(self, _nick, _locks, _bot, _parent, 'IRCBot.IRC')
+    def __init__(self, nick, locks, bot, parent):
+        Protocol.__init__(self, nick, locks, bot, parent, 'IRCBot.IRC')
         self.nickserv = NickServProtocol(self.cnick, self.locks, self.bot, self)
         self.ctcp = CTCPProtocol(self.cnick, self.locks, self.bot, self)
         self.dcc = self.ctcp.dcc

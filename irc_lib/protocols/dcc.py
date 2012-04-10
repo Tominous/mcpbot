@@ -9,18 +9,18 @@ import irc_lib.ircbot
 
 
 class DCCSocket(object):
-    def __init__(self, _socket, _nick):
+    def __init__(self, socket, nick):
         self.buffer = ''
-        self.socket = _socket
-        self.nick = _nick
+        self.socket = socket
+        self.nick = nick
 
     def fileno(self):
         return self.socket.fileno()
 
 
 class DCCProtocol(Protocol):
-    def __init__(self, _nick, _locks, _bot, _parent):
-        Protocol.__init__(self, _nick, _locks, _bot, _parent, 'IRCBot.DCC')
+    def __init__(self, nick, locks, bot, parent):
+        Protocol.__init__(self, nick, locks, bot, parent, 'IRCBot.DCC')
         self.ctcp = self.parent
 
         self.sockets = {}
@@ -43,7 +43,7 @@ class DCCProtocol(Protocol):
         self.inport = listenport
         self.logger.info('# DCC listening on %s:%d %s', listenhost, listenport, externalip)
 
-        self.bot.threadpool.add_task(self.inbound_loop, _threadname='DCCInLoop')
+        self.bot.threadpool.add_task(self.inbound_loop, threadname='DCCInLoop')
 
     def process_msg(self, sender, target, msg):
         dcccmd, _, dccargs = msg.partition(' ')

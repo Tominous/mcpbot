@@ -6,7 +6,7 @@ from irc_lib.ircbot import IRCBotBase
 
 class TestBot(IRCBotBase):
     def __init__(self, nick='DevBot'):
-        IRCBotBase.__init__(self, nick, _log_level=logging.DEBUG)
+        IRCBotBase.__init__(self, nick, log_level=logging.DEBUG)
         self.whitelist['ProfMobius'] = 5
 
     def onIRC_default(self, cmd, prefix, args):

@@ -29,18 +29,18 @@ class IRCBotBase(object):
     Provides a threadpool to handle bot commands, a user list updated as information become available,
     and access to all the procotols through self.<protocol> (irc, ctcp, dcc, and nickserv)"""
 
-    def __init__(self, _nick='IRCBotLib', _char=':', _flood=1000, _log_level=logging.WARN):
-        self.log_config(_log_level)
+    def __init__(self, nick='IRCBotLib', char=':', flood=1000, log_level=logging.WARN):
+        self.log_config(log_level)
         self.logger = logging.getLogger('IRCBot')
 
         self.whitelist = {}
 
-        self.controlchar = _char
+        self.controlchar = char
 
         # Flood protection. Number of char / 30 secs (It is the way it works on esper.net)
-        self.floodprotec = _flood
+        self.floodprotec = flood
 
-        self.cnick = _nick
+        self.cnick = nick
 
         self.locks = {
             'ServReg': threading.Event(),
@@ -71,7 +71,7 @@ class IRCBotBase(object):
         self.channels = set()
         self.users = {}
 
-        self.threadpool.add_task(self.command_loop, _threadname='CommandLoop')
+        self.threadpool.add_task(self.command_loop, threadname='CommandLoop')
 
     @staticmethod
     def log_config(level=logging.WARN):
@@ -190,8 +190,8 @@ class IRCBotBase(object):
         self.irc_socket.connect((server, port))
         self.irc_socket.settimeout(5)
 
-        self.threadpool.add_task(self.inbound_loop, _threadname='MainInLoop')
-        self.threadpool.add_task(self.outbound_loop, _threadname='MainOutLoop')
+        self.threadpool.add_task(self.inbound_loop, threadname='MainInLoop')
+        self.threadpool.add_task(self.outbound_loop, threadname='MainOutLoop')
 
         self.irc.password(password)
         self.irc.nick()

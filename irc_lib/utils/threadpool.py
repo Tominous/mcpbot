@@ -18,8 +18,8 @@ class Worker(Thread):
     def run(self):
         while True:
             func, args, kargs = self.tasks.get()
-            if '_threadname' in kargs:
-                self.name = kargs.pop('_threadname')
+            if 'threadname' in kargs:
+                self.name = kargs.pop('threadname')
             self.ncalls += 1
             try:
                 func(*args, **kargs)  # pylint: disable-msg=W0142

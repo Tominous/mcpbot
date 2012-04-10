@@ -7,8 +7,8 @@ NICKSERV = 'NickServ'
 
 
 class NickServProtocol(Protocol):
-    def __init__(self, _nick, _locks, _bot, _parent):
-        Protocol.__init__(self, _nick, _locks, _bot, _parent, 'IRCBot.NSRV')
+    def __init__(self, nick, locks, bot, parent):
+        Protocol.__init__(self, nick, locks, bot, parent, 'IRCBot.NSRV')
         self.irc = self.parent
         self.online = False
         self.identified = False

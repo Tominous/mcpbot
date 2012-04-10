@@ -10,9 +10,9 @@ class DBHandler(object):
         self.db_name = db_name
 
     @contextmanager
-    def get_db(self):
+    def get_con(self):
         with self._db_lock:
-            with sqlite3.connect(self.db_name) as db:
-                db.text_factory = sqlite3.OptimizedUnicode
-                db.row_factory = sqlite3.Row
-                yield db
+            with sqlite3.connect(self.db_name) as db_con:
+                db_con.text_factory = sqlite3.OptimizedUnicode
+                db_con.row_factory = sqlite3.Row
+                yield db_con

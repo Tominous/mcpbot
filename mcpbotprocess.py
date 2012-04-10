@@ -29,17 +29,15 @@ class CmdSyntaxError(CmdError):
 
 
 class MCPBotProcess(object):
-    def __init__(self, cmds, db):
-        self.commands = cmds
-        self.evt = self.commands.evt
-        self.reply = self.commands.reply
-        self.bot = self.commands.bot
-        self.check_args = self.commands.check_args
-        self.db = db
+    def __init__(self, cmds, db_con):
+        self.evt = cmds.evt
+        self.reply = cmds.reply
+        self.bot = cmds.bot
+        self.db_con = db_con
         self.version_id = self.get_version()
 
     def get_version(self):
-        cur = self.db.cursor()
+        cur = self.db_con.cursor()
         cur.execute("""
                 SELECT value
                 FROM config
@@ -51,7 +49,7 @@ class MCPBotProcess(object):
         return version_id
 
     def get_class(self, search_class, side):
-        cur = self.db.cursor()
+        cur = self.db_con.cursor()
 
         cur.execute("""
                 SELECT name, notch, supername
@@ -94,7 +92,7 @@ class MCPBotProcess(object):
             lowlimit = 1
             highlimit = 10
 
-        cur = self.db.cursor()
+        cur = self.db_con.cursor()
 
         mname_esc = '{0}!_{1}!_%'.format(TYPE_LOOKUP[etype], mname)
 
@@ -172,7 +170,7 @@ class MCPBotProcess(object):
         else:
             highlimit = 10
 
-        cur = self.db.cursor()
+        cur = self.db_con.cursor()
 
         rows = {'classes': None, 'fields': None, 'methods': None}
 
@@ -225,7 +223,7 @@ class MCPBotProcess(object):
                             self.reply(" [%s][%7s] %s %s %s %s" % (side.upper(), etype.upper(), fullname.ljust(maxlenname + 2), fullnotch.ljust(maxlennotch + 2), row['sig'], row['notchsig']))
 
     def set_member(self, oldname, newname, newdesc, side, etype, forced=False):
-        cur = self.db.cursor()
+        cur = self.db_con.cursor()
 
         if forced:
             self.reply("$RCAREFUL, YOU ARE FORCING AN UPDATE !")
@@ -349,7 +347,7 @@ class MCPBotProcess(object):
     def port_member(self, origin, target, side, etype, forced=False):
         target_side_lookup = {'client': 1, 'server': 0}
 
-        cur = self.db.cursor()
+        cur = self.db_con.cursor()
 
         if forced:
             self.reply("$RCAREFUL, YOU ARE FORCING AN UPDATE !")
@@ -482,7 +480,7 @@ class MCPBotProcess(object):
         self.reply("%s     : $B%s => %s" % (side, origin, target))
 
     def log_member(self, member, side, etype):
-        cur = self.db.cursor()
+        cur = self.db_con.cursor()
 
         member_esc = '{0}!_{1}!_%'.format(TYPE_LOOKUP[etype], member)
         cur.execute("""
@@ -506,7 +504,7 @@ class MCPBotProcess(object):
             self.reply(" No result for %s" % self.evt.msg.strip())
 
     def revert_member(self, member, side, etype):
-        cur = self.db.cursor()
+        cur = self.db_con.cursor()
 
         member_esc = '{0}!_{1}!_%'.format(TYPE_LOOKUP[etype], member)
         cur.execute("""
@@ -525,7 +523,7 @@ class MCPBotProcess(object):
                 self.reply("$BPlease use DCC for getlog")
                 return
 
-        cur = self.db.cursor()
+        cur = self.db_con.cursor()
 
         for side in ['client', 'server']:
             for etype in ['methods', 'fields']:
@@ -557,7 +555,7 @@ class MCPBotProcess(object):
                                     self.reply("+ %s, %s [%s%s][%5s][%4s] %s => %s" % (row['timestamp'], row['nick'].ljust(maxlennick), side[0].upper(), etype[0].upper(), indexmember, row['cmd'], row['name'].ljust(maxlensearge), row['newname']))
 
     def db_commit(self, forced=False):
-        cur = self.db.cursor()
+        cur = self.db_con.cursor()
 
         nentries = 0
         for etype in ['methods', 'fields']:
@@ -600,7 +598,7 @@ class MCPBotProcess(object):
             self.reply(" No new entries to commit")
 
     def alt_csv(self):
-        cur = self.db.cursor()
+        cur = self.db_con.cursor()
 
         cur.execute("""
                 SELECT mcpversion
@@ -654,7 +652,7 @@ class MCPBotProcess(object):
         else:
             trgdir = 'devconf'
 
-        cur = self.db.cursor()
+        cur = self.db_con.cursor()
 
         methodswriter = csv.DictWriter(open('%s/methods.csv' % trgdir, 'wb'), ('searge', 'name', 'side', 'desc'))
         methodswriter.writeheader()
@@ -689,7 +687,7 @@ class MCPBotProcess(object):
         self.reply("Test CSVs exported: http://mcp.ocean-labs.de/files/mcptest/")
 
     def status(self, full_status=False):
-        cur = self.db.cursor()
+        cur = self.db_con.cursor()
 
         cur.execute("""
                 SELECT mcpversion, botversion, dbversion, clientversion, serverversion
@@ -718,7 +716,7 @@ class MCPBotProcess(object):
                     self.reply(" [%s][%7s] : T $B%4d$N | R $B%4d$N | U $B%4d$N | $B%5.2f%%$N" % (side[0].upper(), etype.upper(), row['total'], row['ren'], row['urn'], float(row['ren']) / float(row['total']) * 100))
 
     def todo(self, search_side):
-        cur = self.db.cursor()
+        cur = self.db_con.cursor()
 
         cur.execute("""
                 SELECT name, methodst+fieldst AS memberst, methodsr+fieldsr AS membersr, methodsu+fieldsu AS membersu

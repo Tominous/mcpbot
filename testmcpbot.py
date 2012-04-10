@@ -2,14 +2,14 @@ import sys
 import logging
 
 from irc_lib.ircbot import IRCBotBase
-from dbhandler import DBHandler
+from db_sqlite import DBHandler
 from mcpbotcmds import MCPBotCmds
 
 
 class MCPBot(IRCBotBase):
     def __init__(self, nick='DevBot', char='!', db_name='database.sqlite'):
         IRCBotBase.__init__(self, nick, char, log_level=logging.DEBUG)
-        self.db = DBHandler(db_name)
+        self.dbh = DBHandler(db_name)
         self.whitelist['ProfMobius'] = 5
 
     def onIRC_default(self, cmd, prefix, args):
@@ -21,7 +21,7 @@ class MCPBot(IRCBotBase):
     def on_cmd(self, evt):
         self.logger.info('! [%d] %s S: %s C: %s T: %s M: %s', evt.id, evt.type.ljust(4), evt.sender.ljust(20),
                          evt.cmd.ljust(15), evt.target, evt.msg)
-        MCPBotCmds(self, evt).process_cmd()
+        MCPBotCmds(self, evt, self.dbh).process_cmd()
 
 
 def main(password):

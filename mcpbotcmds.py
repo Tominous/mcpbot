@@ -6,9 +6,10 @@ from mcpbotprocess import MCPBotProcess, SIDE_LOOKUP, CmdError, CmdSyntaxError
 
 
 class MCPBotCmds(object):
-    def __init__(self, bot, evt):
+    def __init__(self, bot, evt, dbh):
         self.bot = bot
         self.evt = evt
+        self.dbh = dbh
         self.process = None
 
     def reply(self, msg):
@@ -16,8 +17,8 @@ class MCPBotCmds(object):
 
     def process_cmd(self):
         try:
-            with self.bot.db.get_db() as db:
-                self.process = MCPBotProcess(self, db)
+            with self.dbh.get_con() as db_con:
+                self.process = MCPBotProcess(self, db_con)
                 cmd_func = getattr(self, 'cmd_%s' % self.evt.cmd, self.cmd_default)
                 cmd_func()
         except CmdError as exc:

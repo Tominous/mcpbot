@@ -18,7 +18,8 @@ class MCPBotCmds(object):
         try:
             with self.bot.db.get_db() as db:
                 self.process = MCPBotProcess(self, db)
-                getattr(self, 'cmd_%s' % self.evt.cmd, self.cmd_Default)()
+                cmd_func = getattr(self, 'cmd_%s' % self.evt.cmd, self.cmd_default)
+                cmd_func()
         except CmdError as exc:
             self.reply(str(exc))
 
@@ -35,7 +36,7 @@ class MCPBotCmds(object):
         msg_split.extend([''] * empty_args)
         return msg_split
 
-    def cmd_Default(self):
+    def cmd_default(self):
         pass
 
     #================== Base chatting commands =========================
@@ -318,7 +319,7 @@ class MCPBotCmds(object):
         if level >= self.bot.whitelist[self.evt.sender]:
             raise CmdError("You don't have the rights to do that")
 
-        self.bot.addWhitelist(nick, level)
+        self.bot.add_whitelist(nick, level)
         self.reply("Added %s with level %d to whitelist" % (nick, level))
 
     @restricted(0)
@@ -329,7 +330,7 @@ class MCPBotCmds(object):
             raise CmdError("You don't have the rights to do that.")
 
         try:
-            self.bot.rmWhitelist(nick)
+            self.bot.del_whitelist(nick)
         except KeyError:
             raise CmdError("User %s not found in the whitelist" % nick)
         self.reply("User %s removed from the whitelist" % nick)
@@ -344,13 +345,13 @@ class MCPBotCmds(object):
     def cmd_savewhite(self):
         self.check_args(0)
 
-        self.bot.saveWhitelist()
+        self.bot.save_whitelist()
 
     @restricted(4)
     def cmd_loadwhite(self):
         self.check_args(0)
 
-        self.bot.loadWhitelist()
+        self.bot.load_whitelist()
 
     #====================== Misc commands ==============================
     def cmd_dcc(self):

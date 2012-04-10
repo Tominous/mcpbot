@@ -9,13 +9,13 @@ class TestBot(IRCBotBase):
         IRCBotBase.__init__(self, nick, _log_level=logging.DEBUG)
         self.whitelist['ProfMobius'] = 5
 
-    def onIRC_Default(self, cmd, prefix, args):
+    def onIRC_default(self, cmd, prefix, args):
         self.logger.debug('? IRC_%s %s %s', cmd, prefix, str(args))
 
-    def onDefault(self, evt):
+    def on_default(self, evt):
         self.logger.debug('? %s_%s %s %s %s', evt.type, evt.cmd, evt.sender, evt.target, repr(evt.msg))
 
-    def onCmd(self, evt):
+    def on_cmd(self, evt):
         self.logger.info('! [%d] %s S: %s C: %s T: %s M: %s', evt.id, evt.type.ljust(4), evt.sender.ljust(20),
                          evt.cmd.ljust(15), evt.target, evt.msg)
 
@@ -25,7 +25,7 @@ class TestBot(IRCBotBase):
 
         if evt.cmd == 'ip':
             nick = evt.msg.split()[0].strip()
-            ip = self.getIP(nick)
+            ip = self.get_ip(nick)
             self.say(evt.sender, 'User %s, %s' % (nick, ip))
 
         if evt.cmd == 'dcc':
@@ -47,27 +47,27 @@ class TestBot(IRCBotBase):
             self.irc.privmsg(evt.msg.split()[0], out_msg)
 
         if evt.cmd == 'flood':
-            self.cmdFlood(evt.sender, evt.chan, evt.msg)
+            self.cmd_flood(evt.sender, evt.chan, evt.msg)
 
         if evt.cmd == 'addwhite':
-            self.cmdAddWhite(evt.sender, evt.chan, evt.msg)
+            self.cmd_addwhite(evt.sender, evt.chan, evt.msg)
 
-        if evt.cmd == 'rmwhite':
-            self.cmdRemoveWhite(evt.sender, evt.chan, evt.msg)
+        if evt.cmd == 'delwhite':
+            self.cmd_delwhite(evt.sender, evt.chan, evt.msg)
 
-    def onDCCMsg(self, evt):
+    def onDCC_msg(self, evt):
         self.dcc.say(evt.sender, evt.msg)
 
     @restricted()
-    def cmdAddWhite(self, sender, channel, msg):
-        self.addWhitelist(msg)
+    def cmd_addwhite(self, sender, channel, msg):
+        self.add_whitelist(msg)
 
     @restricted()
-    def cmdRemoveWhite(self, sender, channel, msg):
-        self.rmWhitelist(msg)
+    def cmd_delwhite(self, sender, channel, msg):
+        self.del_whitelist(msg)
 
     @restricted()
-    def cmdFlood(self, sender, channel, msg):
+    def cmd_flood(self, sender, channel, msg):
         number = int(msg.split()[1])
         for i in range(number):
             self.irc.privmsg(msg.split()[0], ':%03d' % i)

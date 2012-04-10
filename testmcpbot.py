@@ -12,13 +12,13 @@ class MCPBot(IRCBotBase):
         self.db = DBHandler(db_name)
         self.whitelist['ProfMobius'] = 5
 
-    def onIRC_Default(self, cmd, prefix, args):
+    def onIRC_default(self, cmd, prefix, args):
         self.logger.debug('? IRC_%s %s %s', cmd, prefix, str(args))
 
-    def onDefault(self, evt):
+    def on_default(self, evt):
         self.logger.debug('? %s_%s %s %s %s', evt.type, evt.cmd, evt.sender, evt.target, repr(evt.msg))
 
-    def onCmd(self, evt):
+    def on_cmd(self, evt):
         self.logger.info('! [%d] %s S: %s C: %s T: %s M: %s', evt.id, evt.type.ljust(4), evt.sender.ljust(20),
                          evt.cmd.ljust(15), evt.target, evt.msg)
         MCPBotCmds(self, evt).process_cmd()
@@ -29,7 +29,7 @@ def main(password):
     bot.connect('irc.esper.net')
     bot.nickserv.identify(password)
     bot.irc.join('#test')
-    bot.loadWhitelist()
+    bot.load_whitelist()
     bot.start()
 
 if __name__ == '__main__':

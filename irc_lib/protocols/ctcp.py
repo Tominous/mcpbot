@@ -29,10 +29,10 @@ class CTCPProtocol(Protocol):
 
         evt = Event(prefix, cmd, target, data, 'CTCP')
 
-        cmd_func = getattr(self, 'onCTCP_%s' % evt.cmd, self.onCTCP_Default)
+        cmd_func = getattr(self, 'onCTCP_%s' % evt.cmd, self.onCTCP_default)
         cmd_func(evt)
 
-        cmd_func = getattr(self.bot, 'onCTCP_%s' % evt.cmd, getattr(self.bot, 'onCTCP_Default', self.bot.onDefault))
+        cmd_func = getattr(self.bot, 'onCTCP_%s' % evt.cmd, getattr(self.bot, 'onCTCP_default', self.bot.on_default))
         cmd_func(evt)
 
     def onCTCP_DCC(self, evt):
@@ -56,7 +56,7 @@ class CTCPProtocol(Protocol):
     def onCTCP_ACTION(self, evt):
         pass
 
-    def onCTCP_Default(self, evt):
+    def onCTCP_default(self, evt):
         self.logger.info('RAW CTCP EVENT: %s %s %s %s', evt.sender, evt.target, evt.cmd, repr(evt.msg))
 
     def ctcp_privmsg(self, target, tag, data=None):

@@ -36,17 +36,17 @@ class IRCProtocol(Protocol):
             cmd = _IRC_REPLIES[cmd]
 
         # We call the corresponding raw event if it exist, or the rawDefault if not.
-        cmd_func = getattr(self, 'onIRC_%s' % cmd, self.onIRC_Default)
+        cmd_func = getattr(self, 'onIRC_%s' % cmd, self.onIRC_default)
         self.bot.threadpool.add_task(cmd_func, cmd, prefix, args)
 
         # We call the corresponding event if it exist, or the Default if not.
-        cmd_func = getattr(self.bot, 'onIRC_%s' % cmd, getattr(self.bot, 'onIRC_Default', None))
+        cmd_func = getattr(self.bot, 'onIRC_%s' % cmd, getattr(self.bot, 'onIRC_default', None))
         if cmd_func:
             self.bot.threadpool.add_task(cmd_func, cmd, prefix, args)
         else:
-            # fake event used for logging and onDefault, missing target
+            # fake event used for logging and on_default, missing target
             evt = Event(prefix, cmd, '', str(args), 'IRC')
-            self.bot.threadpool.add_task(self.bot.onDefault, evt)
+            self.bot.threadpool.add_task(self.bot.on_default, evt)
 
     def add_user(self, nick, chan=None):
         nick_status = '-'
@@ -61,9 +61,9 @@ class IRCProtocol(Protocol):
             return
         self.bot.users[snick].chans[chan] = nick_status
 
-    def rm_user(self, nick, chan=None):
+    def del_user(self, nick, chan=None):
         if nick not in self.bot.users:
-            self.logger.info('*** IRC.rm_user: unknown: %s', nick)
+            self.logger.info('*** IRC.del_user: unknown: %s', nick)
             return
 
         if not chan:
@@ -125,7 +125,7 @@ class IRCProtocol(Protocol):
             msg = args[1]
         else:
             msg = ''
-        self.rm_user(sender, chan)
+        self.del_user(sender, chan)
 
     def onIRC_QUIT(self, cmd, prefix, args):
         sender = get_nick(prefix)
@@ -133,7 +133,7 @@ class IRCProtocol(Protocol):
             msg = args[0]
         else:
             msg = ''
-        self.rm_user(sender)
+        self.del_user(sender)
 
     def onIRC_RPL_WELCOME(self, cmd, prefix, args):
         server = prefix
@@ -196,7 +196,7 @@ class IRCProtocol(Protocol):
             self.logger.info('# Kicked from %s by %s %s', chan, sender, repr(reason))
             self.bot.channels.discard(chan)
         else:
-            self.rm_user(target, chan)
+            self.del_user(target, chan)
 
     def onIRC_ERR_NOSUCHNICK(self, cmd, prefix, args):
         server = prefix
@@ -206,7 +206,7 @@ class IRCProtocol(Protocol):
         if nick == NICKSERV:
             self.nickserv.no_nickserv()
         else:
-            self.rm_user(nick)
+            self.del_user(nick)
 
     def onIRC_ERR_NEEDREGGEDNICK(self, cmd, prefix, args):
         server = prefix
@@ -229,7 +229,7 @@ class IRCProtocol(Protocol):
         reason = args[2]
         self.logger.warning('*** Join to %s failed: banned', chan)
 
-    def onIRC_Default(self, cmd, prefix, args):
+    def onIRC_default(self, cmd, prefix, args):
         pass
 
     def rawcmd(self, cmd, args=None, text=None):

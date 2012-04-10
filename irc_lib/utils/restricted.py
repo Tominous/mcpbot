@@ -12,7 +12,7 @@ def restricted(level=4):
                 status = 3
                 usrlevel = 4
             else:
-                status = bot.getStatus(sender)
+                status = bot.get_status(sender)
                 whitelisted = sender in bot.whitelist
                 if sender in bot.whitelist:
                     usrlevel = bot.whitelist[sender]

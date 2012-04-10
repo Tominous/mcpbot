@@ -51,18 +51,18 @@ class DCCProtocol(Protocol):
         # regenerate event with parsed dcc details
         evt = Event(sender, dcccmd, target, dccargs, 'DCC')
 
-        cmd_func = getattr(self, 'onDCC_%s' % dcccmd, self.onDCC_Default)
+        cmd_func = getattr(self, 'onDCC_%s' % dcccmd, self.onDCC_default)
         cmd_func(evt)
 
-        cmd_func = getattr(self.bot, 'onDCC_%s' % dcccmd, getattr(self.bot, 'onDCC_Default', self.bot.onDefault))
+        cmd_func = getattr(self.bot, 'onDCC_%s' % dcccmd, getattr(self.bot, 'onDCC_default', self.bot.on_default))
         cmd_func(evt)
 
     def process_DCCmsg(self, sender, msg):
         evt = Event(sender, 'DCCMSG', self.cnick, msg, 'DCC')
 
-        self.bot.threadpool.add_task(self.onRawDCCMsg, evt)
+        self.bot.threadpool.add_task(self.onDCC_msg, evt)
 
-        cmd_func = getattr(self.bot, 'onDCCMsg', self.bot.onDefault)
+        cmd_func = getattr(self.bot, 'onDCC_msg', self.bot.on_default)
         self.bot.threadpool.add_task(cmd_func, evt)
 
     def conv_ip_long_std(self, longip):
@@ -153,7 +153,7 @@ class DCCProtocol(Protocol):
                         self.process_DCCmsg(skt.nick, msg)
         self.logger.info('*** DCC.inbound_loop: exited')
 
-    def onRawDCCMsg(self, evt):
+    def onDCC_msg(self, evt):
         if not evt.msg:
             return
 
@@ -171,7 +171,7 @@ class DCCProtocol(Protocol):
 
         self.logger.info('onDCC_CHAT: %s %s | IP:%s Port:%s', evt.sender, repr(evt.msg), dccip, dccport)
 
-    def onDCC_Default(self, evt):
+    def onDCC_default(self, evt):
         self.logger.info('RAW DCC EVENT: %s %s %s %s', evt.sender, evt.target, evt.cmd, repr(evt.msg))
 
     def dcc_privmsg(self, target, cmd, args):
@@ -205,7 +205,7 @@ class DCCProtocol(Protocol):
             self.bot.say(nick, '$BDCC currently disabled')
             return
 
-        target_ip = self.bot.getIP(nick)
+        target_ip = self.bot.get_ip(nick)
 
         if nick in self.sockets and self.sockets[nick] is not None:
             self.logger.warn('*** DCC.dcc: already connected: %s', nick)

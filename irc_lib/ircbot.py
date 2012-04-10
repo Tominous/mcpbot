@@ -149,7 +149,7 @@ class IRCBotBase(object):
                     evt = self.commandq.get(True, 1)
                 except Empty:
                     continue
-                cmd_func = getattr(self, 'onCmd', self.onDefault)
+                cmd_func = getattr(self, 'on_cmd', self.on_default)
                 self.threadpool.add_task(cmd_func, evt)
                 self.commandq.task_done()
         finally:
@@ -200,11 +200,11 @@ class IRCBotBase(object):
         # wait until we are connected before returning
         self.locks['ServReg'].wait()
 
-    def onDefault(self, evt):
+    def on_default(self, evt):
         """Default event handler (do nothing)"""
         pass
 
-    def getIP(self, nick):
+    def get_ip(self, nick):
         if nick not in self.users:
             self.users[nick] = User(nick)
         self.irc.whois(nick)
@@ -213,7 +213,7 @@ class IRCBotBase(object):
                 self.locks['WhoIs'].wait()
         return self.users[nick].ip
 
-    def getStatus(self, nick):
+    def get_status(self, nick):
         if nick not in self.users:
             self.users[nick] = User(nick)
         if self.nickserv.online:
@@ -239,21 +239,20 @@ class IRCBotBase(object):
         else:
             self.irc.notice(nick, msg)
 
-    def addWhitelist(self, nick, level=4):
+    def add_whitelist(self, nick, level=4):
         self.whitelist[nick] = level
 
-    def rmWhitelist(self, nick):
+    def del_whitelist(self, nick):
         del self.whitelist[nick]
 
-    def saveWhitelist(self, filename='whitelist.pck'):
+    def save_whitelist(self, filename='whitelist.pck'):
         with open(filename, 'w') as fh:
             pickle.dump(self.whitelist, fh)
 
-    def loadWhitelist(self, filename='whitelist.pck'):
+    def load_whitelist(self, filename='whitelist.pck'):
         if os.path.isfile(filename):
             with open(filename, 'r') as fh:
                 self.whitelist = pickle.load(fh)
-
 
     def start(self):
         """Start an infinite loop which can be exited by ctrl+c. Take care of cleaning the threads when exiting."""

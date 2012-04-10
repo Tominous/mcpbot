@@ -32,10 +32,10 @@ class NickServProtocol(Protocol):
 
         evt = Event(prefix, cmd, target, msg, 'NSRV')
 
-        cmd_func = getattr(self, 'onNSRV_%s' % evt.cmd, self.onNSRV_Default)
+        cmd_func = getattr(self, 'onNSRV_%s' % evt.cmd, self.onNSRV_default)
         cmd_func(evt)
 
-        cmd_func = getattr(self.bot, 'onNSRV_%s' % evt.cmd, getattr(self.bot, 'onNSRV_Default', self.bot.onDefault))
+        cmd_func = getattr(self.bot, 'onNSRV_%s' % evt.cmd, getattr(self.bot, 'onNSRV_default', self.bot.on_default))
         cmd_func(evt)
 
     def onNSRV_NEED_ID(self, evt):
@@ -74,7 +74,7 @@ class NickServProtocol(Protocol):
             self.bot.users[snick].status = status
             self.locks['NSStatus'].notifyAll()
 
-    def onNSRV_Default(self, evt):
+    def onNSRV_default(self, evt):
         self.logger.info('UNKNOWN NSRV EVENT: %s %s %s %s', evt.sender, evt.target, evt.cmd, repr(evt.msg))
 
     def nserv_privmsg(self, msg):

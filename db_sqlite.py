@@ -1,8 +1,10 @@
+import re
 import time
 import sqlite3
 import threading
 
 from contextlib import contextmanager
+from mcpbotcmds import CmdError
 
 
 class DBHandler(object):
@@ -127,6 +129,71 @@ class DBQueries(object):
         """
         cur.execute(query, {'search_esc': search_esc, 'side': SIDE_LOOKUP[side], 'version': self.version_id})
         return cur.fetchall()
+
+    def get_member_searge(self, name, side, etype):
+        cur = self.db_con.cursor()
+        name_esc = '{0}!_{1}!_%'.format(TYPE_LOOKUP[etype], name)
+        query = """
+            SELECT name, notch, searge, sig, notchsig, desc, classname, classnotch, id
+            FROM v{etype}
+            WHERE (searge LIKE :name_esc ESCAPE '!' OR searge=:name)
+              AND side=:side AND versionid=:version
+        """.format(etype=etype)
+        cur.execute(query, {'name_esc': name_esc, 'name': name, 'side': SIDE_LOOKUP[side], 'version': self.version_id})
+        return cur.fetchall()
+
+    def check_member_name(self, name, side, etype, forced):
+        cur = self.db_con.cursor()
+
+        # DON'T ALLOW STRANGE CHARACTERS IN NAMES
+        if re.search(r'[^A-Za-z0-9$_]', name):
+            raise CmdError("Illegal character in name")
+
+        # WE CHECK IF WE ARE NOT CONFLICTING WITH A CLASS NAME
+        query = """
+            SELECT name
+            FROM vclasses
+            WHERE lower(name)=lower(:newname)
+              AND side=:side AND versionid=:version
+        """
+        cur.execute(query, {'newname': name, 'side': SIDE_LOOKUP[side], 'version': self.version_id})
+        row = cur.fetchone()
+        if row:
+            raise CmdError("It is illegal to use class names for fields or methods !")
+
+        # WE CHECK THAT WE HAVE A UNIQUE NAME
+        if not forced:
+            query = """
+                SELECT searge, name
+                FROM vmethods
+                WHERE name=:name
+                  AND side=:side AND versionid=:version
+            """
+            cur.execute(query, {'name': name, 'side': SIDE_LOOKUP[side], 'version': self.version_id})
+            row = cur.fetchone()
+            if row:
+                raise CmdError("You are conflicting with at least one other method: %s. Please use forced update only if you are certain !" % row['searge'])
+
+            query = """
+                SELECT searge, name
+                FROM vfields
+                WHERE name=:name
+                  AND side=:side AND versionid=:version
+            """
+            cur.execute(query, {'name': name, 'side': SIDE_LOOKUP[side], 'version': self.version_id})
+            row = cur.fetchone()
+            if row:
+                raise CmdError("You are conflicting with at least one other field: %s. Please use forced update only if you are certain !" % row['searge'])
+
+    def update_member(self, member, newname, newdesc, side, etype, nick, forced, cmd):
+        cur = self.db_con.cursor()
+        rows = self.get_member_searge(member, side, etype)
+        row = rows[0]
+        query = """
+            INSERT INTO {etype}hist
+            VALUES (:id, :memberid, :oldname, :olddesc, :newname, :newdesc, :timestamp, :nick, :forced, :cmd)
+        """.format(etype=etype)
+        cur.execute(query, {'id': None, 'memberid': int(row['id']), 'oldname': row['name'], 'olddesc': row['desc'], 'newname': newname, 'newdesc': newdesc, 'timestamp': int(time.time()), 'nick': nick, 'forced': forced, 'cmd': cmd})
 
     def search_member(self, search_str, side, etype):
         cur = self.db_con.cursor()

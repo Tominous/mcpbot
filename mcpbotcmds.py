@@ -4,7 +4,28 @@ import threading
 
 from irc_lib.utils.restricted import restricted
 from irc_lib.utils.threadpool import Worker
-from mcpbotprocess import MCPBotProcess, CmdError, CmdSyntaxError
+
+
+class Error(Exception):
+    pass
+
+
+class CmdError(Error):
+    def __init__(self, msg):
+        Error.__init__(self)
+        self.msg = msg
+
+    def __str__(self):
+        return 'Error: $R{msg}'.format(msg=self.msg)
+
+
+class CmdSyntaxError(CmdError):
+    def __init__(self, cmd, msg=''):
+        CmdError.__init__(self, msg)
+        self.cmd = cmd
+
+    def __str__(self):
+        return 'Syntax error: $B{cmd} {msg}'.format(cmd=self.cmd, msg=self.msg)
 
 
 class MCPBotCmds(object):
@@ -12,7 +33,6 @@ class MCPBotCmds(object):
         self.bot = bot
         self.evt = evt
         self.dbh = dbh
-        self.process = None
         self.queries = None
 
     def reply(self, msg):
@@ -21,7 +41,6 @@ class MCPBotCmds(object):
     def process_cmd(self):
         try:
             with self.dbh.get_con() as db_con:
-                self.process = MCPBotProcess(self, db_con)
                 self.queries = self.dbh.get_queries(db_con)
                 cmd_func = getattr(self, 'cmd_%s' % self.evt.cmd, self.cmd_default)
                 cmd_func()
@@ -262,11 +281,50 @@ class MCPBotCmds(object):
         self.set_member('server', 'fields', forced=True)
 
     def set_member(self, side, etype, forced=False):
-        oldname, newname, newdesc = self.check_args(3, min_args=2, text=True, syntax='<membername> <newname> [newdescription]')
+        member, newname, newdesc = self.check_args(3, min_args=2, text=True, syntax='<membername> <newname> [newdescription]')
 
         self.reply("$B[ SET %s %s ]" % (side.upper(), etype.upper()))
 
-        self.process.set_member(oldname, newname, newdesc, side, etype, forced)
+        if forced:
+            self.reply("$RCAREFUL, YOU ARE FORCING AN UPDATE !")
+
+        # WE CHECK WE ONLY HAVE ONE RESULT
+        rows = self.queries.get_member_searge(member, side, etype)
+        if not rows:
+            self.reply(" No result for %s" % member)
+            return
+        elif len(rows) > 1:
+            self.reply(" Ambiguous request $R'%s'$N" % member)
+            self.reply(" Found %s possible answers" % len(rows))
+
+            maxlencsv = max([len('%s.%s' % (row['classname'], row['name'])) for row in rows])
+            maxlennotch = max([len('[%s.%s]' % (row['classnotch'], row['notch'])) for row in rows])
+            for row in rows:
+                fullcsv = '%s.%s' % (row['classname'], row['name'])
+                fullnotch = '[%s.%s]' % (row['classnotch'], row['notch'])
+                self.reply(" %s %s %s" % (fullcsv.ljust(maxlencsv + 2), fullnotch.ljust(maxlennotch + 2), row['sig']))
+            return
+        row = rows[0]
+
+        if not forced:
+            if row['searge'] != row['name']:
+                raise CmdError("You are trying to rename an already named member. Please use forced update only if you are certain !")
+
+        self.queries.check_member_name(newname, side, etype, forced)
+
+        if not newdesc and not row['desc']:
+            newdesc = None
+        elif not newdesc:
+            newdesc = row['desc'].replace('"', "'")
+        elif newdesc == 'None':
+            newdesc = None
+        else:
+            newdesc = newdesc.replace('"', "'")
+
+        self.reply("Name     : $B%s => %s" % (row['name'], newname))
+        self.reply("$BOld desc$N : %s" % row['desc'])
+        self.reply("$BNew desc$N : %s" % newdesc)
+        self.queries.update_member(member, newname, newdesc, side, etype, self.evt.sender, forced, self.evt.cmd)
 
     #======================= Port mappings =============================
     @restricted(2)
@@ -306,7 +364,60 @@ class MCPBotCmds(object):
 
         self.reply("$B[ PORT %s %s ]" % (side.upper(), etype.upper()))
 
-        self.process.port_member(origin, target, side, etype, forced)
+        if side == 'client':
+            target_side = 'server'
+        else:
+            target_side = 'client'
+
+        if forced:
+            self.reply("$RCAREFUL, YOU ARE FORCING AN UPDATE !")
+
+        # WE CHECK WE ONLY HAVE ONE RESULT
+        rows = self.queries.get_member_searge(origin, side, etype)
+        if not rows:
+            self.reply(" No result for %s" % origin)
+            return
+        elif len(rows) > 1:
+            self.reply(" Ambiguous request $R'%s'$N" % origin)
+            self.reply(" Found %s possible answers" % len(rows))
+
+            maxlencsv = max([len('%s.%s' % (row['classname'], row['name'])) for row in rows])
+            maxlennotch = max([len('[%s.%s]' % (row['classnotch'], row['notch'])) for row in rows])
+            for row in rows:
+                fullcsv = '%s.%s' % (row['classname'], row['name'])
+                fullnotch = '[%s.%s]' % (row['classnotch'], row['notch'])
+                self.reply(" %s %s %s" % (fullcsv.ljust(maxlencsv + 2), fullnotch.ljust(maxlennotch + 2), row['sig']))
+            return
+        src_row = rows[0]
+        newname = src_row['name']
+        newdesc = src_row['desc']
+
+        # DO THE SAME FOR OTHER SIDE
+        rows = self.queries.get_member_searge(target, target_side, etype)
+        if not rows:
+            self.reply(" No result for %s" % target)
+            return
+        elif len(rows) > 1:
+            self.reply(" Ambiguous request $R'%s'$N" % target)
+            self.reply(" Found %s possible answers" % len(rows))
+
+            maxlencsv = max([len('%s.%s' % (row['classname'], row['name'])) for row in rows])
+            maxlennotch = max([len('[%s.%s]' % (row['classnotch'], row['notch'])) for row in rows])
+            for row in rows:
+                fullcsv = '%s.%s' % (row['classname'], row['name'])
+                fullnotch = '[%s.%s]' % (row['classnotch'], row['notch'])
+                self.reply(" %s %s %s" % (fullcsv.ljust(maxlencsv + 2), fullnotch.ljust(maxlennotch + 2), row['sig']))
+            return
+        tgt_row = rows[0]
+
+        self.queries.check_member_name(newname, target_side, etype, forced)
+
+        if not forced:
+            if tgt_row['searge'] != tgt_row['name']:
+                raise CmdError("You are trying to rename an already named member. Please use forced update only if you are certain !")
+
+        self.reply("%s     : $B%s => %s" % (side, origin, target))
+        self.queries.update_member(target, newname, newdesc, target_side, etype, self.evt.sender, forced, self.evt.cmd)
 
     #======================= Mapping info ==============================
     @restricted(2)

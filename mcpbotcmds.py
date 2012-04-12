@@ -28,6 +28,10 @@ class CmdSyntaxError(CmdError):
         return 'Syntax error: $B{cmd} {msg}'.format(cmd=self.cmd, msg=self.msg)
 
 
+def maxlen(rows, field):
+    return max([len(row[field]) for row in rows])
+
+
 class MCPBotCmds(object):
     def __init__(self, bot, evt, dbh):
         self.bot = bot
@@ -120,7 +124,7 @@ class MCPBotCmds(object):
         class_rows = self.queries.get_classes(search_class, side)
 
         if not class_rows:
-            self.reply(" No results found for $B%s" % search_class)
+            self.reply(" No result for $R%s" % search_class)
         else:
             for class_row in class_rows:
                 self.reply(" Side        : $B%s" % side)
@@ -180,29 +184,29 @@ class MCPBotCmds(object):
         rows = self.queries.get_member(cname, mname, sname, side, etype)
 
         if not rows:
-            self.reply(" No result for %s" % self.evt.msg)
+            self.reply(" No result for $R%s" % self.evt.msg)
         elif len(rows) > highlimit:
-            self.reply(" $BVERY$N ambiguous request $R'%s'$N" % self.evt.msg)
-            self.reply(" Found %s possible answers" % len(rows))
-            self.reply(" Not displaying any !")
+            self.reply(" $BVERY$N ambiguous request $R%s" % self.evt.msg)
+            self.reply(" Found %s results" % len(rows))
+            self.reply(" Too many to display")
         elif highlimit >= len(rows) > lowlimit:
-            self.reply(" Ambiguous request $R'%s'$N" % self.evt.msg)
-            self.reply(" Found %s possible answers" % len(rows))
-            maxlencsv = max([len('%s.%s' % (row['classname'], row['name'])) for row in rows])
-            maxlennotch = max([len('[%s.%s]' % (row['classnotch'], row['notch'])) for row in rows])
+            self.reply(" Ambiguous request $R%s" % self.evt.msg)
+            self.reply(" Found %s results" % len(rows))
+            l_name = maxlen(rows, 'fullname')
+            l_notch = maxlen(rows, 'fullnotch') + 2
+            l_searge = maxlen(rows, 'searge') + 2
             for row in rows:
-                fullcsv = '%s.%s' % (row['classname'], row['name'])
-                fullnotch = '[%s.%s]' % (row['classnotch'], row['notch'])
-                fullsearge = '[%s]' % row['searge']
-                self.reply(" %s %s %s %s %s" % (fullsearge, fullcsv.ljust(maxlencsv + 2),
-                                                fullnotch.ljust(maxlennotch + 2), row['sig'], row['notchsig']))
+                p_name = (row['fullname']).ljust(l_name)
+                p_notch = ('[%s]' % row['fullnotch']).ljust(l_notch)
+                p_searge = ('[%s]' % row['searge']).ljust(l_searge)
+                self.reply(" %s %s %s %s %s" % (p_searge, p_name, p_notch, row['sig'], row['notchsig']))
         else:
             for row in rows:
                 self.reply(" Side        : $B%s" % side)
-                self.reply(" Name        : $B%s.%s" % (row['classname'], row['name']))
-                self.reply(" Notch       : $B%s.%s" % (row['classnotch'], row['notch']))
+                self.reply(" Name        : $B%s" % row['fullname'])
+                self.reply(" Notch       : $B%s" % row['fullnotch'])
                 self.reply(" Searge      : $B%s" % row['searge'])
-                self.reply(" Type/Sig    : $B%s$N | $B%s$N" % (row['sig'], row['notchsig']))
+                self.reply(" Type/Notch  : $B%s$N | $B%s$N" % (row['sig'], row['notchsig']))
                 if row['desc']:
                     self.reply(" Description : %s" % row['desc'])
 
@@ -211,7 +215,7 @@ class MCPBotCmds(object):
         """$Bsearch <pattern>$N  : Search for a pattern."""
         search_str, = self.check_args(1, syntax='<name>')
 
-        self.reply("$B[ SEARCH RESULTS ]")
+        self.reply("$B[ SEARCH ]")
 
         if self.evt.dcc:
             highlimit = 100
@@ -230,11 +234,12 @@ class MCPBotCmds(object):
             elif len(rows['classes']) > highlimit:
                 self.reply(" [%s][  CLASS] Too many results : %d" % (side.upper(), len(rows['classes'])))
             else:
-                maxlenname = max([len(row['name']) for row in rows['classes']])
-                maxlennotch = max([len(row['notch']) for row in rows['classes']])
+                l_name = maxlen(rows, 'name')
+                l_notch = maxlen(rows, 'notch')
                 for row in rows['classes']:
-                    self.reply(" [%s][  CLASS] %s %s" % (side.upper(), row['name'].ljust(maxlenname + 2),
-                                                         row['notch'].ljust(maxlennotch + 2)))
+                    p_name = (row['name']).ljust(l_name)
+                    p_notch = (row['notch']).ljust(l_notch)
+                    self.reply(" [%s][  CLASS] %s %s" % (side.upper(), p_name, p_notch))
 
             for etype in ['fields', 'methods']:
                 if not rows[etype]:
@@ -242,15 +247,13 @@ class MCPBotCmds(object):
                 elif len(rows[etype]) > highlimit:
                     self.reply(" [%s][%7s] Too many results : %d" % (side.upper(), etype.upper(), len(rows[etype])))
                 else:
-                    maxlenname = max([len('%s.%s' % (row['classname'], row['name'])) for row in rows[etype]])
-                    maxlennotch = max([len('[%s.%s]' % (row['classnotch'], row['notch'])) for row in rows[etype]])
+                    l_name = maxlen(rows, 'fullname')
+                    l_notch = maxlen(rows, 'fullnotch') + 2
                     for row in rows[etype]:
-                        fullname = '%s.%s' % (row['classname'], row['name'])
-                        fullnotch = '[%s.%s]' % (row['classnotch'], row['notch'])
-                        self.reply(" [%s][%7s] %s %s %s %s" % (side.upper(), etype.upper(),
-                                                               fullname.ljust(maxlenname + 2),
-                                                               fullnotch.ljust(maxlennotch + 2), row['sig'],
-                                                               row['notchsig']))
+                        p_name = (row['fullname']).ljust(l_name)
+                        p_notch = ('[%s]' % row['fullnotch']).ljust(l_notch)
+                        self.reply(" [%s][%7s] %s %s %s %s" % (side.upper(), etype.upper(), p_name, p_notch,
+                            row['sig'], row['notchsig']))
 
     #====================== Setters for members ========================
     def cmd_scm(self):
@@ -292,45 +295,42 @@ class MCPBotCmds(object):
         self.reply("$B[ SET %s %s ]" % (side.upper(), etype.upper()))
 
         if forced:
-            self.reply("$RCAREFUL, YOU ARE FORCING AN UPDATE !")
+            self.reply("$RCAREFUL, YOU ARE FORCING AN UPDATE")
 
         # WE CHECK WE ONLY HAVE ONE RESULT
         rows = self.queries.get_member_searge(member, side, etype)
         if not rows:
-            self.reply(" No result for %s" % member)
+            self.reply(" No result for $R%s" % member)
             return
         elif len(rows) > 1:
-            self.reply(" Ambiguous request $R'%s'$N" % member)
-            self.reply(" Found %s possible answers" % len(rows))
-
-            maxlencsv = max([len('%s.%s' % (row['classname'], row['name'])) for row in rows])
-            maxlennotch = max([len('[%s.%s]' % (row['classnotch'], row['notch'])) for row in rows])
+            self.reply(" Ambiguous request $R%s" % member)
+            self.reply(" Found %s results" % len(rows))
+            l_name = maxlen(rows, 'fullname')
+            l_notch = maxlen(rows, 'fullnotch') + 2
             for row in rows:
-                fullcsv = '%s.%s' % (row['classname'], row['name'])
-                fullnotch = '[%s.%s]' % (row['classnotch'], row['notch'])
-                self.reply(" %s %s %s" % (fullcsv.ljust(maxlencsv + 2), fullnotch.ljust(maxlennotch + 2), row['sig']))
+                p_name = (row['fullname']).ljust(l_name)
+                p_notch = ('[%s]' % row['fullnotch']).ljust(l_notch)
+                self.reply(" %s %s %s" % (p_name, p_notch, row['sig']))
             return
         row = rows[0]
 
         if not forced:
             if row['searge'] != row['name']:
-                raise CmdError("You are trying to rename an already named member. Please use forced update only if you are certain !")
+                raise CmdError("Trying to rename an already named member")
 
         self.queries.check_member_name(newname, side, etype, forced)
 
         if not newdesc and not row['desc']:
             newdesc = None
         elif not newdesc:
-            newdesc = row['desc'].replace('"', "'")
+            newdesc = row['desc']
         elif newdesc == 'None':
             newdesc = None
-        else:
-            newdesc = newdesc.replace('"', "'")
 
+        self.queries.update_member(member, newname, newdesc, side, etype, self.evt.sender, forced, self.evt.cmd)
         self.reply("Name     : $B%s => %s" % (row['name'], newname))
         self.reply("$BOld desc$N : %s" % row['desc'])
         self.reply("$BNew desc$N : %s" % newdesc)
-        self.queries.update_member(member, newname, newdesc, side, etype, self.evt.sender, forced, self.evt.cmd)
 
     #======================= Port mappings =============================
     @restricted(2)
@@ -376,23 +376,22 @@ class MCPBotCmds(object):
             target_side = 'client'
 
         if forced:
-            self.reply("$RCAREFUL, YOU ARE FORCING AN UPDATE !")
+            self.reply("$RCAREFUL, YOU ARE FORCING AN UPDATE")
 
         # WE CHECK WE ONLY HAVE ONE RESULT
         rows = self.queries.get_member_searge(origin, side, etype)
         if not rows:
-            self.reply(" No result for %s" % origin)
+            self.reply(" No result for $R%s" % origin)
             return
         elif len(rows) > 1:
-            self.reply(" Ambiguous request $R'%s'$N" % origin)
-            self.reply(" Found %s possible answers" % len(rows))
-
-            maxlencsv = max([len('%s.%s' % (row['classname'], row['name'])) for row in rows])
-            maxlennotch = max([len('[%s.%s]' % (row['classnotch'], row['notch'])) for row in rows])
+            self.reply(" Ambiguous request $R%s" % origin)
+            self.reply(" Found %s results" % len(rows))
+            l_name = maxlen(rows, 'fullname')
+            l_notch = maxlen(rows, 'fullnotch') + 2
             for row in rows:
-                fullcsv = '%s.%s' % (row['classname'], row['name'])
-                fullnotch = '[%s.%s]' % (row['classnotch'], row['notch'])
-                self.reply(" %s %s %s" % (fullcsv.ljust(maxlencsv + 2), fullnotch.ljust(maxlennotch + 2), row['sig']))
+                p_name = (row['fullname']).ljust(l_name)
+                p_notch = ('[%s]' % row['fullnotch']).ljust(l_notch)
+                self.reply(" %s %s %s" % (p_name, p_notch, row['sig']))
             return
         src_row = rows[0]
         newname = src_row['name']
@@ -401,18 +400,17 @@ class MCPBotCmds(object):
         # DO THE SAME FOR OTHER SIDE
         rows = self.queries.get_member_searge(target, target_side, etype)
         if not rows:
-            self.reply(" No result for %s" % target)
+            self.reply(" No result for $R%s" % target)
             return
         elif len(rows) > 1:
-            self.reply(" Ambiguous request $R'%s'$N" % target)
-            self.reply(" Found %s possible answers" % len(rows))
-
-            maxlencsv = max([len('%s.%s' % (row['classname'], row['name'])) for row in rows])
-            maxlennotch = max([len('[%s.%s]' % (row['classnotch'], row['notch'])) for row in rows])
+            self.reply(" Ambiguous request $R%s" % target)
+            self.reply(" Found %s results" % len(rows))
+            l_name = maxlen(rows, 'fullname')
+            l_notch = maxlen(rows, 'fullnotch') + 2
             for row in rows:
-                fullcsv = '%s.%s' % (row['classname'], row['name'])
-                fullnotch = '[%s.%s]' % (row['classnotch'], row['notch'])
-                self.reply(" %s %s %s" % (fullcsv.ljust(maxlencsv + 2), fullnotch.ljust(maxlennotch + 2), row['sig']))
+                p_name = (row['fullname']).ljust(l_name)
+                p_notch = ('[%s]' % row['fullnotch']).ljust(l_notch)
+                self.reply(" %s %s %s" % (p_name, p_notch, row['sig']))
             return
         tgt_row = rows[0]
 
@@ -420,10 +418,10 @@ class MCPBotCmds(object):
 
         if not forced:
             if tgt_row['searge'] != tgt_row['name']:
-                raise CmdError("You are trying to rename an already named member. Please use forced update only if you are certain !")
+                raise CmdError("Trying to rename an already named member")
 
-        self.reply("%s     : $B%s => %s" % (side, origin, target))
         self.queries.update_member(target, newname, newdesc, target_side, etype, self.evt.sender, forced, self.evt.cmd)
+        self.reply("%s     : $B%s => %s" % (side, origin, target))
 
     #======================= Mapping info ==============================
     @restricted(2)
@@ -450,11 +448,11 @@ class MCPBotCmds(object):
         rows = self.queries.log_member(member, side, etype)
 
         if not rows:
-            self.reply(" No result for %s" % self.evt.msg)
+            self.reply(" No result for $R%s" % self.evt.msg)
         else:
             for row in rows:
                 self.reply("[%s, %s] %s: %s -> %s" % (row['mcpversion'], row['timestamp'], row['nick'], row['oldname'],
-                                                      row['newname']))
+                    row['newname']))
 
     #====================== Revert changes =============================
     @restricted(2)
@@ -479,8 +477,7 @@ class MCPBotCmds(object):
         self.reply("$B[ REVERT %s %s ]" % (side.upper(), etype.upper()))
 
         self.queries.revert_member(member, side, etype)
-
-        self.reply(" Reverting changes on $B%s$N is done." % member)
+        self.reply(" Reverted changes to $B%s" % member)
 
     #====================== Log Methods ================================
     def cmd_getlog(self):
@@ -501,31 +498,26 @@ class MCPBotCmds(object):
             for etype in ['methods', 'fields']:
                 rows = self.queries.get_log(side, etype)
                 if rows:
-                    maxlennick = max([len(row['nick']) for row in rows])
-                    maxlensearge = max([len(row['searge']) for row in rows])
-                    maxlenmname = max([len(row['name']) for row in rows])
+                    l_nick = maxlen(rows, 'nick')
+                    l_searge = maxlen(rows, 'searge')
+                    l_name = maxlen(rows, 'name')
 
                     for forcedstatus in [0, 1]:
                         for row in rows:
                             if row['forced'] == forcedstatus:
+                                p_nick = (row['nick']).ljust(l_nick)
+                                p_searge = (row['searge']).ljust(l_searge)
+                                p_name = (row['name']).ljust(l_name)
+                                p_index = re.search('[0-9]+', row['searge']).group()
                                 if full_log:
                                     self.reply("+ %s, %s, %s" % (row['timestamp'], row['nick'], row['cmd']))
-                                    self.reply("  [%s%s][%s] %s => %s" % (side[0].upper(), etype[0].upper(),
-                                                                          row['searge'].ljust(maxlensearge),
-                                                                          row['name'].ljust(maxlenmname),
-                                                                          row['newname']))
-                                    self.reply("  [%s%s][%s] %s => %s" % (side[0].upper(), etype[0].upper(),
-                                                                          row['searge'].ljust(maxlensearge),
-                                                                          row['desc'], row['newdesc']))
+                                    self.reply("  [%s%s][%s] %s => %s" % (side[0].upper(), etype[0].upper(), p_searge,
+                                        p_name, row['newname']))
+                                    self.reply("  [%s%s][%s] %s => %s" % (side[0].upper(), etype[0].upper(), p_searge,
+                                        row['desc'], row['newdesc']))
                                 else:
-                                    indexmember = re.search('[0-9]+', row['searge']).group()
-                                    self.reply("+ %s, %s [%s%s][%5s][%4s] %s => %s" % (row['timestamp'],
-                                                                                       row['nick'].ljust(maxlennick),
-                                                                                       side[0].upper(),
-                                                                                       etype[0].upper(),
-                                                                                       indexmember, row['cmd'],
-                                                                                       row['name'].ljust(maxlensearge),
-                                                                                       row['newname']))
+                                    self.reply("+ %s, %s [%s%s][%5s][%4s] %s => %s" % (row['timestamp'], p_nick,
+                                        side[0].upper(), etype[0].upper(), p_index, row['cmd'], p_name, row['newname']))
 
     @restricted(3)
     def cmd_commit(self):
@@ -543,7 +535,7 @@ class MCPBotCmds(object):
         nentries = self.queries.db_commit(forced)
         if nentries:
             self.queries.add_commit(self.evt.sender)
-            self.reply(" Committed %d updates" % nentries)
+            self.reply(" Committed %d entries" % nentries)
         else:
             self.reply(" No new entries to commit")
 
@@ -560,7 +552,6 @@ class MCPBotCmds(object):
             trgdir = '/home/mcpfiles/mcprolling_%s/mcp/conf' % mcpversion
 
         self.write_csvs(trgdir)
-
         self.reply("New CSVs exported for MCP %s" % mcpversion)
 
     @restricted(2)
@@ -576,7 +567,6 @@ class MCPBotCmds(object):
             trgdir = '/home/mcpfiles/mcptest'
 
         self.write_csvs(trgdir)
-
         self.reply("Test CSVs for MCP %s exported: http://mcp.ocean-labs.de/files/mcptest/" % mcpversion)
 
     def write_csvs(self, trgdir):
@@ -606,44 +596,56 @@ class MCPBotCmds(object):
         else:
             level = 4
 
+        self.reply("$B[ WHITELIST ]")
+
         if level > 4:
             raise CmdError("Max level is 4")
         if level >= self.bot.whitelist[self.evt.sender]:
             raise CmdError("You don't have the rights to do that")
 
         self.bot.add_whitelist(nick, level)
-        self.reply("Added %s with level %d to whitelist" % (nick, level))
+        self.reply("Added %s with level %d" % (nick, level))
 
     @restricted(0)
     def cmd_rmwhite(self):
         nick, = self.check_args(1, syntax='<nick>')
 
+        self.reply("$B[ WHITELIST ]")
+
         if nick in self.bot.whitelist and self.bot.whitelist[nick] >= self.bot.whitelist[self.evt.sender]:
-            raise CmdError("You don't have the rights to do that.")
+            raise CmdError("You don't have the rights to do that")
 
         try:
             self.bot.del_whitelist(nick)
         except KeyError:
-            raise CmdError("User %s not found in the whitelist" % nick)
-        self.reply("User %s removed from the whitelist" % nick)
+            raise CmdError("%s not found" % nick)
+        self.reply("Removed %s" % nick)
 
     @restricted(0)
     def cmd_getwhite(self):
         self.check_args(0)
 
-        self.reply("Whitelist : %s" % self.bot.whitelist)
+        self.reply("$B[ WHITELIST ]")
+
+        self.reply(str(self.bot.whitelist))
 
     @restricted(4)
     def cmd_savewhite(self):
         self.check_args(0)
 
+        self.reply("$B[ WHITELIST ]")
+
         self.bot.save_whitelist()
+        self.reply("Whitelist saved")
 
     @restricted(4)
     def cmd_loadwhite(self):
         self.check_args(0)
 
+        self.reply("$B[ WHITELIST ]")
+
         self.bot.load_whitelist()
+        self.reply("Whitelist loaded")
 
     #====================== Misc commands ==============================
     def cmd_dcc(self):
@@ -693,14 +695,12 @@ class MCPBotCmds(object):
             for side in ['client', 'server']:
                 for etype in ['methods', 'fields']:
                     row = self.queries.status_members(side, etype)
-                    self.reply(" [%s][%7s] : T $B%4d$N | R $B%4d$N | U $B%4d$N | $B%5.2f%%$N" % (side[0].upper(),
-                                                                                                 etype.upper(),
-                                                                                                 row['total'],
-                                                                                                 row['ren'],
-                                                                                                 row['urn'],
-                                                                                                 float(row['ren']) /
-                                                                                                 float(row['total']) *
-                                                                                                 100))
+                    if row['total']:
+                        percent = float(row['ren']) / float(row['total']) * 100
+                    else:
+                        percent = 0.
+                    self.reply(" [%s][%7s] : T $B%4d$N | R $B%4d$N | U $B%4d$N | $B%5.2f%%$N" % (
+                        side[0].upper(), etype.upper(), row['total'], row['ren'], row['urn'], percent))
 
     @restricted(4)
     def cmd_listthreads(self):
@@ -709,21 +709,21 @@ class MCPBotCmds(object):
         self.reply("$B[ THREADS ]")
 
         threads = threading.enumerate()
-        maxthreadname = max([len(i.name) for i in threads])
+        l_name = max([len(i.name) for i in threads])
 
         for thread in threads:
+            p_name = str(thread.name).ljust(l_name)
             if isinstance(thread, Worker):
-                line = '%s %4d %4d %4d' % (str(thread.name).ljust(maxthreadname), thread.ncalls, thread.nscalls,
-                                           thread.nfcalls)
+                line = '%s %4d %4d %4d' % (p_name, thread.ncalls, thread.nscalls, thread.nfcalls)
             else:
-                line = '%s %4d %4d %4d' % (str(thread.name).ljust(maxthreadname), 0, 0, 0)
+                line = '%s %4d %4d %4d' % (p_name, 0, 0, 0)
             self.reply(line)
 
         nthreads = len(threads)
         if nthreads == self.bot.nthreads + 1:
-            self.reply(" All threads up and running !")
+            self.reply(" All threads up and running")
         else:
-            self.reply(" Found only $R%d$N threads ! $BThere is a problem !" % (nthreads - 1))
+            self.reply(" Found only $R%d$N threads $BThere is a problem!" % (nthreads - 1))
 
     @restricted(4)
     def cmd_listdcc(self):
@@ -747,6 +747,5 @@ class MCPBotCmds(object):
                 percent = float(row['membersr']) / float(row['memberst']) * 100.0
             else:
                 percent = 0.
-            self.reply(" %s : $B%2d$N [ T $B%3d$N | R $B%3d$N | $B%5.2f%%$N ] " % (row['name'].ljust(20),
-                                                                                   row['membersu'], row['memberst'],
-                                                                                   row['membersr'], percent))
+            self.reply(" %s : $B%2d$N [ T $B%3d$N | R $B%3d$N | $B%5.2f%%$N ] " % (
+                row['name'].ljust(20), row['membersu'], row['memberst'], row['membersr'], percent))

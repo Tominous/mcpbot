@@ -87,7 +87,8 @@ class DBQueries(object):
         mname_esc = '{0}!_{1}!_%'.format(TYPE_LOOKUP[etype], mname)
         if cname and sname:
             query = """
-                SELECT name, notch, searge, sig, notchsig, desc, classname, classnotch
+                SELECT name, notch, searge, sig, notchsig, desc, classname, classnotch,
+                  classname || '.' || name AS fullname, classnotch || '.' || notch AS fullnotch
                 FROM v{etype}
                 WHERE (searge LIKE :mname_esc ESCAPE '!' OR searge=:mname OR notch=:mname OR name=:mname)
                   AND (classname=:cname OR classnotch=:cname)
@@ -97,6 +98,7 @@ class DBQueries(object):
         elif cname and not sname:
             query = """
                 SELECT name, notch, searge, sig, notchsig, desc, classname, classnotch
+                  classname || '.' || name AS fullname, classnotch || '.' || notch AS fullnotch
                 FROM v{etype}
                 WHERE (searge LIKE :mname_esc ESCAPE '!' OR searge=:mname OR notch=:mname OR name=:mname)
                   AND (classname=:cname OR classnotch=:cname)
@@ -105,6 +107,7 @@ class DBQueries(object):
         elif not cname and sname:
             query = """
                 SELECT name, notch, searge, sig, notchsig, desc, classname, classnotch
+                  classname || '.' || name AS fullname, classnotch || '.' || notch AS fullnotch
                 FROM v{etype}
                 WHERE (searge LIKE :mname_esc ESCAPE '!' OR searge=:mname OR notch=:mname OR name=:mname)
                   AND (sig=:sname OR notchsig=:sname)
@@ -113,6 +116,7 @@ class DBQueries(object):
         else:
             query = """
                 SELECT name, notch, searge, sig, notchsig, desc, classname, classnotch
+                  classname || '.' || name AS fullname, classnotch || '.' || notch AS fullnotch
                 FROM v{etype}
                 WHERE (searge LIKE :mname_esc ESCAPE '!' OR searge=:mname OR notch=:mname OR name=:mname)
                   AND side=:side AND versionid=:version
@@ -138,7 +142,8 @@ class DBQueries(object):
         cur = self.db_con.cursor()
         name_esc = '{0}!_{1}!_%'.format(TYPE_LOOKUP[etype], name)
         query = """
-            SELECT name, notch, searge, sig, notchsig, desc, classname, classnotch, id
+            SELECT name, notch, searge, sig, notchsig, desc, classname, classnotch, id,
+              classname || '.' || name AS fullname, classnotch || '.' || notch AS fullnotch
             FROM v{etype}
             WHERE (searge LIKE :name_esc ESCAPE '!' OR searge=:name)
               AND side=:side AND versionid=:version
@@ -165,7 +170,7 @@ class DBQueries(object):
                             'side': SIDE_LOOKUP[side], 'version': self.version_id})
         row = cur.fetchone()
         if row:
-            raise CmdError("It is illegal to use class names for fields or methods !")
+            raise CmdError("Illegal to use class names for fields or methods")
 
         # WE CHECK THAT WE HAVE A UNIQUE NAME
         if not forced:
@@ -179,7 +184,7 @@ class DBQueries(object):
                                 'side': SIDE_LOOKUP[side], 'version': self.version_id})
             row = cur.fetchone()
             if row:
-                raise CmdError("You are conflicting with at least one other method: %s. Please use forced update only if you are certain !" % row['searge'])
+                raise CmdError("Conflicting with at least one other method: %s" % row['searge'])
 
             query = """
                 SELECT searge, name
@@ -191,7 +196,7 @@ class DBQueries(object):
                                 'side': SIDE_LOOKUP[side], 'version': self.version_id})
             row = cur.fetchone()
             if row:
-                raise CmdError("You are conflicting with at least one other field: %s. Please use forced update only if you are certain !" % row['searge'])
+                raise CmdError("Conflicting with at least one other field: %s" % row['searge'])
 
     def update_member(self, member, newname, newdesc, side, etype, nick, forced, cmd):
         cur = self.db_con.cursor()

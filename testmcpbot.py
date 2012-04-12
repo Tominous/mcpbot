@@ -9,6 +9,7 @@ from mcpbotcmds import MCPBotCmds
 class MCPBot(IRCBotBase):
     def __init__(self, nick='DevBot', char='!', db_name='database.sqlite'):
         IRCBotBase.__init__(self, nick, char, log_level=logging.DEBUG)
+        self.debug = True
         self.dbh = DBHandler(db_name)
         self.whitelist['ProfMobius'] = 5
 

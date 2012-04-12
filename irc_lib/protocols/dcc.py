@@ -58,7 +58,7 @@ class DCCProtocol(Protocol):
         cmd_func(evt)
 
     def process_DCCmsg(self, sender, msg):
-        evt = Event(sender, 'DCCMSG', self.cnick, msg, 'DCC')
+        evt = Event(sender, 'DCCMSG', self.cnick, msg, 'DCC', dcc=True)
 
         self.bot.threadpool.add_task(self.onDCC_msg, evt)
 

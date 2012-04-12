@@ -36,7 +36,7 @@ class MCPBotCmds(object):
         self.queries = None
 
     def reply(self, msg):
-        self.bot.say(self.evt.sender, msg)
+        self.bot.say(self.evt.sender, msg, dcc=self.evt.dcc)
 
     def process_cmd(self):
         try:
@@ -170,7 +170,7 @@ class MCPBotCmds(object):
 
         self.reply("$B[ GET %s %s ]" % (side.upper(), etype.upper()))
 
-        if self.evt.sender in self.bot.dcc.sockets and self.bot.dcc.sockets[self.evt.sender]:
+        if self.evt.dcc:
             lowlimit = 10
             highlimit = 999
         else:
@@ -180,7 +180,7 @@ class MCPBotCmds(object):
         rows = self.queries.get_member(cname, mname, sname, side, etype)
 
         if not rows:
-            self.reply(" No result for %s" % self.evt.msg.strip())
+            self.reply(" No result for %s" % self.evt.msg)
         elif len(rows) > highlimit:
             self.reply(" $BVERY$N ambiguous request $R'%s'$N" % self.evt.msg)
             self.reply(" Found %s possible answers" % len(rows))
@@ -213,7 +213,7 @@ class MCPBotCmds(object):
 
         self.reply("$B[ SEARCH RESULTS ]")
 
-        if self.evt.sender in self.bot.dcc.sockets and self.bot.dcc.sockets[self.evt.sender]:
+        if self.evt.dcc:
             highlimit = 100
         else:
             highlimit = 10
@@ -450,7 +450,7 @@ class MCPBotCmds(object):
         rows = self.queries.log_member(member, side, etype)
 
         if not rows:
-            self.reply(" No result for %s" % self.evt.msg.strip())
+            self.reply(" No result for %s" % self.evt.msg)
         else:
             for row in rows:
                 self.reply("[%s, %s] %s: %s -> %s" % (row['mcpversion'], row['timestamp'], row['nick'], row['oldname'],
@@ -490,8 +490,8 @@ class MCPBotCmds(object):
         else:
             full_log = False
 
-        if self.bot.cnick == 'MCPBot':
-            if self.evt.sender not in self.bot.dcc.sockets or not self.bot.dcc.sockets[self.evt.sender]:
+        if not self.bot.debug:
+            if not self.evt.dcc:
                 self.reply("$BPlease use DCC for getlog")
                 return
 
@@ -554,10 +554,10 @@ class MCPBotCmds(object):
         self.reply("$B[ ALTCSV ]")
 
         mcpversion = self.queries.get_mcpversion()
-        if self.bot.cnick == 'MCPBot':
-            trgdir = '/home/mcpfiles/mcprolling_%s/mcp/conf' % mcpversion
-        else:
+        if self.bot.debug:
             trgdir = 'devconf'
+        else:
+            trgdir = '/home/mcpfiles/mcprolling_%s/mcp/conf' % mcpversion
 
         self.write_csvs(trgdir)
 
@@ -570,10 +570,10 @@ class MCPBotCmds(object):
         self.reply("$B[ TESTCSV ]")
 
         mcpversion = self.queries.get_mcpversion()
-        if self.bot.cnick == 'MCPBot':
-            trgdir = '/home/mcpfiles/mcptest'
-        else:
+        if self.bot.debug:
             trgdir = 'devconf'
+        else:
+            trgdir = '/home/mcpfiles/mcptest'
 
         self.write_csvs(trgdir)
 

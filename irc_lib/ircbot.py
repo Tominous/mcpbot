@@ -51,6 +51,8 @@ class IRCBotBase(object):
 
         self.exit = False
 
+        self.debug = False
+
         self.nthreads = 10
         self.threadpool = ThreadPool(self.nthreads)
 
@@ -160,7 +162,7 @@ class IRCBotBase(object):
     def process_msg(self, sender, target, msg):
         ischan = target[0] in ['#', '&']
 
-        msg = msg.lstrip()
+        msg = msg.strip()
 
         if not msg:
             return
@@ -230,16 +232,17 @@ class IRCBotBase(object):
     def rawcmd(self, msg):
         self.out_msg.put(msg)
 
-    def say(self, nick, msg):
+    def say(self, target, msg, dcc=False):
         if not msg:
             return
-        # May have to come back here at some point if the users start holding their own socket
-        if nick in self.dcc.sockets and self.dcc.sockets[nick]:
-            self.dcc.say(nick, str(msg))
-        elif nick[0] in ['#', '&']:
-            self.irc.privmsg(nick, msg)
+        if dcc:
+            if target in self.dcc.sockets and self.dcc.sockets[target]:
+                self.dcc.say(target, msg)
         else:
-            self.irc.notice(nick, msg)
+            if target[0] in ['#', '&']:
+                self.irc.privmsg(target, msg)
+            else:
+                self.irc.notice(target, msg)
 
     def add_whitelist(self, nick, level=4):
         self.whitelist[nick] = level

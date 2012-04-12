@@ -6,13 +6,14 @@ from irc_lib.utils.ircname import split_prefix
 class Event(object):
     maxid = 0
 
-    def __init__(self, sender, cmd, target, msg, etype):
+    def __init__(self, sender, cmd, target, msg, etype, dcc=False):
         self.sender, self.senderuser, self.senderhost = split_prefix(sender)
         self.senderfull = sender
         self.cmd = cmd
         self.target = target
         self.msg = msg
         self.type = etype
+        self.dcc = dcc
         if target:
             self.ischan = target[0] in ['#', '&']
         else:

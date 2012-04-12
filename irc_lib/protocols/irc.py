@@ -147,7 +147,8 @@ class IRCProtocol(Protocol):
 
     def onIRC_RPL_NAMREPLY(self, cmd, prefix, args):
         server = prefix
-        # Used for channel status, "@" is used for secret channels, "*" for private channels, and "=" for others (public channels).
+        # Used for channel status, "@" is used for secret channels, "*" for private channels, and "=" for
+        # others (public channels).
         target = args[0]
         channeltype = args[1]
         channel = args[2]

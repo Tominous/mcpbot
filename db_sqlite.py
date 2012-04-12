@@ -66,7 +66,8 @@ class DBQueries(object):
             WHERE (name=:search_class OR notch=:search_class)
               AND side=:side AND versionid=:version
         """
-        cur.execute(query, {'search_class': search_class, 'side': SIDE_LOOKUP[side], 'version': self.version_id})
+        cur.execute(query, {'search_class': search_class,
+                            'side': SIDE_LOOKUP[side], 'version': self.version_id})
         return cur.fetchall()
 
     def get_constructors(self, search_class, side):
@@ -77,7 +78,8 @@ class DBQueries(object):
             WHERE (name=:search_class OR notch=:search_class)
               AND side=:side AND versionid=:version
         """
-        cur.execute(query, {'search_class': search_class, 'side': SIDE_LOOKUP[side], 'version': self.version_id})
+        cur.execute(query, {'search_class': search_class,
+                            'side': SIDE_LOOKUP[side], 'version': self.version_id})
         return cur.fetchall()
 
     def get_member(self, cname, mname, sname, side, etype):
@@ -85,37 +87,38 @@ class DBQueries(object):
         mname_esc = '{0}!_{1}!_%'.format(TYPE_LOOKUP[etype], mname)
         if cname and sname:
             query = """
-                    SELECT name, notch, searge, sig, notchsig, desc, classname, classnotch
-                    FROM v{etype}
-                    WHERE (searge LIKE :mname_esc ESCAPE '!' OR searge=:mname OR notch=:mname OR name=:mname)
-                      AND (classname=:cname OR classnotch=:cname)
-                      AND (sig=:sname OR notchsig=:sname)
-                      AND side=:side AND versionid=:version
-                """.format(etype=etype)
+                SELECT name, notch, searge, sig, notchsig, desc, classname, classnotch
+                FROM v{etype}
+                WHERE (searge LIKE :mname_esc ESCAPE '!' OR searge=:mname OR notch=:mname OR name=:mname)
+                  AND (classname=:cname OR classnotch=:cname)
+                  AND (sig=:sname OR notchsig=:sname)
+                  AND side=:side AND versionid=:version
+            """.format(etype=etype)
         elif cname and not sname:
             query = """
-                    SELECT name, notch, searge, sig, notchsig, desc, classname, classnotch
-                    FROM v{etype}
-                    WHERE (searge LIKE :mname_esc ESCAPE '!' OR searge=:mname OR notch=:mname OR name=:mname)
-                      AND (classname=:cname OR classnotch=:cname)
-                      AND side=:side AND versionid=:version
-                """.format(etype=etype)
+                SELECT name, notch, searge, sig, notchsig, desc, classname, classnotch
+                FROM v{etype}
+                WHERE (searge LIKE :mname_esc ESCAPE '!' OR searge=:mname OR notch=:mname OR name=:mname)
+                  AND (classname=:cname OR classnotch=:cname)
+                  AND side=:side AND versionid=:version
+            """.format(etype=etype)
         elif not cname and sname:
             query = """
-                    SELECT name, notch, searge, sig, notchsig, desc, classname, classnotch
-                    FROM v{etype}
-                    WHERE (searge LIKE :mname_esc ESCAPE '!' OR searge=:mname OR notch=:mname OR name=:mname)
-                      AND (sig=:sname OR notchsig=:sname)
-                      AND side=:side AND versionid=:version
-                """.format(etype=etype)
+                SELECT name, notch, searge, sig, notchsig, desc, classname, classnotch
+                FROM v{etype}
+                WHERE (searge LIKE :mname_esc ESCAPE '!' OR searge=:mname OR notch=:mname OR name=:mname)
+                  AND (sig=:sname OR notchsig=:sname)
+                  AND side=:side AND versionid=:version
+            """.format(etype=etype)
         else:
             query = """
-                    SELECT name, notch, searge, sig, notchsig, desc, classname, classnotch
-                    FROM v{etype}
-                    WHERE (searge LIKE :mname_esc ESCAPE '!' OR searge=:mname OR notch=:mname OR name=:mname)
-                      AND side=:side AND versionid=:version
-                """.format(etype=etype)
-        cur.execute(query, {'mname_esc': mname_esc, 'mname': mname, 'cname': cname, 'sname': sname, 'side': SIDE_LOOKUP[side], 'version': self.version_id})
+                SELECT name, notch, searge, sig, notchsig, desc, classname, classnotch
+                FROM v{etype}
+                WHERE (searge LIKE :mname_esc ESCAPE '!' OR searge=:mname OR notch=:mname OR name=:mname)
+                  AND side=:side AND versionid=:version
+            """.format(etype=etype)
+        cur.execute(query, {'mname_esc': mname_esc, 'mname': mname, 'cname': cname, 'sname': sname,
+                            'side': SIDE_LOOKUP[side], 'version': self.version_id})
         return cur.fetchall()
 
     def search_class(self, search_str, side):
@@ -127,7 +130,8 @@ class DBQueries(object):
             WHERE name LIKE :search_esc ESCAPE '!'
               AND side=:side AND versionid=:version
         """
-        cur.execute(query, {'search_esc': search_esc, 'side': SIDE_LOOKUP[side], 'version': self.version_id})
+        cur.execute(query, {'search_esc': search_esc,
+                            'side': SIDE_LOOKUP[side], 'version': self.version_id})
         return cur.fetchall()
 
     def get_member_searge(self, name, side, etype):
@@ -139,7 +143,8 @@ class DBQueries(object):
             WHERE (searge LIKE :name_esc ESCAPE '!' OR searge=:name)
               AND side=:side AND versionid=:version
         """.format(etype=etype)
-        cur.execute(query, {'name_esc': name_esc, 'name': name, 'side': SIDE_LOOKUP[side], 'version': self.version_id})
+        cur.execute(query, {'name_esc': name_esc, 'name': name,
+                            'side': SIDE_LOOKUP[side], 'version': self.version_id})
         return cur.fetchall()
 
     def check_member_name(self, name, side, etype, forced):
@@ -156,7 +161,8 @@ class DBQueries(object):
             WHERE lower(name)=lower(:newname)
               AND side=:side AND versionid=:version
         """
-        cur.execute(query, {'newname': name, 'side': SIDE_LOOKUP[side], 'version': self.version_id})
+        cur.execute(query, {'newname': name,
+                            'side': SIDE_LOOKUP[side], 'version': self.version_id})
         row = cur.fetchone()
         if row:
             raise CmdError("It is illegal to use class names for fields or methods !")
@@ -169,7 +175,8 @@ class DBQueries(object):
                 WHERE name=:name
                   AND side=:side AND versionid=:version
             """
-            cur.execute(query, {'name': name, 'side': SIDE_LOOKUP[side], 'version': self.version_id})
+            cur.execute(query, {'name': name,
+                                'side': SIDE_LOOKUP[side], 'version': self.version_id})
             row = cur.fetchone()
             if row:
                 raise CmdError("You are conflicting with at least one other method: %s. Please use forced update only if you are certain !" % row['searge'])
@@ -180,7 +187,8 @@ class DBQueries(object):
                 WHERE name=:name
                   AND side=:side AND versionid=:version
             """
-            cur.execute(query, {'name': name, 'side': SIDE_LOOKUP[side], 'version': self.version_id})
+            cur.execute(query, {'name': name,
+                                'side': SIDE_LOOKUP[side], 'version': self.version_id})
             row = cur.fetchone()
             if row:
                 raise CmdError("You are conflicting with at least one other field: %s. Please use forced update only if you are certain !" % row['searge'])
@@ -193,7 +201,9 @@ class DBQueries(object):
             INSERT INTO {etype}hist
             VALUES (:id, :memberid, :oldname, :olddesc, :newname, :newdesc, :timestamp, :nick, :forced, :cmd)
         """.format(etype=etype)
-        cur.execute(query, {'id': None, 'memberid': int(row['id']), 'oldname': row['name'], 'olddesc': row['desc'], 'newname': newname, 'newdesc': newdesc, 'timestamp': int(time.time()), 'nick': nick, 'forced': forced, 'cmd': cmd})
+        cur.execute(query, {'id': None, 'memberid': int(row['id']), 'oldname': row['name'], 'olddesc': row['desc'],
+                            'newname': newname, 'newdesc': newdesc, 'timestamp': int(time.time()), 'nick': nick,
+                            'forced': forced, 'cmd': cmd})
 
     def search_member(self, search_str, side, etype):
         cur = self.db_con.cursor()
@@ -204,7 +214,8 @@ class DBQueries(object):
             WHERE name LIKE :search_esc ESCAPE '!'
               AND side=:side AND versionid=:version
         """.format(etype=etype)
-        cur.execute(query, {'search_esc': search_esc, 'side': SIDE_LOOKUP[side], 'version': self.version_id})
+        cur.execute(query, {'search_esc': search_esc,
+                            'side': SIDE_LOOKUP[side], 'version': self.version_id})
         return cur.fetchall()
 
     def log_member(self, member, side, etype):
@@ -220,7 +231,8 @@ class DBQueries(object):
             WHERE (m.searge LIKE :member_esc ESCAPE '!' OR m.searge=:member OR m.notch=:member OR m.name=:member)
               AND m.side=:side
         """.format(etype=etype)
-        cur.execute(query, {'member_esc': member_esc, 'member': member, 'side': SIDE_LOOKUP[side]})
+        cur.execute(query, {'member_esc': member_esc, 'member': member,
+                            'side': SIDE_LOOKUP[side]})
         return cur.fetchall()
 
     def revert_member(self, member, side, etype):
@@ -232,7 +244,8 @@ class DBQueries(object):
             WHERE (searge LIKE :member_esc ESCAPE '!' OR searge=:member)
               AND side=:side AND versionid=:version
         """.format(etype=etype)
-        cur.execute(query, {'member_esc': member_esc, 'member': member, 'side': SIDE_LOOKUP[side], 'version': self.version_id})
+        cur.execute(query, {'member_esc': member_esc, 'member': member,
+                            'side': SIDE_LOOKUP[side], 'version': self.version_id})
 
     def get_log(self, side, etype):
         cur = self.db_con.cursor()

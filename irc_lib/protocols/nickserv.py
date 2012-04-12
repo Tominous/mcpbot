@@ -94,7 +94,8 @@ class NickServProtocol(Protocol):
         self.locks['NSID'].set()
 
     def status(self, nick):
-        # Yeah, I know, this is not the right command, but they changed the nickserv on esper, and status doesn't returns the right value anymore :(
+        # Yeah, I know, this is not the right command, but they changed the nickserv on esper, and status doesn't
+        # returns the right value anymore :(
         self.nserv_privmsg('ACC %s' % nick)
 
     def ghost(self, nick, password):

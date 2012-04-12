@@ -81,8 +81,10 @@ class IRCBotBase(object):
         """Outgoing messages thread. Check for new messages on the queue and push them to the socket if any."""
         # This is how the flood protection works :
         # We have a char bucket corresponding of the max number of chars per 30 seconds
-        # Every looping, we add chars to this bucket corresponding to the time elapsed in the last loop * number of allowed char / second
-        # If when we want to send the message and the number of chars is not enough, we sleep until we have enough chars in the bucket (in fact, a bit more, to replanish the bucket).
+        # Every looping, we add chars to this bucket corresponding to the time elapsed in the last loop * number of
+        # allowed char / second
+        # If when we want to send the message and the number of chars is not enough, we sleep until we have enough
+        # chars in the bucket (in fact, a bit more, to replanish the bucket).
         # This way, everything slow down when we reach the flood limit, but after 30 seconds, the bucket is full again.
 
         try:

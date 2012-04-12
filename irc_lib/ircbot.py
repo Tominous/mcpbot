@@ -159,7 +159,7 @@ class IRCBotBase(object):
         finally:
             self.logger.info('*** IRCBot.command_loop: exited')
 
-    def process_msg(self, sender, target, msg):
+    def process_msg(self, sender, target, msg, dcc=False):
         ischan = target[0] in ['#', '&']
 
         msg = msg.strip()
@@ -182,7 +182,7 @@ class IRCBotBase(object):
         else:
             outmsg = ''
 
-        evcmd = Event(sender, outcmd, target, outmsg, 'CMD')
+        evcmd = Event(sender, outcmd, target, outmsg, 'CMD', dcc=dcc)
         self.commandq.put(evcmd)
 
     def connect(self, server, port=6667, password=None):

@@ -154,10 +154,7 @@ class DCCProtocol(Protocol):
         self.logger.info('*** DCC.inbound_loop: exited')
 
     def onDCC_msg(self, evt):
-        if not evt.msg:
-            return
-
-        self.bot.process_msg(evt.sender, self.cnick, evt.msg)
+        self.bot.process_msg(evt.sender, self.cnick, evt.msg, dcc=evt.dcc)
 
     def onDCC_CHAT(self, evt):
         nick = evt.sender

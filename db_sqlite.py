@@ -97,7 +97,7 @@ class DBQueries(object):
             """.format(etype=etype)
         elif cname and not sname:
             query = """
-                SELECT name, notch, searge, sig, notchsig, desc, classname, classnotch
+                SELECT name, notch, searge, sig, notchsig, desc, classname, classnotch,
                   classname || '.' || name AS fullname, classnotch || '.' || notch AS fullnotch
                 FROM v{etype}
                 WHERE (searge LIKE :mname_esc ESCAPE '!' OR searge=:mname OR notch=:mname OR name=:mname)
@@ -106,7 +106,7 @@ class DBQueries(object):
             """.format(etype=etype)
         elif not cname and sname:
             query = """
-                SELECT name, notch, searge, sig, notchsig, desc, classname, classnotch
+                SELECT name, notch, searge, sig, notchsig, desc, classname, classnotch,
                   classname || '.' || name AS fullname, classnotch || '.' || notch AS fullnotch
                 FROM v{etype}
                 WHERE (searge LIKE :mname_esc ESCAPE '!' OR searge=:mname OR notch=:mname OR name=:mname)
@@ -115,7 +115,7 @@ class DBQueries(object):
             """.format(etype=etype)
         else:
             query = """
-                SELECT name, notch, searge, sig, notchsig, desc, classname, classnotch
+                SELECT name, notch, searge, sig, notchsig, desc, classname, classnotch,
                   classname || '.' || name AS fullname, classnotch || '.' || notch AS fullnotch
                 FROM v{etype}
                 WHERE (searge LIKE :mname_esc ESCAPE '!' OR searge=:mname OR notch=:mname OR name=:mname)

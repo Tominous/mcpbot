@@ -214,7 +214,8 @@ class DBQueries(object):
         cur = self.db_con.cursor()
         search_esc = '%{0}%'.format(search_str)
         query = """
-            SELECT name, notch, searge, sig, notchsig, desc, classname, classnotch
+            SELECT name, notch, searge, sig, notchsig, desc, classname, classnotch,
+              classname || '.' || name AS fullname, classnotch || '.' || notch AS fullnotch
             FROM v{etype}
             WHERE name LIKE :search_esc ESCAPE '!'
               AND side=:side AND versionid=:version

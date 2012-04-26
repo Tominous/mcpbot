@@ -234,8 +234,8 @@ class MCPBotCmds(object):
             elif len(rows['classes']) > highlimit:
                 self.reply(" [%s][  CLASS] Too many results : %d" % (side.upper(), len(rows['classes'])))
             else:
-                l_name = maxlen(rows, 'name')
-                l_notch = maxlen(rows, 'notch')
+                l_name = maxlen(rows['classes'], 'name')
+                l_notch = maxlen(rows['classes'], 'notch')
                 for row in rows['classes']:
                     p_name = (row['name']).ljust(l_name)
                     p_notch = (row['notch']).ljust(l_notch)
@@ -247,8 +247,8 @@ class MCPBotCmds(object):
                 elif len(rows[etype]) > highlimit:
                     self.reply(" [%s][%7s] Too many results : %d" % (side.upper(), etype.upper(), len(rows[etype])))
                 else:
-                    l_name = maxlen(rows, 'fullname')
-                    l_notch = maxlen(rows, 'fullnotch') + 2
+                    l_name = maxlen(rows[etype], 'fullname')
+                    l_notch = maxlen(rows[etype], 'fullnotch') + 2
                     for row in rows[etype]:
                         p_name = (row['fullname']).ljust(l_name)
                         p_notch = ('[%s]' % row['fullnotch']).ljust(l_notch)

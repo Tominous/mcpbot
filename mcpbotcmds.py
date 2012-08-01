@@ -508,7 +508,11 @@ class MCPBotCmds(object):
                                 p_nick = (row['nick']).ljust(l_nick)
                                 p_searge = (row['searge']).ljust(l_searge)
                                 p_name = (row['name']).ljust(l_name)
-                                p_index = re.search('[0-9]+', row['searge']).group()
+                                index_re = re.search('[0-9]+', row['searge'])
+                                if index_re is not None:
+                                    p_index = index_re.group()
+                                else:
+                                    p_index = row['searge']
                                 if full_log:
                                     self.reply("+ %s, %s, %s" % (row['timestamp'], row['nick'], row['cmd']))
                                     self.reply("  [%s%s][%s] %s => %s" % (side[0].upper(), etype[0].upper(), p_searge,

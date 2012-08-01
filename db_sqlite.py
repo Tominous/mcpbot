@@ -140,20 +140,25 @@ class DBQueries(object):
 
     def get_member_searge(self, name, side, etype):
         cur = self.db_con.cursor()
+        type_esc = '{0}!_%'.format(TYPE_LOOKUP[etype])
         name_esc = '{0}!_{1}!_%'.format(TYPE_LOOKUP[etype], name)
         query = """
             SELECT name, notch, searge, sig, notchsig, desc, classname, classnotch, id,
               classname || '.' || name AS fullname, classnotch || '.' || notch AS fullnotch
             FROM v{etype}
-            WHERE (searge LIKE :name_esc ESCAPE '!' OR searge=:name)
+            WHERE searge LIKE :type_esc ESCAPE '!' AND (searge LIKE :name_esc ESCAPE '!' OR searge=:name)
               AND side=:side AND versionid=:version
         """.format(etype=etype)
-        cur.execute(query, {'name_esc': name_esc, 'name': name,
+        cur.execute(query, {'type_esc': type_esc, 'name_esc': name_esc, 'name': name,
                             'side': SIDE_LOOKUP[side], 'version': self.version_id})
         return cur.fetchall()
 
     def check_member_name(self, name, side, etype, forced):
         cur = self.db_con.cursor()
+
+        # DON'T ALLOW func_ OR field_ PREFIXES
+        if name.lower().startswith((TYPE_LOOKUP['methods'], TYPE_LOOKUP['fields'])):
+            raise CmdError("Invalid prefix in name")
 
         # DON'T ALLOW STRANGE CHARACTERS IN NAMES
         if re.search(r'[^A-Za-z0-9$_]', name):

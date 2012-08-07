@@ -171,6 +171,7 @@ CREATE VIEW vclassesstats AS
     COUNT(DISTINCT mu.id) AS methodsu,
     COUNT(DISTINCT fu.id) AS fieldsu
   FROM classes c
+    INNER JOIN packages p ON p.id=c.packageid AND p.name LIKE "net/minecraft/%"
     LEFT JOIN methods mt ON mt.topid=c.id AND mt.searge LIKE "func_%"
     LEFT JOIN methods mr ON mr.id=mt.id AND mr.searge LIKE "func_%" AND mr.name != mr.searge
     LEFT JOIN methods mu ON mu.id=mt.id AND mu.searge LIKE "func_%" AND mu.name = mu.searge

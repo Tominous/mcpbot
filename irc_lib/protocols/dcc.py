@@ -38,7 +38,7 @@ class DCCProtocol(Protocol):
         except socket.error:
             self.logger.exception('*** DCC: bind insocket failed')
             return
-        externalip = urllib.urlopen('http://automation.whatismyip.com/n09230945.asp').readlines()[0]
+        externalip = urllib.urlopen('http://ifconfig.me/ip').readlines()[0]
         self.inip = self.conv_ip_std_long(externalip)
         self.inport = listenport
         self.logger.info('# DCC listening on %s:%d %s', listenhost, listenport, externalip)

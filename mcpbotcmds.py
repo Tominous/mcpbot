@@ -680,6 +680,7 @@ class MCPBotCmds(object):
 
         self.reply("For help, please check : http://mcp.ocean-labs.de/index.php/MCPBot")
 
+    @restricted(4)
     def cmd_status(self):
         full_status, = self.check_args(1, min_args=0, syntax='[full]')
         if full_status.lower() == 'full':

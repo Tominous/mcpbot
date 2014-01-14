@@ -571,7 +571,7 @@ class MCPBotCmds(object):
             trgdir = '/home/mcpfiles/mcptest'
 
         self.write_csvs(trgdir)
-        self.reply("Test CSVs for MCP %s exported: http://mcp.ocean-labs.de/files/mcptest/" % mcpversion)
+        self.reply("Test CSVs for MCP %s exported: http://mcpold.ocean-labs.de/files/mcptest/" % mcpversion)
 
     def write_csvs(self, trgdir):
         methodswriter = csv.DictWriter(open('%s/methods.csv' % trgdir, 'wb'), ('searge', 'name', 'side', 'desc'))
